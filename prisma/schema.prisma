@@ -13,17 +13,157 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Prisma Schema
+
+// User model for authentication and staff management
 model User {
-  id        String  @id @default(cuid())
-  name      String
-  email     String  @unique
-  role      String
-  password  String
-  createdDate            DateTime         @default(now())
-  updatedDate            DateTime         @default(now())
-  phone     String  @unique
+  id          Int       @id @default(autoincrement())
+  username    String    @unique
+  password    String    // Hashed password
+  email       String?   @unique
+  role        Role      @default(STAFF) // Enum for permissions
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  staffData   Staff?    // Link to staff details if applicable
+  remarks     String?   // Optional remarks about the user
+}
+
+// Enum for user roles
+enum Role {
+  ADMIN
+  STAFF
   
 }
 
+// Staff model for staff-specific details and permissions
+model Staff {
+  id          Int       @id @default(autoincrement())
+  userId      Int       @unique
+  user        User      @relation(fields: [userId], references: [id])
+  fullName    String
+  phone       String?
+  permissions Json      // Flexible JSON field for custom permissions (e.g., canEditItems, canViewReports)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
 
+// Stock model for tracking inventory
+model Stock {
+  id            Int       @id @default(autoincrement())
+  itemId        Int
+  item          Item      @relation(fields: [itemId], references: [id])
+  quantity      Int       @default(0)
+  lastRefilled  DateTime?
+  refillAlert   Boolean     // Threshold for stock refill alert
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  transactions  Transaction[] // Link to buy/sell transactions
+}
+
+// Item model for main items and their sub-items
+model Item {
+  id            Int       @id @default(autoincrement())
+  name          String
+  brand         String?
+  type          String?   // e.g., Electronics, Clothing
+  price         Float
+  isSellable    Boolean   @default(true) // Whether the item can be sold
+  remarks       String?   // Remarks for each item
+  parentItemId  Int?      // For sub-items (self-referencing)
+  parentItem    Item?     @relation("SubItems", fields: [parentItemId], references: [id])
+  subItems      Item[]    @relation("SubItems") // Sub-items linked to main item
+  stock         Stock[]
+  transactions  Transaction[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Customer model for storing customer information and debt
+model Customer {
+  id            Int       @id @default(autoincrement())
+  name          String
+  phone         String?
+  email         String?   @unique
+  address       String?
+  debt          Debt[]
+  transactions  Transaction[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Debt model for tracking customer debts
+model Debt {
+  id            Int       @id @default(autoincrement())
+  customerId    Int
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  amount        Float
+  dueDate       DateTime
+  isSettled     Boolean   @default(false)
+  alertSent     Boolean   @default(false) // For debt due alerts
+  remarks       String?
+  transactionId Int?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Transaction model for buy/sell records
+model Transaction {
+  id            Int       @id @default(autoincrement())
+  type          TransactionType // Buy or Sell
+  itemId        Int
+  item          Item      @relation(fields: [itemId], references: [id])
+  stockId       Int?
+  stock         Stock?    @relation(fields: [stockId], references: [id])
+  customerId    Int?
+  customer      Customer? @relation(fields: [customerId], references: [id])
+  quantity      Int
+  unitPrice     Float
+  totalAmount   Float
+  debt          Debt[]
+  date          DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Enum for transaction type
+enum TransactionType {
+  BUY
+  SELL
+}
+
+// Report model (optional) for precomputed reports - could be virtual/generated in app
+model Report {
+  id            Int       @id @default(autoincrement())
+  period        ReportPeriod // Daily, Monthly, Yearly
+  startDate     DateTime
+  endDate       DateTime
+  totalSales    Float
+  totalPurchases Float
+  profit        Float
+  loss          Float
+  mostSoldItemId Int?
+  mostSoldItem  Item?     @relation(fields: [mostSoldItemId], references: [id])
+  topCustomerId Int?
+  topCustomer   Customer? @relation(fields: [topCustomerId], references: [id])
+  rawData       Json      // Store raw data for export or graph generation
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Enum for report period
+enum ReportPeriod {
+  DAILY
+  MONTHLY
+  YEARLY
+}
+
+// Configuration model for app settings (e.g., export settings, offline sync)
+model Config {
+  id            Int       @id @default(autoincrement())
+  key           String    @unique // e.g., "stockAlertThreshold", "exportFormat"
+  value         String    // Flexible storage for settings
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
 
