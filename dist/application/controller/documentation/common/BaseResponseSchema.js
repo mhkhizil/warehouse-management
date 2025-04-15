@@ -15,11 +15,11 @@ class BaseResponseSchema {
 }
 exports.BaseResponseSchema = BaseResponseSchema;
 __decorate([
-    (0, swagger_1.ApiProperty)({ type: 'string' }),
+    (0, swagger_1.ApiProperty)({ type: 'string', example: 'Success' }),
     __metadata("design:type", String)
 ], BaseResponseSchema.prototype, "message", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ type: 'number' }),
+    (0, swagger_1.ApiProperty)({ type: 'number', example: 200 }),
     __metadata("design:type", Number)
 ], BaseResponseSchema.prototype, "code", void 0);
 __decorate([

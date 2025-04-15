@@ -8,7 +8,7 @@ import { hash } from 'argon2';
 @Injectable()
 export class CreateUserUseCase implements ICreateUserUseCase {
   constructor(@Inject() private readonly userRepository: IUserRepository) {}
-  public async execute(data?: CreateUserDto): Promise<any> {
+  public async execute(data?: CreateUserDto): Promise<UserEntity> {
     const newUser = new UserEntity(
       null,
       data?.name,
@@ -19,7 +19,7 @@ export class CreateUserUseCase implements ICreateUserUseCase {
     );
     const createdUser = await this.userRepository.create(newUser);
 
-    //newUser.id=createdUser.
-    return CreateUserDto.convertToClass(createdUser);
+    // Return the entity directly instead of converting to DTO
+    return createdUser;
   }
 }

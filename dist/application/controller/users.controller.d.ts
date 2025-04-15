@@ -15,7 +15,10 @@ export declare class UsersController {
     findOneById(req: any, params: {
         id: string;
     }): Promise<CoreApiResonseSchema<any>>;
-    getAllByFilter(params: UserFilterSchama): Promise<CoreApiResonseSchema<any>>;
+    getAllByFilter(params: UserFilterSchama): Promise<CoreApiResonseSchema<{
+        users: import("../../core/domain/user/entity/User").UserEntity[];
+        totalCounts: number;
+    }>>;
     updateUser(user: UpdateUserRequestSchema, params: {
         id: string;
     }): Promise<CoreApiResonseSchema<any>>;

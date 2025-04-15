@@ -15,7 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GetUserListWithFilterUseCase = void 0;
 const common_1 = require("@nestjs/common");
 const IUserRepositoryPort_1 = require("../port/repository-port/IUserRepositoryPort");
-const CreateUserDto_1 = require("../dto/CreateUserDto");
 let GetUserListWithFilterUseCase = class GetUserListWithFilterUseCase {
     constructor(userRepository) {
         this.userRepository = userRepository;
@@ -23,7 +22,7 @@ let GetUserListWithFilterUseCase = class GetUserListWithFilterUseCase {
     async execute(filter) {
         const list = await this.userRepository.findAllWithSchema(filter);
         return {
-            users: list.users.map((product) => CreateUserDto_1.CreateUserDto.convertToClass(product)),
+            users: list.users,
             totalCounts: list.totalCounts,
         };
     }

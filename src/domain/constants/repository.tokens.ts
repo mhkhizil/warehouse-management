@@ -1,0 +1,10 @@
+/**
+ * Repository tokens for dependency injection
+ */
+export const USER_REPOSITORY = 'USER_REPOSITORY';
+export const STAFF_REPOSITORY = 'STAFF_REPOSITORY';
+export const ITEM_REPOSITORY = 'ITEM_REPOSITORY';
+export const STOCK_REPOSITORY = 'STOCK_REPOSITORY';
+export const CUSTOMER_REPOSITORY = 'CUSTOMER_REPOSITORY';
+export const TRANSACTION_REPOSITORY = 'TRANSACTION_REPOSITORY';
+export const DEBT_REPOSITORY = 'DEBT_REPOSITORY';

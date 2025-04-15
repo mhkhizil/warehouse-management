@@ -19,6 +19,6 @@ export class UpdateUserUseCase implements ICreateUserUseCase {
     const createdUser = await this.userRepository.update(newUser);
 
     //newUser.id=createdUser.
-    return CreateUserDto.convertToClass(createdUser);
+    return createdUser;
   }
 }

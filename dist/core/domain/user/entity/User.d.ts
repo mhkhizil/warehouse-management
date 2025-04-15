@@ -1,4 +1,5 @@
 import { UserRole } from 'src/core/common/type/UserEnum';
+import { User as PrismaUser } from '@prisma/client';
 export declare class UserEntity {
     id: string;
     name: string;
@@ -9,5 +10,5 @@ export declare class UserEntity {
     createdDate: Date;
     updatedDate: Date;
     constructor(id: string, name: string, email: string, phone: string, role: UserRole, password?: string, createdDate?: Date, updatedDate?: Date);
-    static toEntity(user: any): UserEntity;
+    static toEntity(user: PrismaUser): UserEntity;
 }

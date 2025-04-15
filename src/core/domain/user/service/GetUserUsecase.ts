@@ -9,8 +9,8 @@ import { IGetUserUseCase } from '../port/service-port/IGetUserUseCase';
 @Injectable()
 export class GetUserUseCase implements IGetUserUseCase {
   constructor(@Inject() private readonly userRepository: IUserRepository) {}
-  public async execute(id?: string): Promise<any> {
+  public async execute(id?: string): Promise<UserEntity> {
     const createdUser = await this.userRepository.find({ id: id });
-    return CreateUserDto.convertToClass(createdUser);
+    return createdUser;
   }
 }

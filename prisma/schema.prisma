@@ -74,6 +74,7 @@ model Item {
   subItems      Item[]    @relation("SubItems") // Sub-items linked to main item
   stock         Stock[]
   transactions  Transaction[]
+  reportsAsMostSold Report[] // Add this relation field for reports
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -87,6 +88,7 @@ model Customer {
   address       String?
   debt          Debt[]
   transactions  Transaction[]
+  reportsAsTopCustomer Report[] // Add this relation field for reports
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }

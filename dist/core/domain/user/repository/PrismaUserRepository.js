@@ -25,11 +25,11 @@ let PrismaUserRepository = class PrismaUserRepository {
         try {
             const result = await this.prisma.user.create({
                 data: {
-                    phone: user.phone,
+                    username: user.name,
                     email: user.email,
-                    name: user.name,
                     password: user.password,
                     role: user.role,
+                    remarks: null,
                 },
             });
             return User_1.UserEntity.toEntity(result);
@@ -67,11 +67,15 @@ let PrismaUserRepository = class PrismaUserRepository {
     }
     async update(user) {
         try {
+            const { id, ...userData } = user;
             const result = await this.prisma.user.update({
-                where: { id: user.id },
+                where: { id: Number(id) },
                 data: {
-                    ...user,
-                    updatedDate: new Date(),
+                    username: userData.name,
+                    email: userData.email,
+                    password: userData.password,
+                    role: userData.role,
+                    updatedAt: new Date(),
                 },
             });
             return User_1.UserEntity.toEntity(result);
@@ -94,7 +98,7 @@ let PrismaUserRepository = class PrismaUserRepository {
     async delete(id) {
         try {
             await this.prisma.user.delete({
-                where: { id: id },
+                where: { id: Number(id) },
             });
             return true;
         }
@@ -115,10 +119,17 @@ let PrismaUserRepository = class PrismaUserRepository {
     }
     async find(by) {
         try {
+            const where = {};
+            if (by.id)
+                where.id = Number(by.id);
+            if (by.email)
+                where.email = by.email;
+            if (by.name)
+                where.name = by.name;
+            if (by.phone)
+                where.phone = by.phone;
             const user = await this.prisma.user.findFirst({
-                where: {
-                    ...by,
-                },
+                where,
             });
             if (user)
                 return User_1.UserEntity.toEntity(user);
@@ -146,17 +157,16 @@ let PrismaUserRepository = class PrismaUserRepository {
     }
     async findAllWithSchema(filter) {
         try {
+            const where = {};
+            if (filter.name)
+                where.username = { contains: filter.name };
+            if (filter.role)
+                where.role = filter.role;
             const totalCounts = await this.prisma.user.count({
-                where: {
-                    name: { contains: filter.name },
-                    role: { contains: filter.role },
-                },
+                where,
             });
             const users = await this.prisma.user.findMany({
-                where: {
-                    name: { contains: filter.name },
-                    role: { contains: filter.role },
-                },
+                where,
                 take: filter.take,
                 skip: filter.skip,
             });

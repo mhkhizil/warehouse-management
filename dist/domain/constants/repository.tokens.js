@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DEBT_REPOSITORY = exports.TRANSACTION_REPOSITORY = exports.CUSTOMER_REPOSITORY = exports.STOCK_REPOSITORY = exports.ITEM_REPOSITORY = exports.STAFF_REPOSITORY = exports.USER_REPOSITORY = void 0;
+exports.USER_REPOSITORY = 'USER_REPOSITORY';
+exports.STAFF_REPOSITORY = 'STAFF_REPOSITORY';
+exports.ITEM_REPOSITORY = 'ITEM_REPOSITORY';
+exports.STOCK_REPOSITORY = 'STOCK_REPOSITORY';
+exports.CUSTOMER_REPOSITORY = 'CUSTOMER_REPOSITORY';
+exports.TRANSACTION_REPOSITORY = 'TRANSACTION_REPOSITORY';
+exports.DEBT_REPOSITORY = 'DEBT_REPOSITORY';
+//# sourceMappingURL=repository.tokens.js.map

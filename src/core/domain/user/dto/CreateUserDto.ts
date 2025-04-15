@@ -27,9 +27,9 @@ export class CreateUserDto {
   @Expose()
   updatedDate: Nullable<Date>;
 
-  // public static convertToClass(user: UserEntity) {
-  //   return plainToInstance(CreateUserDto, user, {
-  //     excludeExtraneousValues: true,
-  //   });
-  // }
+  public static convertToClass(user: UserEntity) {
+    return plainToInstance(CreateUserDto, user, {
+      excludeExtraneousValues: true,
+    });
+  }
 }

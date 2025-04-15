@@ -6,16 +6,22 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './application/module/auth.module';
 import { PrismaModule } from './application/module/prisma.module';
-
+import { ItemsModule } from './application/module/items.module';
+import { StocksModule } from './application/module/stocks.module';
+import { CustomersModule } from './application/module/customers.module';
+import { TransactionsModule } from './application/module/transactions.module';
+import { DebtsModule } from './application/module/debts.module';
 
 @Module({
   imports: [
     UsersModule,
     AuthModule,
-   
     PrismaModule,
-   
-   
+    ItemsModule,
+    StocksModule,
+    CustomersModule,
+    TransactionsModule,
+    DebtsModule,
     ThrottlerModule.forRoot([
       {
         name: 'short',

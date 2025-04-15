@@ -1,4 +1,5 @@
 import { UserRole } from 'src/core/common/type/UserEnum';
+import { User as PrismaUser } from '@prisma/client';
 
 export class UserEntity {
   id: string;
@@ -37,16 +38,16 @@ export class UserEntity {
     this.updatedDate = updatedDate;
   }
 
-  public static toEntity(user: any): UserEntity {
+  public static toEntity(user: PrismaUser): UserEntity {
     return new UserEntity(
-      user?.id,
-      user?.name,
+      user?.id?.toString(),
+      user?.username,
       user?.email,
-      user?.phone,
-      user?.role,
+      '',
+      user?.role as unknown as UserRole,
       user?.password,
-      user?.createdDate,
-      user?.updatedDate,
+      user?.createdAt,
+      user?.updatedAt,
     );
   }
 }

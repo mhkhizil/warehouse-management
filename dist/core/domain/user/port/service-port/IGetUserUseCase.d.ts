@@ -1,3 +1,3 @@
 import { IBaseUseCase } from 'src/core/common/base-usecase/port';
-export interface IGetUserUseCase extends IBaseUseCase<string, any> {
+export declare abstract class IGetUserUseCase extends IBaseUseCase<string, any> {
 }

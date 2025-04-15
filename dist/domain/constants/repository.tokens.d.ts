@@ -1,0 +1,7 @@
+export declare const USER_REPOSITORY = "USER_REPOSITORY";
+export declare const STAFF_REPOSITORY = "STAFF_REPOSITORY";
+export declare const ITEM_REPOSITORY = "ITEM_REPOSITORY";
+export declare const STOCK_REPOSITORY = "STOCK_REPOSITORY";
+export declare const CUSTOMER_REPOSITORY = "CUSTOMER_REPOSITORY";
+export declare const TRANSACTION_REPOSITORY = "TRANSACTION_REPOSITORY";
+export declare const DEBT_REPOSITORY = "DEBT_REPOSITORY";

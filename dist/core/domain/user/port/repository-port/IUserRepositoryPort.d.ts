@@ -6,17 +6,17 @@ export declare abstract class IUserRepository implements IBaseRepository<UserEnt
     email?: string;
     name?: string;
 }> {
-    create: (entity: UserEntity) => Promise<UserEntity>;
-    delete: (id: string) => Promise<boolean>;
-    find: (by: {
+    abstract create: (entity: UserEntity) => Promise<UserEntity>;
+    abstract delete: (id: string) => Promise<boolean>;
+    abstract find: (by: {
         id?: string;
         email?: string;
         name?: string;
         phone?: string;
     }) => Promise<UserEntity | null>;
-    findAll: () => Promise<UserEntity[]>;
-    update: (entity: UserEntity) => Promise<UserEntity>;
-    findAllWithSchema: (filter: UserFilter) => Promise<{
+    abstract findAll: () => Promise<UserEntity[]>;
+    abstract update: (entity: UserEntity) => Promise<UserEntity>;
+    abstract findAllWithSchema: (filter: UserFilter) => Promise<{
         users: UserEntity[];
         totalCounts: number;
     }>;

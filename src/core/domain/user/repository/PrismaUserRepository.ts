@@ -17,6 +17,7 @@ import { HTTP_CODE_METADATA } from '@nestjs/common/constants';
 import { CoreApiResonseSchema } from 'src/core/common/schema/ApiResponseSchema';
 import { UserFilter } from '../dto/UserFilter';
 import { PrismaService } from '@src/core/common/prisma/PrismaService';
+import { Role } from '../entity/Role';
 
 export class PrismaUserRepository implements IUserRepository {
   constructor(@Inject() public readonly prisma: PrismaService) {}
@@ -25,11 +26,11 @@ export class PrismaUserRepository implements IUserRepository {
     try {
       const result = await this.prisma.user.create({
         data: {
-          phone: user.phone,
+          username: user.name,
           email: user.email,
-          name: user.name,
           password: user.password,
-          role: user.role,
+          role: user.role as unknown as Role,
+          remarks: null,
         },
       });
       return UserEntity.toEntity(result);
@@ -73,11 +74,16 @@ export class PrismaUserRepository implements IUserRepository {
   }
   async update(user: UserEntity): Promise<UserEntity> {
     try {
+      const { id, ...userData } = user;
+
       const result = await this.prisma.user.update({
-        where: { id: user.id },
+        where: { id: Number(id) },
         data: {
-          ...user,
-          updatedDate: new Date(),
+          username: userData.name,
+          email: userData.email,
+          password: userData.password,
+          role: userData.role as unknown as Role,
+          updatedAt: new Date(),
         },
       });
       return UserEntity.toEntity(result);
@@ -99,7 +105,7 @@ export class PrismaUserRepository implements IUserRepository {
   async delete(id: string): Promise<boolean> {
     try {
       await this.prisma.user.delete({
-        where: { id: id },
+        where: { id: Number(id) },
       });
       return true;
     } catch (e) {
@@ -124,10 +130,15 @@ export class PrismaUserRepository implements IUserRepository {
     phone?: string;
   }): Promise<UserEntity | null> {
     try {
+      const where: any = {};
+
+      if (by.id) where.id = Number(by.id);
+      if (by.email) where.email = by.email;
+      if (by.name) where.name = by.name;
+      if (by.phone) where.phone = by.phone;
+
       const user = await this.prisma.user.findFirst({
-        where: {
-          ...by,
-        },
+        where,
       });
 
       if (user) return UserEntity.toEntity(user);
@@ -157,17 +168,17 @@ export class PrismaUserRepository implements IUserRepository {
     filter: UserFilter,
   ): Promise<{ users: UserEntity[]; totalCounts: number }> {
     try {
+      const where: any = {};
+
+      if (filter.name) where.username = { contains: filter.name };
+      if (filter.role) where.role = filter.role as unknown as Role;
+
       const totalCounts = await this.prisma.user.count({
-        where: {
-          name: { contains: filter.name },
-          role: { contains: filter.role },
-        },
+        where,
       });
+
       const users = await this.prisma.user.findMany({
-        where: {
-          name: { contains: filter.name },
-          role: { contains: filter.role },
-        },
+        where,
         take: filter.take,
         skip: filter.skip,
       });

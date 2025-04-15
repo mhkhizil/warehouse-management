@@ -14,7 +14,6 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GetUserUseCase = void 0;
 const IUserRepositoryPort_1 = require("../port/repository-port/IUserRepositoryPort");
-const CreateUserDto_1 = require("../dto/CreateUserDto");
 const common_1 = require("@nestjs/common");
 let GetUserUseCase = class GetUserUseCase {
     constructor(userRepository) {
@@ -22,7 +21,7 @@ let GetUserUseCase = class GetUserUseCase {
     }
     async execute(id) {
         const createdUser = await this.userRepository.find({ id: id });
-        return CreateUserDto_1.CreateUserDto.convertToClass(createdUser);
+        return createdUser;
     }
 };
 exports.GetUserUseCase = GetUserUseCase;

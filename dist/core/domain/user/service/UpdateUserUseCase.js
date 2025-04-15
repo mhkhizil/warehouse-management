@@ -15,7 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateUserUseCase = void 0;
 const IUserRepositoryPort_1 = require("../port/repository-port/IUserRepositoryPort");
 const User_1 = require("../entity/User");
-const CreateUserDto_1 = require("../dto/CreateUserDto");
 const common_1 = require("@nestjs/common");
 let UpdateUserUseCase = class UpdateUserUseCase {
     constructor(userRepository) {
@@ -24,7 +23,7 @@ let UpdateUserUseCase = class UpdateUserUseCase {
     async execute(data) {
         const newUser = new User_1.UserEntity(data?.id, data?.name, data?.email, data?.phone, data?.role);
         const createdUser = await this.userRepository.update(newUser);
-        return CreateUserDto_1.CreateUserDto.convertToClass(createdUser);
+        return createdUser;
     }
 };
 exports.UpdateUserUseCase = UpdateUserUseCase;
