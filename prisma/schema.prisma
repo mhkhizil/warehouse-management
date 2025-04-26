@@ -75,6 +75,7 @@ model Item {
   stock         Stock[]
   transactions  Transaction[]
   reportsAsMostSold Report[] // Add this relation field for reports
+  isDeleted     Boolean   @default(false) // Flag for soft delete
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }

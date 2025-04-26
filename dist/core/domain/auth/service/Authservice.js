@@ -23,7 +23,7 @@ let AuthService = class AuthService {
         this.jwtService = jwtService;
     }
     async validateUser(credentials) {
-        const result = await this.userRepository.find({ phone: credentials.phone });
+        const result = await this.userRepository.find({ email: credentials.email });
         let isValid;
         if (result) {
             try {
@@ -33,6 +33,7 @@ let AuthService = class AuthService {
                 return null;
             }
             if (isValid) {
+                common_1.Logger.log('User logged in', result.email);
                 return this.jwtService.sign({
                     id: result.id,
                     email: result.email,

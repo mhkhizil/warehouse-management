@@ -17,14 +17,14 @@ const Authservice_1 = require("../../../core/domain/auth/service/Authservice");
 let LocalStrategy = class LocalStrategy extends (0, passport_1.PassportStrategy)(passport_local_1.Strategy) {
     constructor(authService) {
         super({
-            usernameField: 'phone',
+            usernameField: 'email',
             passwordField: 'password',
         });
         this.authService = authService;
     }
-    async validate(phone, password) {
+    async validate(email, password) {
         const user = await this.authService.validateUser({
-            phone: phone,
+            email: email,
             password: password,
         });
         if (!user) {

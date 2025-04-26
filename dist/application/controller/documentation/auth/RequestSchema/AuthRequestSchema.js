@@ -19,7 +19,7 @@ __decorate([
     (0, swagger_1.ApiProperty)({ type: 'string' }),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], AuthRequestSchema.prototype, "phone", void 0);
+], AuthRequestSchema.prototype, "email", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ type: 'string' }),
     (0, class_validator_1.IsNotEmpty)(),

@@ -24,55 +24,93 @@ let ItemRepository = class ItemRepository {
     }
     async findById(id) {
         return this.prisma.item.findUnique({
-            where: { id },
+            where: {
+                id,
+                isDeleted: false,
+            },
             include: {
                 stock: true,
-                subItems: true,
+                subItems: {
+                    where: {
+                        isDeleted: false,
+                    },
+                },
             },
         });
     }
     async findAll() {
         return this.prisma.item.findMany({
+            where: {
+                isDeleted: false,
+            },
             include: {
                 stock: true,
-                subItems: true,
+                subItems: {
+                    where: {
+                        isDeleted: false,
+                    },
+                },
             },
         });
     }
     async update(id, data) {
         return this.prisma.item.update({
-            where: { id },
+            where: {
+                id,
+                isDeleted: false,
+            },
             data,
             include: {
                 stock: true,
-                subItems: true,
+                subItems: {
+                    where: {
+                        isDeleted: false,
+                    },
+                },
             },
         });
     }
     async delete(id) {
-        await this.prisma.item.delete({
+        await this.prisma.item.update({
             where: { id },
+            data: {
+                isDeleted: true,
+                updatedAt: new Date(),
+            },
         });
         return true;
     }
     async findByName(name) {
         return this.prisma.item.findFirst({
-            where: { name: { equals: name, mode: 'insensitive' } },
+            where: {
+                name: { equals: name, mode: 'insensitive' },
+                isDeleted: false,
+            },
             include: {
                 stock: true,
-                subItems: true,
+                subItems: {
+                    where: {
+                        isDeleted: false,
+                    },
+                },
             },
         });
     }
     async findSubItems(parentItemId) {
         return this.prisma.item.findMany({
-            where: { parentItemId },
-            include: { stock: true },
+            where: {
+                parentItemId,
+                isDeleted: false,
+            },
+            include: {
+                stock: true,
+            },
         });
     }
     async findWithFilters(filter) {
         const { name, brand, type, isSellable, skip = 0, take = 10 } = filter;
         const where = {
+            isDeleted: false,
             ...(name && {
                 name: { contains: name, mode: client_1.Prisma.QueryMode.insensitive },
             }),
@@ -92,7 +130,11 @@ let ItemRepository = class ItemRepository {
                 orderBy: { createdAt: 'desc' },
                 include: {
                     stock: true,
-                    subItems: true,
+                    subItems: {
+                        where: {
+                            isDeleted: false,
+                        },
+                    },
                 },
             }),
             this.prisma.item.count({ where }),

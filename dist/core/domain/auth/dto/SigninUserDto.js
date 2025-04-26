@@ -17,7 +17,7 @@ exports.SinginUserDto = SinginUserDto;
 __decorate([
     (0, class_validator_1.IsEmail)(),
     __metadata("design:type", String)
-], SinginUserDto.prototype, "phone", void 0);
+], SinginUserDto.prototype, "email", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),

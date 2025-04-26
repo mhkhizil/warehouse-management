@@ -4,7 +4,7 @@ import { IsEmail, IsNotEmpty } from 'class-validator';
 export class AuthRequestSchema {
   @ApiProperty({ type: 'string' })
   @IsNotEmpty()
-  public phone: string;
+  public email: string;
 
   @ApiProperty({ type: 'string' })
   @IsNotEmpty()

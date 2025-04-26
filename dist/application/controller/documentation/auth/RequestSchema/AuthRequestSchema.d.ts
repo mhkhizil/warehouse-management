@@ -1,4 +1,4 @@
 export declare class AuthRequestSchema {
-    phone: string;
+    email: string;
     password: string;
 }
