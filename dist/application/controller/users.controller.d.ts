@@ -6,13 +6,16 @@ import { UserFilterSchama } from './documentation/user/RequsetSchema/UserFilterS
 import { UpdateUserRequestSchema } from './documentation/user/RequsetSchema/UpdateUserRequestSchema';
 import { UpdateUserUseCase } from '@src/core/domain/user/service/UpdateUserUseCase';
 import { PrismaService } from '@src/core/common/prisma/PrismaService';
+import { UpdateProfileUseCase } from '@src/core/domain/user/service/UpdateProfileUseCase';
+import { UpdateProfileRequestSchema } from './documentation/user/RequsetSchema/UpdateProfileRequestSchema';
 export declare class UsersController {
     private getUserUseCase;
     private createUserUseCase;
     private getUserListWithFilter;
     private updateUserUseCase;
+    private updateProfileUseCase;
     private prisma;
-    constructor(getUserUseCase: GetUserUseCase, createUserUseCase: CreateUserUseCase, getUserListWithFilter: GetUserListWithFilterUseCase, updateUserUseCase: UpdateUserUseCase, prisma: PrismaService);
+    constructor(getUserUseCase: GetUserUseCase, createUserUseCase: CreateUserUseCase, getUserListWithFilter: GetUserListWithFilterUseCase, updateUserUseCase: UpdateUserUseCase, updateProfileUseCase: UpdateProfileUseCase, prisma: PrismaService);
     findOne(req: any): Promise<CoreApiResonseSchema<any>>;
     findOneById(req: any, params: {
         id: string;
@@ -23,5 +26,6 @@ export declare class UsersController {
     }>>;
     updateUser(user: UpdateUserRequestSchema, params: {
         id: string;
-    }): Promise<CoreApiResonseSchema<any>>;
+    }, req: any): Promise<CoreApiResonseSchema<any>>;
+    updateProfile(profileData: UpdateProfileRequestSchema, req: any): Promise<CoreApiResonseSchema<any>>;
 }

@@ -31,19 +31,43 @@ const UpdateUserRequestSchema_1 = require("./documentation/user/RequsetSchema/Up
 const UpdateUserUseCase_1 = require("../../core/domain/user/service/UpdateUserUseCase");
 const UserEnum_1 = require("../../core/common/type/UserEnum");
 const PrismaService_1 = require("../../core/common/prisma/PrismaService");
+const UpdateProfileUseCase_1 = require("../../core/domain/user/service/UpdateProfileUseCase");
+const UpdateProfileRequestSchema_1 = require("./documentation/user/RequsetSchema/UpdateProfileRequestSchema");
 let UsersController = class UsersController {
-    constructor(getUserUseCase, createUserUseCase, getUserListWithFilter, updateUserUseCase, prisma) {
+    constructor(getUserUseCase, createUserUseCase, getUserListWithFilter, updateUserUseCase, updateProfileUseCase, prisma) {
         this.getUserUseCase = getUserUseCase;
         this.createUserUseCase = createUserUseCase;
         this.getUserListWithFilter = getUserListWithFilter;
         this.updateUserUseCase = updateUserUseCase;
+        this.updateProfileUseCase = updateProfileUseCase;
         this.prisma = prisma;
     }
     async findOne(req) {
-        return ApiResponseSchema_1.CoreApiResonseSchema.success(await this.getUserUseCase.execute(req.user?.user?.id));
+        try {
+            return ApiResponseSchema_1.CoreApiResonseSchema.success(await this.getUserUseCase.execute(req.user?.user?.id));
+        }
+        catch (error) {
+            throw new common_1.ForbiddenException('Error retrieving user data');
+        }
     }
     async findOneById(req, params) {
-        return ApiResponseSchema_1.CoreApiResonseSchema.success(await this.getUserUseCase.execute(params.id));
+        try {
+            const userId = req.user?.user?.id;
+            const user = await this.prisma.user.findUnique({
+                where: { id: Number(userId) },
+                select: { role: true },
+            });
+            if (!user || user.role !== UserEnum_1.UserRole.ADMIN) {
+                throw new common_1.ForbiddenException('Access denied. Only administrators can view user details.');
+            }
+            return ApiResponseSchema_1.CoreApiResonseSchema.success(await this.getUserUseCase.execute(params.id));
+        }
+        catch (error) {
+            if (error instanceof common_1.ForbiddenException) {
+                throw error;
+            }
+            throw new common_1.ForbiddenException('Error checking user permissions');
+        }
     }
     async getAllByFilter(params, req) {
         try {
@@ -65,14 +89,52 @@ let UsersController = class UsersController {
             throw new common_1.ForbiddenException('Error checking user permissions');
         }
     }
-    async updateUser(user, params) {
-        const updateUserDto = new CreateUserDto_1.CreateUserDto();
-        updateUserDto.id = params.id;
-        updateUserDto.email = user.email;
-        updateUserDto.phone = user.phone;
-        updateUserDto.name = user.name;
-        updateUserDto.role = user.role;
-        return ApiResponseSchema_1.CoreApiResonseSchema.success(await this.updateUserUseCase.execute(updateUserDto));
+    async updateUser(user, params, req) {
+        try {
+            const userId = req.user?.user?.id;
+            const currentUser = await this.prisma.user.findUnique({
+                where: { id: Number(userId) },
+                select: { role: true },
+            });
+            if (!currentUser) {
+                throw new common_1.ForbiddenException('User not found');
+            }
+            if (currentUser.role !== UserEnum_1.UserRole.ADMIN && userId !== params.id) {
+                throw new common_1.ForbiddenException('Access denied. Only administrators can update other users.');
+            }
+            const updateUserDto = new CreateUserDto_1.CreateUserDto();
+            updateUserDto.id = params.id;
+            updateUserDto.email = user.email;
+            updateUserDto.phone = user.phone;
+            updateUserDto.name = user.name;
+            updateUserDto.role = user.role;
+            return ApiResponseSchema_1.CoreApiResonseSchema.success(await this.updateUserUseCase.execute(updateUserDto));
+        }
+        catch (error) {
+            if (error instanceof common_1.ForbiddenException) {
+                throw error;
+            }
+            throw new common_1.ForbiddenException('Error updating user');
+        }
+    }
+    async updateProfile(profileData, req) {
+        try {
+            const userId = req.user?.user?.id;
+            if (!userId) {
+                throw new common_1.ForbiddenException('Authentication required');
+            }
+            const updatedUser = await this.updateProfileUseCase.execute(userId, profileData);
+            const responseDto = CreateUserDto_1.CreateUserDto.convertToClass(updatedUser);
+            return ApiResponseSchema_1.CoreApiResonseSchema.success(responseDto);
+        }
+        catch (error) {
+            if (error instanceof common_1.ForbiddenException ||
+                error instanceof common_1.BadRequestException ||
+                error instanceof common_1.UnauthorizedException) {
+                throw error;
+            }
+            throw new common_1.BadRequestException('Error updating profile: ' + error.message);
+        }
     }
 };
 exports.UsersController = UsersController;
@@ -119,10 +181,24 @@ __decorate([
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Body)(new common_1.ValidationPipe({ errorHttpStatusCode: common_1.HttpStatus.NOT_ACCEPTABLE }))),
     __param(1, (0, common_1.Query)()),
+    __param(2, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [UpdateUserRequestSchema_1.UpdateUserRequestSchema, Object]),
+    __metadata("design:paramtypes", [UpdateUserRequestSchema_1.UpdateUserRequestSchema, Object, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "updateUser", null);
+__decorate([
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, common_1.Put)('profile'),
+    (0, swagger_1.ApiBody)({ type: UpdateProfileRequestSchema_1.UpdateProfileRequestSchema }),
+    (0, swagger_1.ApiResponse)({ type: CreateUserResponseSchema_1.CreateUserResonseSchema }),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Body)(new common_1.ValidationPipe({ errorHttpStatusCode: common_1.HttpStatus.NOT_ACCEPTABLE }))),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [UpdateProfileRequestSchema_1.UpdateProfileRequestSchema, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "updateProfile", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)('User'),
     (0, swagger_1.ApiTags)('users'),
@@ -130,6 +206,7 @@ exports.UsersController = UsersController = __decorate([
         CreateUserUsecase_1.CreateUserUseCase,
         GetUserListUsecase_1.GetUserListWithFilterUseCase,
         UpdateUserUseCase_1.UpdateUserUseCase,
+        UpdateProfileUseCase_1.UpdateProfileUseCase,
         PrismaService_1.PrismaService])
 ], UsersController);
 //# sourceMappingURL=users.controller.js.map

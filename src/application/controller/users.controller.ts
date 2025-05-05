@@ -15,6 +15,8 @@ import {
   UsePipes,
   ValidationPipe,
   ForbiddenException,
+  BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 import { CreateUserUseCase } from 'src/core/domain/user/service/CreateUserUsecase';
@@ -30,6 +32,7 @@ import {
   ApiQuery,
   ApiResponse,
   ApiTags,
+  ApiProperty,
 } from '@nestjs/swagger';
 
 import { CreateUserResonseSchema } from './documentation/user/ResponseSchema/CreateUserResponseSchema';
@@ -45,6 +48,8 @@ import { UpdateUserRequestSchema } from './documentation/user/RequsetSchema/Upda
 import { UpdateUserUseCase } from '@src/core/domain/user/service/UpdateUserUseCase';
 import { UserRole } from '@src/core/common/type/UserEnum';
 import { PrismaService } from '@src/core/common/prisma/PrismaService';
+import { UpdateProfileUseCase } from '@src/core/domain/user/service/UpdateProfileUseCase';
+import { UpdateProfileRequestSchema } from './documentation/user/RequsetSchema/UpdateProfileRequestSchema';
 
 @Controller('User')
 @ApiTags('users')
@@ -55,6 +60,7 @@ export class UsersController {
     private createUserUseCase: CreateUserUseCase,
     private getUserListWithFilter: GetUserListWithFilterUseCase,
     private updateUserUseCase: UpdateUserUseCase,
+    private updateProfileUseCase: UpdateProfileUseCase,
     private prisma: PrismaService,
   ) {}
 
@@ -63,9 +69,13 @@ export class UsersController {
   @ApiResponse({ type: GetUserResonseSchema })
   @Get()
   async findOne(@Request() req): Promise<CoreApiResonseSchema<any>> {
-    return CoreApiResonseSchema.success(
-      await this.getUserUseCase.execute(req.user?.user?.id),
-    );
+    try {
+      return CoreApiResonseSchema.success(
+        await this.getUserUseCase.execute(req.user?.user?.id),
+      );
+    } catch (error) {
+      throw new ForbiddenException('Error retrieving user data');
+    }
   }
 
   @ApiBearerAuth()
@@ -77,9 +87,32 @@ export class UsersController {
     @Request() req,
     @Query() params: { id: string },
   ): Promise<CoreApiResonseSchema<any>> {
-    return CoreApiResonseSchema.success(
-      await this.getUserUseCase.execute(params.id),
-    );
+    try {
+      // Get user ID from token
+      const userId = req.user?.user?.id;
+
+      // Query database to get user's role
+      const user = await this.prisma.user.findUnique({
+        where: { id: Number(userId) },
+        select: { role: true },
+      });
+
+      // Check if user exists and is an admin
+      if (!user || user.role !== UserRole.ADMIN) {
+        throw new ForbiddenException(
+          'Access denied. Only administrators can view user details.',
+        );
+      }
+
+      return CoreApiResonseSchema.success(
+        await this.getUserUseCase.execute(params.id),
+      );
+    } catch (error) {
+      if (error instanceof ForbiddenException) {
+        throw error;
+      }
+      throw new ForbiddenException('Error checking user permissions');
+    }
   }
 
   @ApiBearerAuth()
@@ -138,17 +171,87 @@ export class UsersController {
     )
     user: UpdateUserRequestSchema,
     @Query() params: { id: string },
+    @Request() req,
   ): Promise<CoreApiResonseSchema<any>> {
-    const updateUserDto = new CreateUserDto();
-    updateUserDto.id = params.id;
-    updateUserDto.email = user.email;
-    updateUserDto.phone = user.phone;
-    updateUserDto.name = user.name;
+    try {
+      // Get user ID from token
+      const userId = req.user?.user?.id;
 
-    updateUserDto.role = user.role;
-    return CoreApiResonseSchema.success(
-      await this.updateUserUseCase.execute(updateUserDto),
-    );
+      // Query database to get user's role
+      const currentUser = await this.prisma.user.findUnique({
+        where: { id: Number(userId) },
+        select: { role: true },
+      });
+
+      // Check if user exists and is an admin (or is updating their own data)
+      if (!currentUser) {
+        throw new ForbiddenException('User not found');
+      }
+
+      if (currentUser.role !== UserRole.ADMIN && userId !== params.id) {
+        throw new ForbiddenException(
+          'Access denied. Only administrators can update other users.',
+        );
+      }
+
+      const updateUserDto = new CreateUserDto();
+      updateUserDto.id = params.id;
+      updateUserDto.email = user.email;
+      updateUserDto.phone = user.phone;
+      updateUserDto.name = user.name;
+      updateUserDto.role = user.role;
+
+      return CoreApiResonseSchema.success(
+        await this.updateUserUseCase.execute(updateUserDto),
+      );
+    } catch (error) {
+      if (error instanceof ForbiddenException) {
+        throw error;
+      }
+      throw new ForbiddenException('Error updating user');
+    }
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @Put('profile')
+  @ApiBody({ type: UpdateProfileRequestSchema })
+  @ApiResponse({ type: CreateUserResonseSchema })
+  @HttpCode(HttpStatus.OK)
+  async updateProfile(
+    @Body(
+      new ValidationPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
+    )
+    profileData: UpdateProfileRequestSchema,
+    @Request() req,
+  ): Promise<CoreApiResonseSchema<any>> {
+    try {
+      // Get current user ID from token
+      const userId = req.user?.user?.id;
+      if (!userId) {
+        throw new ForbiddenException('Authentication required');
+      }
+
+      // Execute the update profile use case
+      const updatedUser = await this.updateProfileUseCase.execute(
+        userId,
+        profileData,
+      );
+
+      // Convert to DTO for response
+      const responseDto = CreateUserDto.convertToClass(updatedUser);
+
+      return CoreApiResonseSchema.success(responseDto);
+    } catch (error) {
+      if (
+        error instanceof ForbiddenException ||
+        error instanceof BadRequestException ||
+        error instanceof UnauthorizedException
+      ) {
+        throw error;
+      }
+      throw new BadRequestException('Error updating profile: ' + error.message);
+    }
   }
 
   // @Post()
