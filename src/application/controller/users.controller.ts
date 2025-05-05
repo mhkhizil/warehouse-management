@@ -17,6 +17,7 @@ import {
   ForbiddenException,
   BadRequestException,
   UnauthorizedException,
+  Delete,
 } from '@nestjs/common';
 
 import { CreateUserUseCase } from 'src/core/domain/user/service/CreateUserUsecase';
@@ -50,6 +51,7 @@ import { UserRole } from '@src/core/common/type/UserEnum';
 import { PrismaService } from '@src/core/common/prisma/PrismaService';
 import { UpdateProfileUseCase } from '@src/core/domain/user/service/UpdateProfileUseCase';
 import { UpdateProfileRequestSchema } from './documentation/user/RequsetSchema/UpdateProfileRequestSchema';
+import { DeleteUserUseCase } from '@src/core/domain/user/service/DeleteUserUseCase';
 
 @Controller('User')
 @ApiTags('users')
@@ -61,6 +63,7 @@ export class UsersController {
     private getUserListWithFilter: GetUserListWithFilterUseCase,
     private updateUserUseCase: UpdateUserUseCase,
     private updateProfileUseCase: UpdateProfileUseCase,
+    private deleteUserUseCase: DeleteUserUseCase,
     private prisma: PrismaService,
   ) {}
 
@@ -251,6 +254,41 @@ export class UsersController {
         throw error;
       }
       throw new BadRequestException('Error updating profile: ' + error.message);
+    }
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @Delete(':id')
+  @ApiResponse({ description: 'User deleted successfully' })
+  @HttpCode(HttpStatus.OK)
+  async deleteUser(
+    @Param('id') id: string,
+    @Request() req,
+  ): Promise<CoreApiResonseSchema<any>> {
+    try {
+      // Get admin user ID from token
+      const adminUserId = req.user?.user?.id;
+      if (!adminUserId) {
+        throw new ForbiddenException('Authentication required');
+      }
+
+      // Execute the delete user use case
+      const result = await this.deleteUserUseCase.execute(adminUserId, id);
+
+      return CoreApiResonseSchema.success({
+        message: 'User deleted successfully',
+        success: result,
+      });
+    } catch (error) {
+      if (
+        error instanceof ForbiddenException ||
+        error instanceof BadRequestException ||
+        error instanceof UnauthorizedException
+      ) {
+        throw error;
+      }
+      throw new BadRequestException('Error deleting user: ' + error.message);
     }
   }
 

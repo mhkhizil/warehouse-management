@@ -18,6 +18,7 @@ const GetUserListUsecase_1 = require("../../core/domain/user/service/GetUserList
 const UpdateUserUseCase_1 = require("../../core/domain/user/service/UpdateUserUseCase");
 const PrismaService_1 = require("../../core/common/prisma/PrismaService");
 const UpdateProfileUseCase_1 = require("../../core/domain/user/service/UpdateProfileUseCase");
+const DeleteUserUseCase_1 = require("../../core/domain/user/service/DeleteUserUseCase");
 let UsersModule = class UsersModule {
 };
 exports.UsersModule = UsersModule;
@@ -31,6 +32,7 @@ exports.UsersModule = UsersModule = __decorate([
             GetUserListUsecase_1.GetUserListWithFilterUseCase,
             UpdateUserUseCase_1.UpdateUserUseCase,
             UpdateProfileUseCase_1.UpdateProfileUseCase,
+            DeleteUserUseCase_1.DeleteUserUseCase,
             PrismaService_1.PrismaService,
             {
                 provide: IUserRepositoryPort_1.IUserRepository,

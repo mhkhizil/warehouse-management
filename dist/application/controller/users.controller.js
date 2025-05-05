@@ -33,13 +33,15 @@ const UserEnum_1 = require("../../core/common/type/UserEnum");
 const PrismaService_1 = require("../../core/common/prisma/PrismaService");
 const UpdateProfileUseCase_1 = require("../../core/domain/user/service/UpdateProfileUseCase");
 const UpdateProfileRequestSchema_1 = require("./documentation/user/RequsetSchema/UpdateProfileRequestSchema");
+const DeleteUserUseCase_1 = require("../../core/domain/user/service/DeleteUserUseCase");
 let UsersController = class UsersController {
-    constructor(getUserUseCase, createUserUseCase, getUserListWithFilter, updateUserUseCase, updateProfileUseCase, prisma) {
+    constructor(getUserUseCase, createUserUseCase, getUserListWithFilter, updateUserUseCase, updateProfileUseCase, deleteUserUseCase, prisma) {
         this.getUserUseCase = getUserUseCase;
         this.createUserUseCase = createUserUseCase;
         this.getUserListWithFilter = getUserListWithFilter;
         this.updateUserUseCase = updateUserUseCase;
         this.updateProfileUseCase = updateProfileUseCase;
+        this.deleteUserUseCase = deleteUserUseCase;
         this.prisma = prisma;
     }
     async findOne(req) {
@@ -136,6 +138,27 @@ let UsersController = class UsersController {
             throw new common_1.BadRequestException('Error updating profile: ' + error.message);
         }
     }
+    async deleteUser(id, req) {
+        try {
+            const adminUserId = req.user?.user?.id;
+            if (!adminUserId) {
+                throw new common_1.ForbiddenException('Authentication required');
+            }
+            const result = await this.deleteUserUseCase.execute(adminUserId, id);
+            return ApiResponseSchema_1.CoreApiResonseSchema.success({
+                message: 'User deleted successfully',
+                success: result,
+            });
+        }
+        catch (error) {
+            if (error instanceof common_1.ForbiddenException ||
+                error instanceof common_1.BadRequestException ||
+                error instanceof common_1.UnauthorizedException) {
+                throw error;
+            }
+            throw new common_1.BadRequestException('Error deleting user: ' + error.message);
+        }
+    }
 };
 exports.UsersController = UsersController;
 __decorate([
@@ -199,6 +222,18 @@ __decorate([
     __metadata("design:paramtypes", [UpdateProfileRequestSchema_1.UpdateProfileRequestSchema, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "updateProfile", null);
+__decorate([
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, common_1.Delete)(':id'),
+    (0, swagger_1.ApiResponse)({ description: 'User deleted successfully' }),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "deleteUser", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)('User'),
     (0, swagger_1.ApiTags)('users'),
@@ -207,6 +242,7 @@ exports.UsersController = UsersController = __decorate([
         GetUserListUsecase_1.GetUserListWithFilterUseCase,
         UpdateUserUseCase_1.UpdateUserUseCase,
         UpdateProfileUseCase_1.UpdateProfileUseCase,
+        DeleteUserUseCase_1.DeleteUserUseCase,
         PrismaService_1.PrismaService])
 ], UsersController);
 //# sourceMappingURL=users.controller.js.map

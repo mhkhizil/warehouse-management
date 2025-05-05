@@ -13,6 +13,7 @@ import { GetUserListWithFilterUseCase } from '@src/core/domain/user/service/GetU
 import { UpdateUserUseCase } from '@src/core/domain/user/service/UpdateUserUseCase';
 import { PrismaService } from '@src/core/common/prisma/PrismaService';
 import { UpdateProfileUseCase } from '@src/core/domain/user/service/UpdateProfileUseCase';
+import { DeleteUserUseCase } from '@src/core/domain/user/service/DeleteUserUseCase';
 
 @Module({
   controllers: [UsersController],
@@ -23,6 +24,7 @@ import { UpdateProfileUseCase } from '@src/core/domain/user/service/UpdateProfil
     GetUserListWithFilterUseCase,
     UpdateUserUseCase,
     UpdateProfileUseCase,
+    DeleteUserUseCase,
     PrismaService,
     {
       provide: IUserRepository,

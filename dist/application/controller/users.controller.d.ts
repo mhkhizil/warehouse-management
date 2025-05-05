@@ -8,14 +8,16 @@ import { UpdateUserUseCase } from '@src/core/domain/user/service/UpdateUserUseCa
 import { PrismaService } from '@src/core/common/prisma/PrismaService';
 import { UpdateProfileUseCase } from '@src/core/domain/user/service/UpdateProfileUseCase';
 import { UpdateProfileRequestSchema } from './documentation/user/RequsetSchema/UpdateProfileRequestSchema';
+import { DeleteUserUseCase } from '@src/core/domain/user/service/DeleteUserUseCase';
 export declare class UsersController {
     private getUserUseCase;
     private createUserUseCase;
     private getUserListWithFilter;
     private updateUserUseCase;
     private updateProfileUseCase;
+    private deleteUserUseCase;
     private prisma;
-    constructor(getUserUseCase: GetUserUseCase, createUserUseCase: CreateUserUseCase, getUserListWithFilter: GetUserListWithFilterUseCase, updateUserUseCase: UpdateUserUseCase, updateProfileUseCase: UpdateProfileUseCase, prisma: PrismaService);
+    constructor(getUserUseCase: GetUserUseCase, createUserUseCase: CreateUserUseCase, getUserListWithFilter: GetUserListWithFilterUseCase, updateUserUseCase: UpdateUserUseCase, updateProfileUseCase: UpdateProfileUseCase, deleteUserUseCase: DeleteUserUseCase, prisma: PrismaService);
     findOne(req: any): Promise<CoreApiResonseSchema<any>>;
     findOneById(req: any, params: {
         id: string;
@@ -28,4 +30,5 @@ export declare class UsersController {
         id: string;
     }, req: any): Promise<CoreApiResonseSchema<any>>;
     updateProfile(profileData: UpdateProfileRequestSchema, req: any): Promise<CoreApiResonseSchema<any>>;
+    deleteUser(id: string, req: any): Promise<CoreApiResonseSchema<any>>;
 }
