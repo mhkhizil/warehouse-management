@@ -16,6 +16,7 @@ const jwt_guard_1 = require("../auth/guard/jwt.guard");
 const GetUserUsecase_1 = require("../../core/domain/user/service/GetUserUsecase");
 const GetUserListUsecase_1 = require("../../core/domain/user/service/GetUserListUsecase");
 const UpdateUserUseCase_1 = require("../../core/domain/user/service/UpdateUserUseCase");
+const PrismaService_1 = require("../../core/common/prisma/PrismaService");
 let UsersModule = class UsersModule {
 };
 exports.UsersModule = UsersModule;
@@ -28,6 +29,7 @@ exports.UsersModule = UsersModule = __decorate([
             GetUserUsecase_1.GetUserUseCase,
             GetUserListUsecase_1.GetUserListWithFilterUseCase,
             UpdateUserUseCase_1.UpdateUserUseCase,
+            PrismaService_1.PrismaService,
             {
                 provide: IUserRepositoryPort_1.IUserRepository,
                 useClass: PrismaUserRepository_1.PrismaUserRepository,

@@ -14,6 +14,7 @@ import {
   UseGuards,
   UsePipes,
   ValidationPipe,
+  ForbiddenException,
 } from '@nestjs/common';
 
 import { CreateUserUseCase } from 'src/core/domain/user/service/CreateUserUsecase';
@@ -42,6 +43,8 @@ import { GetUserListResponseSchema } from './documentation/user/ResponseSchema/G
 import { BaseRequestQuerySchema } from './documentation/common/BaseRequestQuerySchema';
 import { UpdateUserRequestSchema } from './documentation/user/RequsetSchema/UpdateUserRequestSchema';
 import { UpdateUserUseCase } from '@src/core/domain/user/service/UpdateUserUseCase';
+import { UserRole } from '@src/core/common/type/UserEnum';
+import { PrismaService } from '@src/core/common/prisma/PrismaService';
 
 @Controller('User')
 @ApiTags('users')
@@ -52,6 +55,7 @@ export class UsersController {
     private createUserUseCase: CreateUserUseCase,
     private getUserListWithFilter: GetUserListWithFilterUseCase,
     private updateUserUseCase: UpdateUserUseCase,
+    private prisma: PrismaService,
   ) {}
 
   @ApiBearerAuth()
@@ -82,17 +86,43 @@ export class UsersController {
   @UseGuards(JwtGuard)
   @ApiResponse({ type: GetUserListResponseSchema })
   @Get('/getUserList')
-  public async getAllByFilter(@Query() params: UserFilterSchama) {
-    console.log(params);
-    const filter = new UserFilter(
-      params.name,
-      params.role,
-      parseInt(params?.take.toString()),
-      parseInt(params?.skip.toString()),
-    );
-    return CoreApiResonseSchema.success(
-      await this.getUserListWithFilter.execute(filter),
-    );
+  public async getAllByFilter(
+    @Query() params: UserFilterSchama,
+    @Request() req,
+  ) {
+    try {
+      // Get user ID from token
+      const userId = req.user?.user?.id;
+
+      // Query database to get user's role
+      const user = await this.prisma.user.findUnique({
+        where: { id: Number(userId) },
+        select: { role: true },
+      });
+
+      // Check if user exists and is an admin
+      if (!user || user.role !== UserRole.ADMIN) {
+        throw new ForbiddenException(
+          'Access denied. Only administrators can view user list.',
+        );
+      }
+
+      const filter = new UserFilter(
+        params.name,
+        params.role,
+        parseInt(params?.take.toString()),
+        parseInt(params?.skip.toString()),
+      );
+
+      return CoreApiResonseSchema.success(
+        await this.getUserListWithFilter.execute(filter),
+      );
+    } catch (error) {
+      if (error instanceof ForbiddenException) {
+        throw error;
+      }
+      throw new ForbiddenException('Error checking user permissions');
+    }
   }
 
   @ApiBearerAuth()

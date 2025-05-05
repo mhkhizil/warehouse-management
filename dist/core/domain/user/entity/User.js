@@ -13,7 +13,7 @@ class UserEntity {
         this.updatedDate = updatedDate;
     }
     static toEntity(user) {
-        return new UserEntity(user?.id?.toString(), user?.username, user?.email, '', user?.role, user?.password, user?.createdAt, user?.updatedAt);
+        return new UserEntity(user?.id?.toString(), user?.username, user?.email, user?.phone, user?.role, user?.password, user?.createdAt, user?.updatedAt);
     }
 }
 exports.UserEntity = UserEntity;

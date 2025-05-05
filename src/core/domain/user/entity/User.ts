@@ -43,7 +43,7 @@ export class UserEntity {
       user?.id?.toString(),
       user?.username,
       user?.email,
-      '',
+      user?.phone,
       user?.role as unknown as UserRole,
       user?.password,
       user?.createdAt,

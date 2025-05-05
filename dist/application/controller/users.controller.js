@@ -29,12 +29,15 @@ const GetUserListResponseSchema_1 = require("./documentation/user/ResponseSchema
 const BaseRequestQuerySchema_1 = require("./documentation/common/BaseRequestQuerySchema");
 const UpdateUserRequestSchema_1 = require("./documentation/user/RequsetSchema/UpdateUserRequestSchema");
 const UpdateUserUseCase_1 = require("../../core/domain/user/service/UpdateUserUseCase");
+const UserEnum_1 = require("../../core/common/type/UserEnum");
+const PrismaService_1 = require("../../core/common/prisma/PrismaService");
 let UsersController = class UsersController {
-    constructor(getUserUseCase, createUserUseCase, getUserListWithFilter, updateUserUseCase) {
+    constructor(getUserUseCase, createUserUseCase, getUserListWithFilter, updateUserUseCase, prisma) {
         this.getUserUseCase = getUserUseCase;
         this.createUserUseCase = createUserUseCase;
         this.getUserListWithFilter = getUserListWithFilter;
         this.updateUserUseCase = updateUserUseCase;
+        this.prisma = prisma;
     }
     async findOne(req) {
         return ApiResponseSchema_1.CoreApiResonseSchema.success(await this.getUserUseCase.execute(req.user?.user?.id));
@@ -42,10 +45,25 @@ let UsersController = class UsersController {
     async findOneById(req, params) {
         return ApiResponseSchema_1.CoreApiResonseSchema.success(await this.getUserUseCase.execute(params.id));
     }
-    async getAllByFilter(params) {
-        console.log(params);
-        const filter = new UserFilter_1.UserFilter(params.name, params.role, parseInt(params?.take.toString()), parseInt(params?.skip.toString()));
-        return ApiResponseSchema_1.CoreApiResonseSchema.success(await this.getUserListWithFilter.execute(filter));
+    async getAllByFilter(params, req) {
+        try {
+            const userId = req.user?.user?.id;
+            const user = await this.prisma.user.findUnique({
+                where: { id: Number(userId) },
+                select: { role: true },
+            });
+            if (!user || user.role !== UserEnum_1.UserRole.ADMIN) {
+                throw new common_1.ForbiddenException('Access denied. Only administrators can view user list.');
+            }
+            const filter = new UserFilter_1.UserFilter(params.name, params.role, parseInt(params?.take.toString()), parseInt(params?.skip.toString()));
+            return ApiResponseSchema_1.CoreApiResonseSchema.success(await this.getUserListWithFilter.execute(filter));
+        }
+        catch (error) {
+            if (error instanceof common_1.ForbiddenException) {
+                throw error;
+            }
+            throw new common_1.ForbiddenException('Error checking user permissions');
+        }
     }
     async updateUser(user, params) {
         const updateUserDto = new CreateUserDto_1.CreateUserDto();
@@ -86,8 +104,9 @@ __decorate([
     (0, swagger_1.ApiResponse)({ type: GetUserListResponseSchema_1.GetUserListResponseSchema }),
     (0, common_1.Get)('/getUserList'),
     __param(0, (0, common_1.Query)()),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [UserFilterSchema_1.UserFilterSchama]),
+    __metadata("design:paramtypes", [UserFilterSchema_1.UserFilterSchama, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "getAllByFilter", null);
 __decorate([
@@ -110,6 +129,7 @@ exports.UsersController = UsersController = __decorate([
     __metadata("design:paramtypes", [GetUserUsecase_1.GetUserUseCase,
         CreateUserUsecase_1.CreateUserUseCase,
         GetUserListUsecase_1.GetUserListWithFilterUseCase,
-        UpdateUserUseCase_1.UpdateUserUseCase])
+        UpdateUserUseCase_1.UpdateUserUseCase,
+        PrismaService_1.PrismaService])
 ], UsersController);
 //# sourceMappingURL=users.controller.js.map

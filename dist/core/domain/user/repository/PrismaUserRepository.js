@@ -27,6 +27,7 @@ let PrismaUserRepository = class PrismaUserRepository {
                 data: {
                     username: user.name,
                     email: user.email,
+                    phone: user.phone,
                     password: user.password,
                     role: user.role,
                     remarks: null,

@@ -11,6 +11,7 @@ import { AuthService } from 'src/core/domain/auth/service/Authservice';
 import { GetUserUseCase } from 'src/core/domain/user/service/GetUserUsecase';
 import { GetUserListWithFilterUseCase } from '@src/core/domain/user/service/GetUserListUsecase';
 import { UpdateUserUseCase } from '@src/core/domain/user/service/UpdateUserUseCase';
+import { PrismaService } from '@src/core/common/prisma/PrismaService';
 
 @Module({
   controllers: [UsersController],
@@ -20,6 +21,7 @@ import { UpdateUserUseCase } from '@src/core/domain/user/service/UpdateUserUseCa
     GetUserUseCase,
     GetUserListWithFilterUseCase,
     UpdateUserUseCase,
+    PrismaService,
     {
       provide: IUserRepository,
       useClass: PrismaUserRepository,

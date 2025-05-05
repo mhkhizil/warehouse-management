@@ -8,8 +8,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Main');
   const config = new DocumentBuilder()
-    .setTitle('Restaurant')
-    .setDescription('This is Restaurant REST API')
+    .setTitle('Car auto parts warehouse management system')
+    .setDescription('This is WMS REST API')
     .setVersion('1.0')
     // .addTag('cats')
     .addBearerAuth()

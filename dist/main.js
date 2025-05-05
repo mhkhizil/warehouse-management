@@ -9,8 +9,8 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const logger = new common_1.Logger('Main');
     const config = new swagger_1.DocumentBuilder()
-        .setTitle('Restaurant')
-        .setDescription('This is Restaurant REST API')
+        .setTitle('Car auto parts warehouse management system')
+        .setDescription('This is WMS REST API')
         .setVersion('1.0')
         .addBearerAuth()
         .build();
