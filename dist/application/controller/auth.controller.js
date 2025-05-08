@@ -24,6 +24,8 @@ const CreateUserRequestSchema_1 = require("./documentation/user/RequsetSchema/Cr
 const CreateUserResponseSchema_1 = require("./documentation/user/ResponseSchema/CreateUserResponseSchema");
 const CreateUserUsecase_1 = require("../../core/domain/user/service/CreateUserUsecase");
 const CreateUserDto_1 = require("../../core/domain/user/dto/CreateUserDto");
+const jwt_guard_1 = require("../auth/guard/jwt.guard");
+const admin_guard_1 = require("../auth/guard/admin.guard");
 let AuthController = class AuthController {
     constructor(authService, createUserUseCase) {
         this.authService = authService;
@@ -57,6 +59,8 @@ __decorate([
 ], AuthController.prototype, "SignIn", null);
 __decorate([
     (0, common_1.Post)('register'),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, admin_guard_1.AdminGuard),
+    (0, swagger_1.ApiBearerAuth)(),
     (0, swagger_1.ApiBody)({ type: CreateUserRequestSchema_1.CreateUserSchema }),
     (0, swagger_1.ApiResponse)({ type: CreateUserResponseSchema_1.CreateUserResonseSchema }),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),

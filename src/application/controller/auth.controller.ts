@@ -15,7 +15,7 @@ import { SinginUserDto } from 'src/core/domain/auth/dto/SigninUserDto';
 import { AuthService } from 'src/core/domain/auth/service/Authservice';
 
 import { LocalGuard } from '../auth/guard/local.guard';
-import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthRequestSchema } from './documentation/auth/RequestSchema/AuthRequestSchema';
 import { AuthResponseSchema } from './documentation/auth/ResponseSchema/AuthResponseSchema';
 import { CoreApiResonseSchema } from 'src/core/common/schema/ApiResponseSchema';
@@ -25,6 +25,8 @@ import { CreateUserUseCase } from 'src/core/domain/user/service/CreateUserUsecas
 import { PrismaUserRepository } from 'src/core/domain/user/repository/PrismaUserRepository';
 import { PrismaClient } from '@prisma/client';
 import { CreateUserDto } from 'src/core/domain/user/dto/CreateUserDto';
+import { JwtGuard } from '../auth/guard/jwt.guard';
+import { AdminGuard } from '../auth/guard/admin.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -50,6 +52,8 @@ export class AuthController {
   }
 
   @Post('register')
+  @UseGuards(JwtGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiBody({ type: CreateUserSchema })
   @ApiResponse({ type: CreateUserResonseSchema })
   @HttpCode(HttpStatus.OK)

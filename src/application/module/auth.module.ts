@@ -10,6 +10,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from '../auth/passport/jwt.strategy';
 import { env } from 'process';
 import { CreateUserUseCase } from 'src/core/domain/user/service/CreateUserUsecase';
+import { AdminGuard } from '../auth/guard/admin.guard';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { CreateUserUseCase } from 'src/core/domain/user/service/CreateUserUsecas
     LocalStrategy,
     JwtStrategy,
     CreateUserUseCase,
+    AdminGuard,
   ],
 })
 export class AuthModule {}

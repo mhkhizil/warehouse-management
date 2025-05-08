@@ -12,6 +12,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PrismaService = void 0;
 const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
+const child_process_1 = require("child_process");
+const util_1 = require("util");
+const execAsync = (0, util_1.promisify)(child_process_1.exec);
 let PrismaService = class PrismaService extends client_1.PrismaClient {
     constructor() {
         super({
@@ -30,7 +33,14 @@ let PrismaService = class PrismaService extends client_1.PrismaClient {
                 key[0] !== '$' &&
                 typeof this[key] === 'object' &&
                 this[key] !== null);
-            return Promise.all(models.map((modelKey) => this[modelKey].deleteMany()));
+            await Promise.all(models.map((modelKey) => this[modelKey].deleteMany()));
+            try {
+                await execAsync('npm run db:seed');
+                console.log('Database seeded successfully');
+            }
+            catch (error) {
+                console.error('Error seeding database:', error);
+            }
         }
     }
 };

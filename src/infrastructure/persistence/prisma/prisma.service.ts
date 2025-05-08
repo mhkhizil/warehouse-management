@@ -1,5 +1,9 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 @Injectable()
 export class PrismaService
@@ -35,7 +39,15 @@ export class PrismaService
           this[key] !== null,
       );
 
-      return Promise.all(models.map((modelKey) => this[modelKey].deleteMany()));
+      await Promise.all(models.map((modelKey) => this[modelKey].deleteMany()));
+
+      // Run seed after cleaning
+      try {
+        await execAsync('npm run db:seed');
+        console.log('Database seeded successfully');
+      } catch (error) {
+        console.error('Error seeding database:', error);
+      }
     }
   }
 }

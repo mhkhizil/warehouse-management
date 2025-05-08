@@ -19,6 +19,7 @@ const passport_1 = require("@nestjs/passport");
 const jwt_strategy_1 = require("../auth/passport/jwt.strategy");
 const process_1 = require("process");
 const CreateUserUsecase_1 = require("../../core/domain/user/service/CreateUserUsecase");
+const admin_guard_1 = require("../auth/guard/admin.guard");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
@@ -42,6 +43,7 @@ exports.AuthModule = AuthModule = __decorate([
             local_strategy_1.LocalStrategy,
             jwt_strategy_1.JwtStrategy,
             CreateUserUsecase_1.CreateUserUseCase,
+            admin_guard_1.AdminGuard,
         ],
     })
 ], AuthModule);
