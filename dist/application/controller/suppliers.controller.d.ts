@@ -17,13 +17,13 @@ export declare class SuppliersController {
     create(createSupplierDto: CreateSupplierDto): Promise<CoreApiResonseSchema<{
         name: string;
         id: number;
-        phone: string | null;
         email: string | null;
-        address: string | null;
-        isActive: boolean;
+        phone: string | null;
         createdAt: Date;
         updatedAt: Date;
         remarks: string | null;
+        address: string | null;
+        isActive: boolean;
         contactPerson: string | null;
     }>>;
     findAll(filter: SupplierFilterDto): Promise<CoreApiResonseSchema<{
@@ -33,73 +33,73 @@ export declare class SuppliersController {
     findAllSuppliers(): Promise<CoreApiResonseSchema<{
         name: string;
         id: number;
-        phone: string | null;
         email: string | null;
-        address: string | null;
-        isActive: boolean;
+        phone: string | null;
         createdAt: Date;
         updatedAt: Date;
         remarks: string | null;
+        address: string | null;
+        isActive: boolean;
         contactPerson: string | null;
     }[]>>;
     findWithDebts(): Promise<CoreApiResonseSchema<{
         name: string;
         id: number;
-        phone: string | null;
         email: string | null;
-        address: string | null;
-        isActive: boolean;
+        phone: string | null;
         createdAt: Date;
         updatedAt: Date;
         remarks: string | null;
+        address: string | null;
+        isActive: boolean;
         contactPerson: string | null;
     }[]>>;
     findByEmail(email: string): Promise<CoreApiResonseSchema<{
         name: string;
         id: number;
-        phone: string | null;
         email: string | null;
-        address: string | null;
-        isActive: boolean;
+        phone: string | null;
         createdAt: Date;
         updatedAt: Date;
         remarks: string | null;
+        address: string | null;
+        isActive: boolean;
         contactPerson: string | null;
     }>>;
     findByPhone(phone: string): Promise<CoreApiResonseSchema<{
         name: string;
         id: number;
-        phone: string | null;
         email: string | null;
-        address: string | null;
-        isActive: boolean;
+        phone: string | null;
         createdAt: Date;
         updatedAt: Date;
         remarks: string | null;
+        address: string | null;
+        isActive: boolean;
         contactPerson: string | null;
     }>>;
     findOne(id: number): Promise<CoreApiResonseSchema<{
         name: string;
         id: number;
-        phone: string | null;
         email: string | null;
-        address: string | null;
-        isActive: boolean;
+        phone: string | null;
         createdAt: Date;
         updatedAt: Date;
         remarks: string | null;
+        address: string | null;
+        isActive: boolean;
         contactPerson: string | null;
     }>>;
     update(id: number, updateSupplierDto: UpdateSupplierDto): Promise<CoreApiResonseSchema<{
         name: string;
         id: number;
-        phone: string | null;
         email: string | null;
-        address: string | null;
-        isActive: boolean;
+        phone: string | null;
         createdAt: Date;
         updatedAt: Date;
         remarks: string | null;
+        address: string | null;
+        isActive: boolean;
         contactPerson: string | null;
     }>>;
     remove(id: number): Promise<CoreApiResonseSchema<boolean>>;

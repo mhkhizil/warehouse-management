@@ -32,9 +32,6 @@ export declare class TransactionsController {
     deleteTransaction(id: number): Promise<ApiResponseDto<boolean>>;
     buyFromSupplier(buyFromSupplierDto: BuyFromSupplierDto): Promise<CoreApiResonseSchema<{
         id: number;
-        createdAt: Date;
-        updatedAt: Date;
-        date: Date;
         type: import(".prisma/client").$Enums.TransactionType;
         itemId: number;
         stockId: number | null;
@@ -43,5 +40,8 @@ export declare class TransactionsController {
         quantity: number;
         unitPrice: number;
         totalAmount: number;
+        date: Date;
+        createdAt: Date;
+        updatedAt: Date;
     }>>;
 }
