@@ -23,8 +23,11 @@ let CustomerRepository = class CustomerRepository {
         });
     }
     async findById(id) {
-        return this.prisma.customer.findUnique({
-            where: { id },
+        return this.prisma.customer.findFirst({
+            where: {
+                id,
+                isActive: true,
+            },
             include: {
                 debt: true,
                 transactions: {
@@ -36,6 +39,9 @@ let CustomerRepository = class CustomerRepository {
     }
     async findAll() {
         return this.prisma.customer.findMany({
+            where: {
+                isActive: true,
+            },
             include: {
                 debt: true,
             },
@@ -51,14 +57,18 @@ let CustomerRepository = class CustomerRepository {
         });
     }
     async delete(id) {
-        await this.prisma.customer.delete({
+        const result = await this.prisma.customer.update({
             where: { id },
+            data: { isActive: false },
         });
-        return true;
+        return !!result;
     }
     async findByEmail(email) {
-        return this.prisma.customer.findUnique({
-            where: { email },
+        return this.prisma.customer.findFirst({
+            where: {
+                email,
+                isActive: true,
+            },
             include: {
                 debt: true,
             },
@@ -66,7 +76,10 @@ let CustomerRepository = class CustomerRepository {
     }
     async findByPhone(phone) {
         return this.prisma.customer.findFirst({
-            where: { phone },
+            where: {
+                phone,
+                isActive: true,
+            },
             include: {
                 debt: true,
             },
@@ -75,6 +88,7 @@ let CustomerRepository = class CustomerRepository {
     async findWithDebts() {
         return this.prisma.customer.findMany({
             where: {
+                isActive: true,
                 debt: {
                     some: {
                         isSettled: false,
@@ -91,8 +105,9 @@ let CustomerRepository = class CustomerRepository {
         });
     }
     async findWithFilters(filter) {
-        const { name, phone, email, hasDebt, skip = 0, take = 10 } = filter;
+        const { name, phone, email, hasDebt, skip = 0, take = 10, isActive, } = filter;
         const where = {
+            isActive: isActive !== undefined ? isActive : true,
             ...(name && {
                 name: { contains: name, mode: client_1.Prisma.QueryMode.insensitive },
             }),

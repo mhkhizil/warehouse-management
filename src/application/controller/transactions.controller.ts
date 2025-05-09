@@ -11,9 +11,18 @@ import {
   Put,
   Query,
   UseGuards,
+  ValidationPipe,
 } from '@nestjs/common';
 import { JwtGuard } from '../auth/guard/jwt.guard';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { ApiResponseDto } from '../dtos/common/api-response.dto';
 import {
   PaginatedResponseDto,
@@ -35,10 +44,17 @@ import { PaginatedTransactionResponseSchema } from './documentation/transaction/
 import { TransactionListResponseSchema } from './documentation/transaction/ResponseSchema/TransactionListResponseSchema';
 import { TransactionReportResponseSchema } from './documentation/transaction/ResponseSchema/TransactionReportResponseSchema';
 import { CoreApiResonseSchema } from '../../core/common/schema/ApiResponseSchema';
+import {
+  BuyFromSupplierUseCase,
+  BuyFromSupplierDto,
+} from '../use-cases/transaction/buy-from-supplier.use-case';
+import { AdminGuard } from '../auth/guard/admin.guard';
+import { BuyFromSupplierRequestSchema } from './documentation/transaction/RequestSchema/BuyFromSupplierRequestSchema';
 
 @ApiTags('Transactions')
 @UseGuards(JwtGuard)
 @Controller('transactions')
+@ApiBearerAuth()
 export class TransactionsController {
   constructor(
     private readonly createTransactionUseCase: CreateTransactionUseCase,
@@ -47,16 +63,20 @@ export class TransactionsController {
     private readonly listTransactionsUseCase: ListTransactionsUseCase,
     private readonly updateTransactionUseCase: UpdateTransactionUseCase,
     private readonly getTransactionReportUseCase: GetTransactionReportUseCase,
+    private readonly buyFromSupplierUseCase: BuyFromSupplierUseCase,
   ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new transaction' })
-  @ApiBody({ type: CreateTransactionDto, description: 'Transaction data to create' })
-  @ApiResponse({ 
+  @ApiBody({
+    type: CreateTransactionDto,
+    description: 'Transaction data to create',
+  })
+  @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Transaction created successfully',
-    type: TransactionResponseSchema 
+    type: TransactionResponseSchema,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
@@ -73,7 +93,7 @@ export class TransactionsController {
       await this.createTransactionUseCase.execute(createTransactionDto);
     return ApiResponseDto.success(
       new TransactionResponseDto(transaction),
-      'Transaction created successfully'
+      'Transaction created successfully',
     );
   }
 
@@ -81,18 +101,51 @@ export class TransactionsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get transactions with optional filtering' })
   @ApiQuery({ type: PaginationQueryDto, required: false })
-  @ApiQuery({ name: 'type', required: false, enum: TransactionType, description: 'Filter by transaction type' })
-  @ApiQuery({ name: 'itemId', required: false, description: 'Filter by item ID' })
-  @ApiQuery({ name: 'customerId', required: false, description: 'Filter by customer ID' })
-  @ApiQuery({ name: 'stockId', required: false, description: 'Filter by stock ID' })
-  @ApiQuery({ name: 'startDate', required: false, description: 'Filter by start date' })
-  @ApiQuery({ name: 'endDate', required: false, description: 'Filter by end date' })
-  @ApiQuery({ name: 'minAmount', required: false, description: 'Filter by minimum amount' })
-  @ApiQuery({ name: 'maxAmount', required: false, description: 'Filter by maximum amount' })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: TransactionType,
+    description: 'Filter by transaction type',
+  })
+  @ApiQuery({
+    name: 'itemId',
+    required: false,
+    description: 'Filter by item ID',
+  })
+  @ApiQuery({
+    name: 'customerId',
+    required: false,
+    description: 'Filter by customer ID',
+  })
+  @ApiQuery({
+    name: 'stockId',
+    required: false,
+    description: 'Filter by stock ID',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    description: 'Filter by start date',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    description: 'Filter by end date',
+  })
+  @ApiQuery({
+    name: 'minAmount',
+    required: false,
+    description: 'Filter by minimum amount',
+  })
+  @ApiQuery({
+    name: 'maxAmount',
+    required: false,
+    description: 'Filter by maximum amount',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Transactions retrieved successfully',
-    type: PaginatedTransactionResponseSchema
+    type: PaginatedTransactionResponseSchema,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
@@ -136,17 +189,17 @@ export class TransactionsController {
 
     return ApiResponseDto.success(
       paginatedResponse,
-      'Transactions retrieved successfully'
+      'Transactions retrieved successfully',
     );
   }
 
   @Get('all')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all transactions without pagination' })
-  @ApiResponse({ 
+  @ApiResponse({
     status: HttpStatus.OK,
     description: 'All transactions retrieved successfully',
-    type: TransactionListResponseSchema 
+    type: TransactionListResponseSchema,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
@@ -160,19 +213,27 @@ export class TransactionsController {
       transactions.map(
         (transaction) => new TransactionResponseDto(transaction),
       ),
-      'All transactions retrieved successfully'
+      'All transactions retrieved successfully',
     );
   }
 
   @Get('reports/sales')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get sales report for a date range' })
-  @ApiQuery({ name: 'startDate', required: false, description: 'Start date for report period' })
-  @ApiQuery({ name: 'endDate', required: false, description: 'End date for report period' })
-  @ApiResponse({ 
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    description: 'Start date for report period',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    description: 'End date for report period',
+  })
+  @ApiResponse({
     status: HttpStatus.OK,
     description: 'Sales report generated successfully',
-    type: TransactionReportResponseSchema 
+    type: TransactionReportResponseSchema,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
@@ -187,23 +248,34 @@ export class TransactionsController {
       new Date(endDate || new Date()),
     );
 
-    return ApiResponseDto.success({
-      totalSales: report.totalSales,
-      transactions: report.transactions.map(
-        (transaction) => new TransactionResponseDto(transaction),
-      ),
-    }, 'Sales report generated successfully');
+    return ApiResponseDto.success(
+      {
+        totalSales: report.totalSales,
+        transactions: report.transactions.map(
+          (transaction) => new TransactionResponseDto(transaction),
+        ),
+      },
+      'Sales report generated successfully',
+    );
   }
 
   @Get('reports/purchases')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get purchases report for a date range' })
-  @ApiQuery({ name: 'startDate', required: false, description: 'Start date for report period' })
-  @ApiQuery({ name: 'endDate', required: false, description: 'End date for report period' })
-  @ApiResponse({ 
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    description: 'Start date for report period',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    description: 'End date for report period',
+  })
+  @ApiResponse({
     status: HttpStatus.OK,
     description: 'Purchases report generated successfully',
-    type: TransactionReportResponseSchema 
+    type: TransactionReportResponseSchema,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
@@ -218,22 +290,25 @@ export class TransactionsController {
       new Date(endDate || new Date()),
     );
 
-    return ApiResponseDto.success({
-      totalPurchases: report.totalPurchases,
-      transactions: report.transactions.map(
-        (transaction) => new TransactionResponseDto(transaction),
-      ),
-    }, 'Purchases report generated successfully');
+    return ApiResponseDto.success(
+      {
+        totalPurchases: report.totalPurchases,
+        transactions: report.transactions.map(
+          (transaction) => new TransactionResponseDto(transaction),
+        ),
+      },
+      'Purchases report generated successfully',
+    );
   }
 
   @Get('customer/:customerId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get transactions by customer ID' })
   @ApiParam({ name: 'customerId', type: 'number', description: 'Customer ID' })
-  @ApiResponse({ 
+  @ApiResponse({
     status: HttpStatus.OK,
     description: 'Transactions retrieved successfully',
-    type: TransactionListResponseSchema 
+    type: TransactionListResponseSchema,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
@@ -248,7 +323,7 @@ export class TransactionsController {
       transactions.map(
         (transaction) => new TransactionResponseDto(transaction),
       ),
-      'Transactions retrieved successfully'
+      'Transactions retrieved successfully',
     );
   }
 
@@ -256,10 +331,10 @@ export class TransactionsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get transactions by item ID' })
   @ApiParam({ name: 'itemId', type: 'number', description: 'Item ID' })
-  @ApiResponse({ 
+  @ApiResponse({
     status: HttpStatus.OK,
     description: 'Transactions retrieved successfully',
-    type: TransactionListResponseSchema 
+    type: TransactionListResponseSchema,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
@@ -273,7 +348,7 @@ export class TransactionsController {
       transactions.map(
         (transaction) => new TransactionResponseDto(transaction),
       ),
-      'Transactions retrieved successfully'
+      'Transactions retrieved successfully',
     );
   }
 
@@ -281,10 +356,10 @@ export class TransactionsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get transaction by ID' })
   @ApiParam({ name: 'id', type: 'number', description: 'Transaction ID' })
-  @ApiResponse({ 
+  @ApiResponse({
     status: HttpStatus.OK,
     description: 'Transaction retrieved successfully',
-    type: TransactionResponseSchema 
+    type: TransactionResponseSchema,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -300,7 +375,7 @@ export class TransactionsController {
     const transaction = await this.getTransactionUseCase.execute(id);
     return ApiResponseDto.success(
       new TransactionResponseDto(transaction),
-      'Transaction retrieved successfully'
+      'Transaction retrieved successfully',
     );
   }
 
@@ -308,11 +383,14 @@ export class TransactionsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update a transaction' })
   @ApiParam({ name: 'id', type: 'number', description: 'Transaction ID' })
-  @ApiBody({ type: UpdateTransactionDto, description: 'Transaction data to update' })
-  @ApiResponse({ 
+  @ApiBody({
+    type: UpdateTransactionDto,
+    description: 'Transaction data to update',
+  })
+  @ApiResponse({
     status: HttpStatus.OK,
     description: 'Transaction updated successfully',
-    type: TransactionResponseSchema 
+    type: TransactionResponseSchema,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -336,7 +414,7 @@ export class TransactionsController {
     );
     return ApiResponseDto.success(
       new TransactionResponseDto(transaction),
-      'Transaction updated successfully'
+      'Transaction updated successfully',
     );
   }
 
@@ -344,10 +422,10 @@ export class TransactionsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete a transaction' })
   @ApiParam({ name: 'id', type: 'number', description: 'Transaction ID' })
-  @ApiResponse({ 
+  @ApiResponse({
     status: HttpStatus.OK,
     description: 'Transaction deleted successfully',
-    type: TransactionResponseSchema 
+    type: TransactionResponseSchema,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -362,5 +440,41 @@ export class TransactionsController {
   ): Promise<ApiResponseDto<boolean>> {
     const deleted = await this.deleteTransactionUseCase.execute(id);
     return ApiResponseDto.success(deleted, 'Transaction deleted successfully');
+  }
+
+  @Post('buy-from-supplier')
+  @UseGuards(AdminGuard)
+  @ApiOperation({ summary: 'Buy items from a supplier and update stock' })
+  @ApiBody({
+    type: BuyFromSupplierRequestSchema,
+    description: 'Data for buying items from a supplier',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Items purchased successfully and stock updated',
+    type: TransactionResponseSchema,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data or validation error',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Supplier or item not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'User not authenticated',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'User not authorized to purchase from suppliers',
+  })
+  async buyFromSupplier(
+    @Body(ValidationPipe) buyFromSupplierDto: BuyFromSupplierDto,
+  ) {
+    const transaction =
+      await this.buyFromSupplierUseCase.execute(buyFromSupplierDto);
+    return CoreApiResonseSchema.success(transaction);
   }
 }

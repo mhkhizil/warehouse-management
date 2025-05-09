@@ -33,14 +33,19 @@ const TransactionResponseSchema_1 = require("./documentation/transaction/Respons
 const PaginatedTransactionResponseSchema_1 = require("./documentation/transaction/ResponseSchema/PaginatedTransactionResponseSchema");
 const TransactionListResponseSchema_1 = require("./documentation/transaction/ResponseSchema/TransactionListResponseSchema");
 const TransactionReportResponseSchema_1 = require("./documentation/transaction/ResponseSchema/TransactionReportResponseSchema");
+const ApiResponseSchema_1 = require("../../core/common/schema/ApiResponseSchema");
+const buy_from_supplier_use_case_1 = require("../use-cases/transaction/buy-from-supplier.use-case");
+const admin_guard_1 = require("../auth/guard/admin.guard");
+const BuyFromSupplierRequestSchema_1 = require("./documentation/transaction/RequestSchema/BuyFromSupplierRequestSchema");
 let TransactionsController = class TransactionsController {
-    constructor(createTransactionUseCase, deleteTransactionUseCase, getTransactionUseCase, listTransactionsUseCase, updateTransactionUseCase, getTransactionReportUseCase) {
+    constructor(createTransactionUseCase, deleteTransactionUseCase, getTransactionUseCase, listTransactionsUseCase, updateTransactionUseCase, getTransactionReportUseCase, buyFromSupplierUseCase) {
         this.createTransactionUseCase = createTransactionUseCase;
         this.deleteTransactionUseCase = deleteTransactionUseCase;
         this.getTransactionUseCase = getTransactionUseCase;
         this.listTransactionsUseCase = listTransactionsUseCase;
         this.updateTransactionUseCase = updateTransactionUseCase;
         this.getTransactionReportUseCase = getTransactionReportUseCase;
+        this.buyFromSupplierUseCase = buyFromSupplierUseCase;
     }
     async createTransaction(createTransactionDto) {
         const transaction = await this.createTransactionUseCase.execute(createTransactionDto);
@@ -101,17 +106,24 @@ let TransactionsController = class TransactionsController {
         const deleted = await this.deleteTransactionUseCase.execute(id);
         return api_response_dto_1.ApiResponseDto.success(deleted, 'Transaction deleted successfully');
     }
+    async buyFromSupplier(buyFromSupplierDto) {
+        const transaction = await this.buyFromSupplierUseCase.execute(buyFromSupplierDto);
+        return ApiResponseSchema_1.CoreApiResonseSchema.success(transaction);
+    }
 };
 exports.TransactionsController = TransactionsController;
 __decorate([
     (0, common_1.Post)(),
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
     (0, swagger_1.ApiOperation)({ summary: 'Create a new transaction' }),
-    (0, swagger_1.ApiBody)({ type: create_transaction_dto_1.CreateTransactionDto, description: 'Transaction data to create' }),
+    (0, swagger_1.ApiBody)({
+        type: create_transaction_dto_1.CreateTransactionDto,
+        description: 'Transaction data to create',
+    }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.CREATED,
         description: 'Transaction created successfully',
-        type: TransactionResponseSchema_1.TransactionResponseSchema
+        type: TransactionResponseSchema_1.TransactionResponseSchema,
     }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.BAD_REQUEST,
@@ -131,18 +143,51 @@ __decorate([
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, swagger_1.ApiOperation)({ summary: 'Get transactions with optional filtering' }),
     (0, swagger_1.ApiQuery)({ type: pagination_dto_1.PaginationQueryDto, required: false }),
-    (0, swagger_1.ApiQuery)({ name: 'type', required: false, enum: client_1.TransactionType, description: 'Filter by transaction type' }),
-    (0, swagger_1.ApiQuery)({ name: 'itemId', required: false, description: 'Filter by item ID' }),
-    (0, swagger_1.ApiQuery)({ name: 'customerId', required: false, description: 'Filter by customer ID' }),
-    (0, swagger_1.ApiQuery)({ name: 'stockId', required: false, description: 'Filter by stock ID' }),
-    (0, swagger_1.ApiQuery)({ name: 'startDate', required: false, description: 'Filter by start date' }),
-    (0, swagger_1.ApiQuery)({ name: 'endDate', required: false, description: 'Filter by end date' }),
-    (0, swagger_1.ApiQuery)({ name: 'minAmount', required: false, description: 'Filter by minimum amount' }),
-    (0, swagger_1.ApiQuery)({ name: 'maxAmount', required: false, description: 'Filter by maximum amount' }),
+    (0, swagger_1.ApiQuery)({
+        name: 'type',
+        required: false,
+        enum: client_1.TransactionType,
+        description: 'Filter by transaction type',
+    }),
+    (0, swagger_1.ApiQuery)({
+        name: 'itemId',
+        required: false,
+        description: 'Filter by item ID',
+    }),
+    (0, swagger_1.ApiQuery)({
+        name: 'customerId',
+        required: false,
+        description: 'Filter by customer ID',
+    }),
+    (0, swagger_1.ApiQuery)({
+        name: 'stockId',
+        required: false,
+        description: 'Filter by stock ID',
+    }),
+    (0, swagger_1.ApiQuery)({
+        name: 'startDate',
+        required: false,
+        description: 'Filter by start date',
+    }),
+    (0, swagger_1.ApiQuery)({
+        name: 'endDate',
+        required: false,
+        description: 'Filter by end date',
+    }),
+    (0, swagger_1.ApiQuery)({
+        name: 'minAmount',
+        required: false,
+        description: 'Filter by minimum amount',
+    }),
+    (0, swagger_1.ApiQuery)({
+        name: 'maxAmount',
+        required: false,
+        description: 'Filter by maximum amount',
+    }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
         description: 'Transactions retrieved successfully',
-        type: PaginatedTransactionResponseSchema_1.PaginatedTransactionResponseSchema
+        type: PaginatedTransactionResponseSchema_1.PaginatedTransactionResponseSchema,
     }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.UNAUTHORIZED,
@@ -168,7 +213,7 @@ __decorate([
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
         description: 'All transactions retrieved successfully',
-        type: TransactionListResponseSchema_1.TransactionListResponseSchema
+        type: TransactionListResponseSchema_1.TransactionListResponseSchema,
     }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.UNAUTHORIZED,
@@ -182,12 +227,20 @@ __decorate([
     (0, common_1.Get)('reports/sales'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, swagger_1.ApiOperation)({ summary: 'Get sales report for a date range' }),
-    (0, swagger_1.ApiQuery)({ name: 'startDate', required: false, description: 'Start date for report period' }),
-    (0, swagger_1.ApiQuery)({ name: 'endDate', required: false, description: 'End date for report period' }),
+    (0, swagger_1.ApiQuery)({
+        name: 'startDate',
+        required: false,
+        description: 'Start date for report period',
+    }),
+    (0, swagger_1.ApiQuery)({
+        name: 'endDate',
+        required: false,
+        description: 'End date for report period',
+    }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
         description: 'Sales report generated successfully',
-        type: TransactionReportResponseSchema_1.TransactionReportResponseSchema
+        type: TransactionReportResponseSchema_1.TransactionReportResponseSchema,
     }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.UNAUTHORIZED,
@@ -203,12 +256,20 @@ __decorate([
     (0, common_1.Get)('reports/purchases'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, swagger_1.ApiOperation)({ summary: 'Get purchases report for a date range' }),
-    (0, swagger_1.ApiQuery)({ name: 'startDate', required: false, description: 'Start date for report period' }),
-    (0, swagger_1.ApiQuery)({ name: 'endDate', required: false, description: 'End date for report period' }),
+    (0, swagger_1.ApiQuery)({
+        name: 'startDate',
+        required: false,
+        description: 'Start date for report period',
+    }),
+    (0, swagger_1.ApiQuery)({
+        name: 'endDate',
+        required: false,
+        description: 'End date for report period',
+    }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
         description: 'Purchases report generated successfully',
-        type: TransactionReportResponseSchema_1.TransactionReportResponseSchema
+        type: TransactionReportResponseSchema_1.TransactionReportResponseSchema,
     }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.UNAUTHORIZED,
@@ -228,7 +289,7 @@ __decorate([
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
         description: 'Transactions retrieved successfully',
-        type: TransactionListResponseSchema_1.TransactionListResponseSchema
+        type: TransactionListResponseSchema_1.TransactionListResponseSchema,
     }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.UNAUTHORIZED,
@@ -247,7 +308,7 @@ __decorate([
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
         description: 'Transactions retrieved successfully',
-        type: TransactionListResponseSchema_1.TransactionListResponseSchema
+        type: TransactionListResponseSchema_1.TransactionListResponseSchema,
     }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.UNAUTHORIZED,
@@ -266,7 +327,7 @@ __decorate([
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
         description: 'Transaction retrieved successfully',
-        type: TransactionResponseSchema_1.TransactionResponseSchema
+        type: TransactionResponseSchema_1.TransactionResponseSchema,
     }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.NOT_FOUND,
@@ -286,11 +347,14 @@ __decorate([
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, swagger_1.ApiOperation)({ summary: 'Update a transaction' }),
     (0, swagger_1.ApiParam)({ name: 'id', type: 'number', description: 'Transaction ID' }),
-    (0, swagger_1.ApiBody)({ type: update_transaction_dto_1.UpdateTransactionDto, description: 'Transaction data to update' }),
+    (0, swagger_1.ApiBody)({
+        type: update_transaction_dto_1.UpdateTransactionDto,
+        description: 'Transaction data to update',
+    }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
         description: 'Transaction updated successfully',
-        type: TransactionResponseSchema_1.TransactionResponseSchema
+        type: TransactionResponseSchema_1.TransactionResponseSchema,
     }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.NOT_FOUND,
@@ -318,7 +382,7 @@ __decorate([
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
         description: 'Transaction deleted successfully',
-        type: TransactionResponseSchema_1.TransactionResponseSchema
+        type: TransactionResponseSchema_1.TransactionResponseSchema,
     }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.NOT_FOUND,
@@ -333,15 +397,51 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], TransactionsController.prototype, "deleteTransaction", null);
+__decorate([
+    (0, common_1.Post)('buy-from-supplier'),
+    (0, common_1.UseGuards)(admin_guard_1.AdminGuard),
+    (0, swagger_1.ApiOperation)({ summary: 'Buy items from a supplier and update stock' }),
+    (0, swagger_1.ApiBody)({
+        type: BuyFromSupplierRequestSchema_1.BuyFromSupplierRequestSchema,
+        description: 'Data for buying items from a supplier',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.OK,
+        description: 'Items purchased successfully and stock updated',
+        type: TransactionResponseSchema_1.TransactionResponseSchema,
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.BAD_REQUEST,
+        description: 'Invalid input data or validation error',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.NOT_FOUND,
+        description: 'Supplier or item not found',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.UNAUTHORIZED,
+        description: 'User not authenticated',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.FORBIDDEN,
+        description: 'User not authorized to purchase from suppliers',
+    }),
+    __param(0, (0, common_1.Body)(common_1.ValidationPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], TransactionsController.prototype, "buyFromSupplier", null);
 exports.TransactionsController = TransactionsController = __decorate([
     (0, swagger_1.ApiTags)('Transactions'),
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, common_1.Controller)('transactions'),
+    (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [create_transaction_use_case_1.CreateTransactionUseCase,
         delete_transaction_use_case_1.DeleteTransactionUseCase,
         get_transaction_use_case_1.GetTransactionUseCase,
         list_transactions_use_case_1.ListTransactionsUseCase,
         update_transaction_use_case_1.UpdateTransactionUseCase,
-        get_transaction_report_use_case_1.GetTransactionReportUseCase])
+        get_transaction_report_use_case_1.GetTransactionReportUseCase,
+        buy_from_supplier_use_case_1.BuyFromSupplierUseCase])
 ], TransactionsController);
 //# sourceMappingURL=transactions.controller.js.map

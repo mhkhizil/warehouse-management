@@ -18,12 +18,13 @@ const update_transaction_use_case_1 = require("../use-cases/transaction/update-t
 const get_transaction_report_use_case_1 = require("../use-cases/transaction/get-transaction-report.use-case");
 const repository_tokens_1 = require("../../domain/constants/repository.tokens");
 const transaction_repository_1 = require("../../infrastructure/persistence/repositories/transaction.repository");
+const suppliers_module_1 = require("./suppliers.module");
 let TransactionsModule = class TransactionsModule {
 };
 exports.TransactionsModule = TransactionsModule;
 exports.TransactionsModule = TransactionsModule = __decorate([
     (0, common_1.Module)({
-        imports: [repositories_module_1.RepositoriesModule],
+        imports: [repositories_module_1.RepositoriesModule, suppliers_module_1.SuppliersModule],
         controllers: [transactions_controller_1.TransactionsController],
         providers: [
             {

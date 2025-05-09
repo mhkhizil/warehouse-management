@@ -109,6 +109,12 @@ export class CustomersController {
     enum: ['true', 'false'],
     description: 'Filter by whether customer has debt',
   })
+  @ApiQuery({
+    name: 'isActive',
+    required: false,
+    enum: ['true', 'false'],
+    description: 'Filter by whether customer is active (not deleted)',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Customers retrieved successfully',
@@ -124,6 +130,7 @@ export class CustomersController {
     @Query('phone') phone?: string,
     @Query('email') email?: string,
     @Query('hasDebt') hasDebt?: string,
+    @Query('isActive') isActive?: string,
   ): Promise<ApiResponseDto<PaginatedResponseDto<CustomerResponseDto>>> {
     const filter = new CustomerFilter({
       skip: paginationQuery.skip,
@@ -133,6 +140,8 @@ export class CustomersController {
       email,
       hasDebts:
         hasDebt === 'true' ? true : hasDebt === 'false' ? false : undefined,
+      isActive:
+        isActive === 'true' ? true : isActive === 'false' ? false : undefined,
     });
 
     const { customers, total } =
@@ -333,7 +342,9 @@ export class CustomersController {
   @Delete(':id')
   @UseGuards(JwtGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Delete a customer' })
+  @ApiOperation({
+    summary: 'Delete a customer (soft delete - sets isActive to false)',
+  })
   @ApiParam({ name: 'id', type: 'number', description: 'Customer ID' })
   @ApiResponse({
     status: HttpStatus.OK,

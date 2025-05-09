@@ -16,7 +16,7 @@ export declare class CustomersController {
     private readonly updateCustomerUseCase;
     constructor(createCustomerUseCase: CreateCustomerUseCase, deleteCustomerUseCase: DeleteCustomerUseCase, getCustomerUseCase: GetCustomerUseCase, listCustomersUseCase: ListCustomersUseCase, updateCustomerUseCase: UpdateCustomerUseCase);
     createCustomer(createCustomerDto: CreateCustomerDto): Promise<ApiResponseDto<CustomerResponseDto>>;
-    getCustomers(paginationQuery: PaginationQueryDto, name?: string, phone?: string, email?: string, hasDebt?: string): Promise<ApiResponseDto<PaginatedResponseDto<CustomerResponseDto>>>;
+    getCustomers(paginationQuery: PaginationQueryDto, name?: string, phone?: string, email?: string, hasDebt?: string, isActive?: string): Promise<ApiResponseDto<PaginatedResponseDto<CustomerResponseDto>>>;
     getAllCustomers(): Promise<ApiResponseDto<CustomerResponseDto[]>>;
     getCustomersWithDebts(): Promise<ApiResponseDto<CustomerResponseDto[]>>;
     getCustomerById(id: number): Promise<ApiResponseDto<CustomerResponseDto>>;

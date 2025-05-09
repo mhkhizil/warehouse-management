@@ -7,6 +7,9 @@ import { StockRepository } from './stock.repository';
 import { CustomerRepository } from './customer.repository';
 import { TransactionRepository } from './transaction.repository';
 import { DebtRepository } from './debt.repository';
+// import { ReportRepository } from './report.repository';
+import { SupplierRepository } from './supplier.repository';
+import { SupplierDebtRepository } from './supplier-debt.repository';
 import {
   USER_REPOSITORY,
   STAFF_REPOSITORY,
@@ -15,6 +18,9 @@ import {
   CUSTOMER_REPOSITORY,
   TRANSACTION_REPOSITORY,
   DEBT_REPOSITORY,
+  REPORT_REPOSITORY,
+  SUPPLIER_REPOSITORY,
+  SUPPLIER_DEBT_REPOSITORY,
 } from '../../../domain/constants/repository.tokens';
 
 const repositories = [
@@ -25,6 +31,9 @@ const repositories = [
   { provide: CUSTOMER_REPOSITORY, useClass: CustomerRepository },
   { provide: TRANSACTION_REPOSITORY, useClass: TransactionRepository },
   { provide: DEBT_REPOSITORY, useClass: DebtRepository },
+  // { provide: REPORT_REPOSITORY, useClass: ReportRepository },
+  { provide: SUPPLIER_REPOSITORY, useClass: SupplierRepository },
+  { provide: SUPPLIER_DEBT_REPOSITORY, useClass: SupplierDebtRepository },
 ];
 
 @Module({

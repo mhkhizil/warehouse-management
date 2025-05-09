@@ -9,6 +9,8 @@ import { GetTransactionReportUseCase } from '../use-cases/transaction/get-transa
 import { CreateTransactionDto } from '../dtos/transaction/create-transaction.dto';
 import { UpdateTransactionDto } from '../dtos/transaction/update-transaction.dto';
 import { TransactionResponseDto } from '../dtos/transaction/transaction-response.dto';
+import { CoreApiResonseSchema } from '../../core/common/schema/ApiResponseSchema';
+import { BuyFromSupplierUseCase, BuyFromSupplierDto } from '../use-cases/transaction/buy-from-supplier.use-case';
 export declare class TransactionsController {
     private readonly createTransactionUseCase;
     private readonly deleteTransactionUseCase;
@@ -16,7 +18,8 @@ export declare class TransactionsController {
     private readonly listTransactionsUseCase;
     private readonly updateTransactionUseCase;
     private readonly getTransactionReportUseCase;
-    constructor(createTransactionUseCase: CreateTransactionUseCase, deleteTransactionUseCase: DeleteTransactionUseCase, getTransactionUseCase: GetTransactionUseCase, listTransactionsUseCase: ListTransactionsUseCase, updateTransactionUseCase: UpdateTransactionUseCase, getTransactionReportUseCase: GetTransactionReportUseCase);
+    private readonly buyFromSupplierUseCase;
+    constructor(createTransactionUseCase: CreateTransactionUseCase, deleteTransactionUseCase: DeleteTransactionUseCase, getTransactionUseCase: GetTransactionUseCase, listTransactionsUseCase: ListTransactionsUseCase, updateTransactionUseCase: UpdateTransactionUseCase, getTransactionReportUseCase: GetTransactionReportUseCase, buyFromSupplierUseCase: BuyFromSupplierUseCase);
     createTransaction(createTransactionDto: CreateTransactionDto): Promise<ApiResponseDto<TransactionResponseDto>>;
     getTransactions(paginationQuery: PaginationQueryDto, type?: string, itemId?: string, customerId?: string, stockId?: string, startDate?: string, endDate?: string, minAmount?: string, maxAmount?: string): Promise<ApiResponseDto<PaginatedResponseDto<TransactionResponseDto>>>;
     getAllTransactions(): Promise<ApiResponseDto<TransactionResponseDto[]>>;
@@ -27,4 +30,18 @@ export declare class TransactionsController {
     getTransactionById(id: number): Promise<ApiResponseDto<TransactionResponseDto>>;
     updateTransaction(id: number, updateTransactionDto: UpdateTransactionDto): Promise<ApiResponseDto<TransactionResponseDto>>;
     deleteTransaction(id: number): Promise<ApiResponseDto<boolean>>;
+    buyFromSupplier(buyFromSupplierDto: BuyFromSupplierDto): Promise<CoreApiResonseSchema<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        date: Date;
+        type: import(".prisma/client").$Enums.TransactionType;
+        itemId: number;
+        stockId: number | null;
+        customerId: number | null;
+        supplierId: number | null;
+        quantity: number;
+        unitPrice: number;
+        totalAmount: number;
+    }>>;
 }

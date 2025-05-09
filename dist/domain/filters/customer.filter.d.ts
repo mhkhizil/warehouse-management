@@ -4,6 +4,7 @@ export declare class CustomerFilter extends PaginationFilter {
     phone?: string;
     email?: string;
     hasDebts?: boolean;
+    isActive?: boolean;
     createdAtFrom?: Date;
     createdAtTo?: Date;
     constructor(partial: Partial<CustomerFilter>);

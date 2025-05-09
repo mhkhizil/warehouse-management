@@ -15,9 +15,10 @@ import {
   DEBT_REPOSITORY,
 } from '../../domain/constants/repository.tokens';
 import { TransactionRepository } from '../../infrastructure/persistence/repositories/transaction.repository';
+import { SuppliersModule } from './suppliers.module';
 
 @Module({
-  imports: [RepositoriesModule],
+  imports: [RepositoriesModule, SuppliersModule],
   controllers: [TransactionsController],
   providers: [
     {

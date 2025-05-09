@@ -11,6 +11,7 @@ import { StocksModule } from './application/module/stocks.module';
 import { CustomersModule } from './application/module/customers.module';
 import { TransactionsModule } from './application/module/transactions.module';
 import { DebtsModule } from './application/module/debts.module';
+import { SuppliersModule } from './application/module/suppliers.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { DebtsModule } from './application/module/debts.module';
     CustomersModule,
     TransactionsModule,
     DebtsModule,
+    SuppliersModule,
     ThrottlerModule.forRoot([
       {
         name: 'short',

@@ -17,8 +17,11 @@ export class CustomerRepository implements ICustomerRepository {
   }
 
   async findById(id: number): Promise<Customer | null> {
-    return this.prisma.customer.findUnique({
-      where: { id },
+    return this.prisma.customer.findFirst({
+      where: {
+        id,
+        isActive: true,
+      },
       include: {
         debt: true,
         transactions: {
@@ -31,6 +34,9 @@ export class CustomerRepository implements ICustomerRepository {
 
   async findAll(): Promise<Customer[]> {
     return this.prisma.customer.findMany({
+      where: {
+        isActive: true,
+      },
       include: {
         debt: true,
       },
@@ -48,15 +54,19 @@ export class CustomerRepository implements ICustomerRepository {
   }
 
   async delete(id: number): Promise<boolean> {
-    await this.prisma.customer.delete({
+    const result = await this.prisma.customer.update({
       where: { id },
+      data: { isActive: false },
     });
-    return true;
+    return !!result;
   }
 
   async findByEmail(email: string): Promise<Customer | null> {
-    return this.prisma.customer.findUnique({
-      where: { email },
+    return this.prisma.customer.findFirst({
+      where: {
+        email,
+        isActive: true,
+      },
       include: {
         debt: true,
       },
@@ -65,7 +75,10 @@ export class CustomerRepository implements ICustomerRepository {
 
   async findByPhone(phone: string): Promise<Customer | null> {
     return this.prisma.customer.findFirst({
-      where: { phone },
+      where: {
+        phone,
+        isActive: true,
+      },
       include: {
         debt: true,
       },
@@ -75,6 +88,7 @@ export class CustomerRepository implements ICustomerRepository {
   async findWithDebts(): Promise<Customer[]> {
     return this.prisma.customer.findMany({
       where: {
+        isActive: true,
         debt: {
           some: {
             isSettled: false,
@@ -94,9 +108,18 @@ export class CustomerRepository implements ICustomerRepository {
   async findWithFilters(
     filter: CustomerFilter,
   ): Promise<{ customers: Customer[]; total: number }> {
-    const { name, phone, email, hasDebt, skip = 0, take = 10 } = filter;
+    const {
+      name,
+      phone,
+      email,
+      hasDebt,
+      skip = 0,
+      take = 10,
+      isActive,
+    } = filter;
 
     const where: Prisma.CustomerWhereInput = {
+      isActive: isActive !== undefined ? isActive : true,
       ...(name && {
         name: { contains: name, mode: Prisma.QueryMode.insensitive },
       }),

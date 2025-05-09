@@ -20,6 +20,7 @@ const stocks_module_1 = require("./application/module/stocks.module");
 const customers_module_1 = require("./application/module/customers.module");
 const transactions_module_1 = require("./application/module/transactions.module");
 const debts_module_1 = require("./application/module/debts.module");
+const suppliers_module_1 = require("./application/module/suppliers.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -34,6 +35,7 @@ exports.AppModule = AppModule = __decorate([
             customers_module_1.CustomersModule,
             transactions_module_1.TransactionsModule,
             debts_module_1.DebtsModule,
+            suppliers_module_1.SuppliersModule,
             throttler_1.ThrottlerModule.forRoot([
                 {
                     name: 'short',

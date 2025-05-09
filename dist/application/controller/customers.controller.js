@@ -42,7 +42,7 @@ let CustomersController = class CustomersController {
         const customer = await this.createCustomerUseCase.execute(createCustomerDto);
         return api_response_dto_1.ApiResponseDto.success(new customer_response_dto_1.CustomerResponseDto(customer), 'Customer created successfully');
     }
-    async getCustomers(paginationQuery, name, phone, email, hasDebt) {
+    async getCustomers(paginationQuery, name, phone, email, hasDebt, isActive) {
         const filter = new customer_filter_1.CustomerFilter({
             skip: paginationQuery.skip,
             take: paginationQuery.take,
@@ -50,6 +50,7 @@ let CustomersController = class CustomersController {
             phone,
             email,
             hasDebts: hasDebt === 'true' ? true : hasDebt === 'false' ? false : undefined,
+            isActive: isActive === 'true' ? true : isActive === 'false' ? false : undefined,
         });
         const { customers, total } = await this.listCustomersUseCase.execute(filter);
         const customerDtos = customers.map((customer) => new customer_response_dto_1.CustomerResponseDto(customer));
@@ -140,6 +141,12 @@ __decorate([
         enum: ['true', 'false'],
         description: 'Filter by whether customer has debt',
     }),
+    (0, swagger_1.ApiQuery)({
+        name: 'isActive',
+        required: false,
+        enum: ['true', 'false'],
+        description: 'Filter by whether customer is active (not deleted)',
+    }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
         description: 'Customers retrieved successfully',
@@ -154,8 +161,9 @@ __decorate([
     __param(2, (0, common_1.Query)('phone')),
     __param(3, (0, common_1.Query)('email')),
     __param(4, (0, common_1.Query)('hasDebt')),
+    __param(5, (0, common_1.Query)('isActive')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [pagination_dto_1.PaginationQueryDto, String, String, String, String]),
+    __metadata("design:paramtypes", [pagination_dto_1.PaginationQueryDto, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], CustomersController.prototype, "getCustomers", null);
 __decorate([
@@ -304,7 +312,9 @@ __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
     (0, swagger_1.ApiBearerAuth)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Delete a customer' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Delete a customer (soft delete - sets isActive to false)',
+    }),
     (0, swagger_1.ApiParam)({ name: 'id', type: 'number', description: 'Customer ID' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,

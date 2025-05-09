@@ -16,6 +16,8 @@ const stock_repository_1 = require("./stock.repository");
 const customer_repository_1 = require("./customer.repository");
 const transaction_repository_1 = require("./transaction.repository");
 const debt_repository_1 = require("./debt.repository");
+const supplier_repository_1 = require("./supplier.repository");
+const supplier_debt_repository_1 = require("./supplier-debt.repository");
 const repository_tokens_1 = require("../../../domain/constants/repository.tokens");
 const repositories = [
     { provide: repository_tokens_1.USER_REPOSITORY, useClass: user_repository_1.UserRepository },
@@ -25,6 +27,8 @@ const repositories = [
     { provide: repository_tokens_1.CUSTOMER_REPOSITORY, useClass: customer_repository_1.CustomerRepository },
     { provide: repository_tokens_1.TRANSACTION_REPOSITORY, useClass: transaction_repository_1.TransactionRepository },
     { provide: repository_tokens_1.DEBT_REPOSITORY, useClass: debt_repository_1.DebtRepository },
+    { provide: repository_tokens_1.SUPPLIER_REPOSITORY, useClass: supplier_repository_1.SupplierRepository },
+    { provide: repository_tokens_1.SUPPLIER_DEBT_REPOSITORY, useClass: supplier_debt_repository_1.SupplierDebtRepository },
 ];
 let RepositoriesModule = class RepositoriesModule {
 };

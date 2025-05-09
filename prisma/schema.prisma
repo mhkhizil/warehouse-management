@@ -48,6 +48,38 @@ model Staff {
   updatedAt   DateTime  @updatedAt
 }
 
+// Supplier model for storing supplier information and debt
+model Supplier {
+  id            Int       @id @default(autoincrement())
+  name          String
+  phone         String?   @unique
+  email         String?   @unique
+  address       String?
+  contactPerson String?
+  transactions  Transaction[]
+  debt          SupplierDebt[]
+  isActive      Boolean   @default(true)
+  remarks       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// SupplierDebt model for tracking debts to suppliers
+model SupplierDebt {
+  id            Int       @id @default(autoincrement())
+  supplierId    Int
+  supplier      Supplier  @relation(fields: [supplierId], references: [id])
+  amount        Float
+  dueDate       DateTime
+  isSettled     Boolean   @default(false)
+  alertSent     Boolean   @default(false)
+  remarks       String?
+  transactionId Int?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
 // Stock model for tracking inventory
 model Stock {
   id            Int       @id @default(autoincrement())
@@ -91,6 +123,7 @@ model Customer {
   debt          Debt[]
   transactions  Transaction[]
   reportsAsTopCustomer Report[] // Add this relation field for reports
+  isActive      Boolean   @default(true) // Flag for soft delete
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -121,10 +154,13 @@ model Transaction {
   stock         Stock?    @relation(fields: [stockId], references: [id])
   customerId    Int?
   customer      Customer? @relation(fields: [customerId], references: [id])
+  supplierId    Int?
+  supplier      Supplier? @relation(fields: [supplierId], references: [id])
   quantity      Int
   unitPrice     Float
   totalAmount   Float
   debt          Debt[]
+  supplierDebt  SupplierDebt[]
   date          DateTime  @default(now())
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
