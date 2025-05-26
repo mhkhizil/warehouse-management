@@ -13,6 +13,8 @@ import {
   STOCK_REPOSITORY,
   CUSTOMER_REPOSITORY,
   DEBT_REPOSITORY,
+  SUPPLIER_DEBT_REPOSITORY,
+  SUPPLIER_REPOSITORY,
 } from '../../domain/constants/repository.tokens';
 import { TransactionRepository } from '../../infrastructure/persistence/repositories/transaction.repository';
 import { SuppliersModule } from './suppliers.module';
@@ -29,13 +31,21 @@ import { SuppliersModule } from './suppliers.module';
         stockRepo,
         customerRepo,
         debtRepo,
+        supplierRepo,
+        supplierDebtRepo,
       ) => {
+        console.log(
+          'Creating CreateTransactionUseCase with supplier repo:',
+          !!supplierRepo,
+        );
         return new CreateTransactionUseCase(
           transactionRepo,
           itemRepo,
           stockRepo,
           customerRepo,
           debtRepo,
+          supplierRepo,
+          supplierDebtRepo,
         );
       },
       inject: [
@@ -44,6 +54,8 @@ import { SuppliersModule } from './suppliers.module';
         STOCK_REPOSITORY,
         CUSTOMER_REPOSITORY,
         DEBT_REPOSITORY,
+        SUPPLIER_REPOSITORY,
+        SUPPLIER_DEBT_REPOSITORY,
       ],
     },
     {

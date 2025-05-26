@@ -15,6 +15,7 @@ import {
   IsDate,
 } from 'class-validator';
 import { CreateDebtDto } from '../debt/create-debt.dto';
+import { CreateSupplierDebtDto } from '../supplier-debt/create-supplier-debt.dto';
 
 export class CreateTransactionDto {
   @ApiProperty({
@@ -56,6 +57,17 @@ export class CreateTransactionDto {
   @IsInt()
   @Type(() => Number)
   customerId?: number;
+
+  @ApiProperty({
+    description: 'Supplier ID (required for BUY transactions)',
+    example: 1,
+    required: false,
+  })
+  @ValidateIf((o) => o.type === TransactionType.BUY)
+  @IsNotEmpty()
+  @IsInt()
+  @Type(() => Number)
+  supplierId?: number;
 
   @ApiProperty({
     description: 'Quantity of items',
@@ -114,4 +126,24 @@ export class CreateTransactionDto {
   @ValidateNested()
   @Type(() => CreateDebtDto)
   debt?: CreateDebtDto;
+
+  @ApiProperty({
+    description: 'Create supplier debt for this transaction',
+    required: false,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  createSupplierDebt?: boolean = false;
+
+  @ApiProperty({
+    description: 'Supplier debt information (if createSupplierDebt is true)',
+    type: CreateSupplierDebtDto,
+    required: false,
+  })
+  @ValidateIf((o) => o.createSupplierDebt === true)
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => CreateSupplierDebtDto)
+  supplierDebt?: CreateSupplierDebtDto;
 }

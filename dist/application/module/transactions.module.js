@@ -29,8 +29,9 @@ exports.TransactionsModule = TransactionsModule = __decorate([
         providers: [
             {
                 provide: create_transaction_use_case_1.CreateTransactionUseCase,
-                useFactory: (transactionRepo, itemRepo, stockRepo, customerRepo, debtRepo) => {
-                    return new create_transaction_use_case_1.CreateTransactionUseCase(transactionRepo, itemRepo, stockRepo, customerRepo, debtRepo);
+                useFactory: (transactionRepo, itemRepo, stockRepo, customerRepo, debtRepo, supplierRepo, supplierDebtRepo) => {
+                    console.log('Creating CreateTransactionUseCase with supplier repo:', !!supplierRepo);
+                    return new create_transaction_use_case_1.CreateTransactionUseCase(transactionRepo, itemRepo, stockRepo, customerRepo, debtRepo, supplierRepo, supplierDebtRepo);
                 },
                 inject: [
                     repository_tokens_1.TRANSACTION_REPOSITORY,
@@ -38,6 +39,8 @@ exports.TransactionsModule = TransactionsModule = __decorate([
                     repository_tokens_1.STOCK_REPOSITORY,
                     repository_tokens_1.CUSTOMER_REPOSITORY,
                     repository_tokens_1.DEBT_REPOSITORY,
+                    repository_tokens_1.SUPPLIER_REPOSITORY,
+                    repository_tokens_1.SUPPLIER_DEBT_REPOSITORY,
                 ],
             },
             {

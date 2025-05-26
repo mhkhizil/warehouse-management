@@ -12,12 +12,16 @@ import {
   STOCK_REPOSITORY,
   CUSTOMER_REPOSITORY,
   DEBT_REPOSITORY,
+  SUPPLIER_REPOSITORY,
+  SUPPLIER_DEBT_REPOSITORY,
 } from '../../../domain/constants/repository.tokens';
 import { ITransactionRepository } from '../../../domain/interfaces/repositories/transaction.repository.interface';
 import { IItemRepository } from '../../../domain/interfaces/repositories/item.repository.interface';
 import { IStockRepository } from '../../../domain/interfaces/repositories/stock.repository.interface';
 import { ICustomerRepository } from '../../../domain/interfaces/repositories/customer.repository.interface';
 import { IDebtRepository } from '../../../domain/interfaces/repositories/debt.repository.interface';
+import { ISupplierRepository } from '../../../domain/interfaces/repositories/supplier.repository.interface';
+import { ISupplierDebtRepository } from '../../../domain/interfaces/repositories/supplier-debt.repository.interface';
 import { CreateTransactionDto } from '../../dtos/transaction/create-transaction.dto';
 
 @Injectable()
@@ -35,6 +39,10 @@ export class CreateTransactionUseCase {
     private readonly customerRepository: ICustomerRepository,
     @Inject(DEBT_REPOSITORY)
     private readonly debtRepository: IDebtRepository,
+    @Inject(SUPPLIER_REPOSITORY)
+    private readonly supplierRepository: ISupplierRepository,
+    @Inject(SUPPLIER_DEBT_REPOSITORY)
+    private readonly supplierDebtRepository: ISupplierDebtRepository,
   ) {}
 
   async execute(
@@ -100,11 +108,52 @@ export class CreateTransactionUseCase {
         stock.quantity - createTransactionDto.quantity,
       );
     } else if (createTransactionDto.type === TransactionType.BUY) {
-      // For BUY, validate stock exists
-      if (!createTransactionDto.stockId) {
+      if (!createTransactionDto.supplierId) {
         throw new BadRequestException(
-          'Stock ID is required for BUY transactions',
+          'Supplier ID is required for BUY transactions',
         );
+      }
+
+      // Convert supplierId to number if it's a string
+      const supplierId =
+        typeof createTransactionDto.supplierId === 'string'
+          ? parseInt(createTransactionDto.supplierId, 10)
+          : createTransactionDto.supplierId;
+
+      console.log(`Supplier ID: ${supplierId}, Type: ${typeof supplierId}`);
+
+      try {
+        // Try direct database query to check if supplier exists
+        const supplier = await this.supplierRepository.findById(supplierId);
+        console.log(
+          'Supplier search result:',
+          supplier ? 'Found' : 'Not found',
+        );
+
+        if (!supplier) {
+          throw new NotFoundException(
+            `Supplier with ID ${supplierId} not found`,
+          );
+        }
+      } catch (error) {
+        console.error('Error finding supplier:', error);
+        throw error;
+      }
+
+      if (!createTransactionDto.stockId) {
+        // Find or create stock for this item
+        let stock = await this.stockRepository.findByItemId(
+          createTransactionDto.itemId,
+        );
+        if (!stock) {
+          stock = await this.stockRepository.create({
+            itemId: createTransactionDto.itemId,
+            quantity: 0,
+            refillAlert: false,
+            lastRefilled: new Date(),
+          });
+        }
+        createTransactionDto.stockId = stock.id;
       }
 
       const stock = await this.stockRepository.findById(
@@ -152,6 +201,25 @@ export class CreateTransactionUseCase {
       }
 
       await this.debtRepository.create(createTransactionDto.debt);
+    }
+
+    // Create supplier debt if needed
+    if (
+      createTransactionDto.type === TransactionType.BUY &&
+      createTransactionDto.createSupplierDebt &&
+      createTransactionDto.supplierDebt
+    ) {
+      createTransactionDto.supplierDebt.transactionId = transaction.id;
+      if (!createTransactionDto.supplierDebt.supplierId) {
+        createTransactionDto.supplierDebt.supplierId =
+          createTransactionDto.supplierId;
+      }
+
+      // Convert string dueDate to Date object
+      await this.supplierDebtRepository.create({
+        ...createTransactionDto.supplierDebt,
+        dueDate: new Date(createTransactionDto.supplierDebt.dueDate),
+      });
     }
 
     return transaction;

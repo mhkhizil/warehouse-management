@@ -17,16 +17,37 @@ export class SupplierRepository implements ISupplierRepository {
   }
 
   async findById(id: number): Promise<Supplier | null> {
-    return this.prisma.supplier.findFirst({
-      where: {
-        id,
-        isActive: true,
-      },
-      include: {
-        debt: true,
-        transactions: true,
-      },
-    });
+    // Ensure id is a number and convert if needed
+    const supplierId = typeof id === 'string' ? parseInt(id, 10) : id;
+    console.log(
+      `Repository: Finding supplier with ID: ${supplierId}, type: ${typeof supplierId}`,
+    );
+
+    try {
+      const result = await this.prisma.supplier.findFirst({
+        where: {
+          id: supplierId,
+          isActive: true,
+        },
+        include: {
+          debt: true,
+          transactions: true,
+        },
+      });
+
+      console.log(
+        `Repository: Supplier search result: ${result ? 'Found' : 'Not found'}`,
+      );
+      if (result) {
+        console.log(
+          `Repository: Supplier details: ID=${result.id}, Name=${result.name}, isActive=${result.isActive}`,
+        );
+      }
+      return result;
+    } catch (error) {
+      console.error('Repository: Error finding supplier:', error);
+      throw error;
+    }
   }
 
   async findAll(): Promise<Supplier[]> {

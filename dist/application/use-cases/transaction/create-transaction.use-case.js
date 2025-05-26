@@ -18,12 +18,14 @@ const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
 const repository_tokens_1 = require("../../../domain/constants/repository.tokens");
 let CreateTransactionUseCase = CreateTransactionUseCase_1 = class CreateTransactionUseCase {
-    constructor(transactionRepository, itemRepository, stockRepository, customerRepository, debtRepository) {
+    constructor(transactionRepository, itemRepository, stockRepository, customerRepository, debtRepository, supplierRepository, supplierDebtRepository) {
         this.transactionRepository = transactionRepository;
         this.itemRepository = itemRepository;
         this.stockRepository = stockRepository;
         this.customerRepository = customerRepository;
         this.debtRepository = debtRepository;
+        this.supplierRepository = supplierRepository;
+        this.supplierDebtRepository = supplierDebtRepository;
         this.logger = new common_1.Logger(CreateTransactionUseCase_1.name);
     }
     async execute(createTransactionDto) {
@@ -53,8 +55,35 @@ let CreateTransactionUseCase = CreateTransactionUseCase_1 = class CreateTransact
             await this.stockRepository.updateQuantity(stock.id, stock.quantity - createTransactionDto.quantity);
         }
         else if (createTransactionDto.type === client_1.TransactionType.BUY) {
+            if (!createTransactionDto.supplierId) {
+                throw new common_1.BadRequestException('Supplier ID is required for BUY transactions');
+            }
+            const supplierId = typeof createTransactionDto.supplierId === 'string'
+                ? parseInt(createTransactionDto.supplierId, 10)
+                : createTransactionDto.supplierId;
+            console.log(`Supplier ID: ${supplierId}, Type: ${typeof supplierId}`);
+            try {
+                const supplier = await this.supplierRepository.findById(supplierId);
+                console.log('Supplier search result:', supplier ? 'Found' : 'Not found');
+                if (!supplier) {
+                    throw new common_1.NotFoundException(`Supplier with ID ${supplierId} not found`);
+                }
+            }
+            catch (error) {
+                console.error('Error finding supplier:', error);
+                throw error;
+            }
             if (!createTransactionDto.stockId) {
-                throw new common_1.BadRequestException('Stock ID is required for BUY transactions');
+                let stock = await this.stockRepository.findByItemId(createTransactionDto.itemId);
+                if (!stock) {
+                    stock = await this.stockRepository.create({
+                        itemId: createTransactionDto.itemId,
+                        quantity: 0,
+                        refillAlert: false,
+                        lastRefilled: new Date(),
+                    });
+                }
+                createTransactionDto.stockId = stock.id;
             }
             const stock = await this.stockRepository.findById(createTransactionDto.stockId);
             if (!stock) {
@@ -79,6 +108,19 @@ let CreateTransactionUseCase = CreateTransactionUseCase_1 = class CreateTransact
             }
             await this.debtRepository.create(createTransactionDto.debt);
         }
+        if (createTransactionDto.type === client_1.TransactionType.BUY &&
+            createTransactionDto.createSupplierDebt &&
+            createTransactionDto.supplierDebt) {
+            createTransactionDto.supplierDebt.transactionId = transaction.id;
+            if (!createTransactionDto.supplierDebt.supplierId) {
+                createTransactionDto.supplierDebt.supplierId =
+                    createTransactionDto.supplierId;
+            }
+            await this.supplierDebtRepository.create({
+                ...createTransactionDto.supplierDebt,
+                dueDate: new Date(createTransactionDto.supplierDebt.dueDate),
+            });
+        }
         return transaction;
     }
 };
@@ -90,6 +132,8 @@ exports.CreateTransactionUseCase = CreateTransactionUseCase = CreateTransactionU
     __param(2, (0, common_1.Inject)(repository_tokens_1.STOCK_REPOSITORY)),
     __param(3, (0, common_1.Inject)(repository_tokens_1.CUSTOMER_REPOSITORY)),
     __param(4, (0, common_1.Inject)(repository_tokens_1.DEBT_REPOSITORY)),
-    __metadata("design:paramtypes", [Object, Object, Object, Object, Object])
+    __param(5, (0, common_1.Inject)(repository_tokens_1.SUPPLIER_REPOSITORY)),
+    __param(6, (0, common_1.Inject)(repository_tokens_1.SUPPLIER_DEBT_REPOSITORY)),
+    __metadata("design:paramtypes", [Object, Object, Object, Object, Object, Object, Object])
 ], CreateTransactionUseCase);
 //# sourceMappingURL=create-transaction.use-case.js.map

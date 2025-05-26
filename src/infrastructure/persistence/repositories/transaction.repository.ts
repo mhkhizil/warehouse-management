@@ -12,7 +12,13 @@ export class TransactionRepository implements ITransactionRepository {
 
   async create(data: Partial<Transaction>): Promise<Transaction> {
     // Create a copy of the data and remove the non-Transaction model fields
-    const { createDebt, debt, ...transactionData } = data as any;
+    const {
+      createDebt,
+      debt,
+      createSupplierDebt,
+      supplierDebt,
+      ...transactionData
+    } = data as any;
 
     return this.prisma.transaction.create({
       data: transactionData,

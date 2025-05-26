@@ -17,7 +17,7 @@ let TransactionRepository = class TransactionRepository {
         this.prisma = prisma;
     }
     async create(data) {
-        const { createDebt, debt, ...transactionData } = data;
+        const { createDebt, debt, createSupplierDebt, supplierDebt, ...transactionData } = data;
         return this.prisma.transaction.create({
             data: transactionData,
             include: {

@@ -15,9 +15,11 @@ const client_1 = require("@prisma/client");
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 const create_debt_dto_1 = require("../debt/create-debt.dto");
+const create_supplier_debt_dto_1 = require("../supplier-debt/create-supplier-debt.dto");
 class CreateTransactionDto {
     constructor() {
         this.createDebt = false;
+        this.createSupplierDebt = false;
     }
 }
 exports.CreateTransactionDto = CreateTransactionDto;
@@ -65,6 +67,18 @@ __decorate([
     (0, class_transformer_1.Type)(() => Number),
     __metadata("design:type", Number)
 ], CreateTransactionDto.prototype, "customerId", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Supplier ID (required for BUY transactions)',
+        example: 1,
+        required: false,
+    }),
+    (0, class_validator_1.ValidateIf)((o) => o.type === client_1.TransactionType.BUY),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsInt)(),
+    (0, class_transformer_1.Type)(() => Number),
+    __metadata("design:type", Number)
+], CreateTransactionDto.prototype, "supplierId", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Quantity of items',
@@ -129,4 +143,26 @@ __decorate([
     (0, class_transformer_1.Type)(() => create_debt_dto_1.CreateDebtDto),
     __metadata("design:type", create_debt_dto_1.CreateDebtDto)
 ], CreateTransactionDto.prototype, "debt", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Create supplier debt for this transaction',
+        required: false,
+        default: false,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateTransactionDto.prototype, "createSupplierDebt", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Supplier debt information (if createSupplierDebt is true)',
+        type: create_supplier_debt_dto_1.CreateSupplierDebtDto,
+        required: false,
+    }),
+    (0, class_validator_1.ValidateIf)((o) => o.createSupplierDebt === true),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => create_supplier_debt_dto_1.CreateSupplierDebtDto),
+    __metadata("design:type", create_supplier_debt_dto_1.CreateSupplierDebtDto)
+], CreateTransactionDto.prototype, "supplierDebt", void 0);
 //# sourceMappingURL=create-transaction.dto.js.map
