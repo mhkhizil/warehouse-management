@@ -17,14 +17,20 @@ let TransactionRepository = class TransactionRepository {
         this.prisma = prisma;
     }
     async create(data) {
-        const { createDebt, debt, createSupplierDebt, supplierDebt, ...transactionData } = data;
+        const { createDebt, debt, createSupplierDebt, supplierDebt, items, ...transactionData } = data;
         return this.prisma.transaction.create({
             data: transactionData,
             include: {
-                item: true,
                 customer: true,
-                stock: true,
+                supplier: true,
                 debt: true,
+                supplierDebt: true,
+                transactionItems: {
+                    include: {
+                        item: true,
+                        stock: true,
+                    },
+                },
             },
         });
     }
@@ -32,19 +38,32 @@ let TransactionRepository = class TransactionRepository {
         return this.prisma.transaction.findUnique({
             where: { id },
             include: {
-                item: true,
                 customer: true,
-                stock: true,
+                supplier: true,
                 debt: true,
+                supplierDebt: true,
+                transactionItems: {
+                    include: {
+                        item: true,
+                        stock: true,
+                    },
+                },
             },
         });
     }
     async findAll() {
         return this.prisma.transaction.findMany({
             include: {
-                item: true,
                 customer: true,
-                stock: true,
+                supplier: true,
+                debt: true,
+                supplierDebt: true,
+                transactionItems: {
+                    include: {
+                        item: true,
+                        stock: true,
+                    },
+                },
             },
             orderBy: { date: 'desc' },
         });
@@ -54,10 +73,16 @@ let TransactionRepository = class TransactionRepository {
             where: { id },
             data,
             include: {
-                item: true,
                 customer: true,
-                stock: true,
+                supplier: true,
                 debt: true,
+                supplierDebt: true,
+                transactionItems: {
+                    include: {
+                        item: true,
+                        stock: true,
+                    },
+                },
             },
         });
     }
@@ -71,31 +96,44 @@ let TransactionRepository = class TransactionRepository {
         return this.prisma.transaction.findMany({
             where: { customerId },
             include: {
-                item: true,
-                stock: true,
+                customer: true,
+                supplier: true,
                 debt: true,
+                supplierDebt: true,
+                transactionItems: {
+                    include: {
+                        item: true,
+                        stock: true,
+                    },
+                },
             },
             orderBy: { date: 'desc' },
         });
     }
-    async findByItemId(itemId) {
+    async findBySupplierId(supplierId) {
         return this.prisma.transaction.findMany({
-            where: { itemId },
+            where: { supplierId },
             include: {
-                item: true,
                 customer: true,
-                stock: true,
+                supplier: true,
+                debt: true,
+                supplierDebt: true,
+                transactionItems: {
+                    include: {
+                        item: true,
+                        stock: true,
+                    },
+                },
             },
             orderBy: { date: 'desc' },
         });
     }
     async findWithFilters(filter) {
-        const { type, itemId, customerId, stockId, startDate, endDate, minAmount, maxAmount, skip = 0, take = 10, } = filter;
+        const { type, customerId, supplierId, startDate, endDate, minAmount, maxAmount, skip = 0, take = 10, } = filter;
         const where = {
             ...(type && { type }),
-            ...(itemId && { itemId }),
             ...(customerId && { customerId }),
-            ...(stockId && { stockId }),
+            ...(supplierId && { supplierId }),
             ...((startDate || endDate) && {
                 date: {
                     ...(startDate && { gte: startDate }),
@@ -116,10 +154,16 @@ let TransactionRepository = class TransactionRepository {
                 take,
                 orderBy: { date: 'desc' },
                 include: {
-                    item: true,
                     customer: true,
-                    stock: true,
+                    supplier: true,
                     debt: true,
+                    supplierDebt: true,
+                    transactionItems: {
+                        include: {
+                            item: true,
+                            stock: true,
+                        },
+                    },
                 },
             }),
             this.prisma.transaction.count({ where }),
@@ -136,8 +180,13 @@ let TransactionRepository = class TransactionRepository {
                 },
             },
             include: {
-                item: true,
                 customer: true,
+                debt: true,
+                transactionItems: {
+                    include: {
+                        item: true,
+                    },
+                },
             },
             orderBy: { date: 'desc' },
         });
@@ -154,7 +203,14 @@ let TransactionRepository = class TransactionRepository {
                 },
             },
             include: {
-                item: true,
+                customer: true,
+                supplier: true,
+                supplierDebt: true,
+                transactionItems: {
+                    include: {
+                        item: true,
+                    },
+                },
             },
             orderBy: { date: 'desc' },
         });

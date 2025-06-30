@@ -9,6 +9,7 @@ import { UpdateTransactionUseCase } from '../use-cases/transaction/update-transa
 import { GetTransactionReportUseCase } from '../use-cases/transaction/get-transaction-report.use-case';
 import {
   TRANSACTION_REPOSITORY,
+  TRANSACTION_ITEM_REPOSITORY,
   ITEM_REPOSITORY,
   STOCK_REPOSITORY,
   CUSTOMER_REPOSITORY,
@@ -18,6 +19,7 @@ import {
 } from '../../domain/constants/repository.tokens';
 import { TransactionRepository } from '../../infrastructure/persistence/repositories/transaction.repository';
 import { SuppliersModule } from './suppliers.module';
+import { PrismaService } from '../../infrastructure/persistence/prisma/prisma.service';
 
 @Module({
   imports: [RepositoriesModule, SuppliersModule],
@@ -27,12 +29,14 @@ import { SuppliersModule } from './suppliers.module';
       provide: CreateTransactionUseCase,
       useFactory: (
         transactionRepo,
+        transactionItemRepo,
         itemRepo,
         stockRepo,
         customerRepo,
         debtRepo,
         supplierRepo,
         supplierDebtRepo,
+        prisma,
       ) => {
         console.log(
           'Creating CreateTransactionUseCase with supplier repo:',
@@ -40,22 +44,26 @@ import { SuppliersModule } from './suppliers.module';
         );
         return new CreateTransactionUseCase(
           transactionRepo,
+          transactionItemRepo,
           itemRepo,
           stockRepo,
           customerRepo,
           debtRepo,
           supplierRepo,
           supplierDebtRepo,
+          prisma,
         );
       },
       inject: [
         TRANSACTION_REPOSITORY,
+        TRANSACTION_ITEM_REPOSITORY,
         ITEM_REPOSITORY,
         STOCK_REPOSITORY,
         CUSTOMER_REPOSITORY,
         DEBT_REPOSITORY,
         SUPPLIER_REPOSITORY,
         SUPPLIER_DEBT_REPOSITORY,
+        PrismaService,
       ],
     },
     {

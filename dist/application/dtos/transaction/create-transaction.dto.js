@@ -16,6 +16,7 @@ const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 const create_debt_dto_1 = require("../debt/create-debt.dto");
 const create_supplier_debt_dto_1 = require("../supplier-debt/create-supplier-debt.dto");
+const create_transaction_item_dto_1 = require("./create-transaction-item.dto");
 class CreateTransactionDto {
     constructor() {
         this.createDebt = false;
@@ -33,28 +34,6 @@ __decorate([
     (0, class_validator_1.IsEnum)(client_1.TransactionType),
     __metadata("design:type", String)
 ], CreateTransactionDto.prototype, "type", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'Item ID',
-        example: 1,
-    }),
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsInt)(),
-    (0, class_transformer_1.Type)(() => Number),
-    __metadata("design:type", Number)
-], CreateTransactionDto.prototype, "itemId", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'Stock ID (required for BUY transactions)',
-        example: 1,
-        required: false,
-    }),
-    (0, class_validator_1.ValidateIf)((o) => o.type === client_1.TransactionType.BUY),
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsInt)(),
-    (0, class_transformer_1.Type)(() => Number),
-    __metadata("design:type", Number)
-], CreateTransactionDto.prototype, "stockId", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Customer ID (required for SELL transactions)',
@@ -81,28 +60,32 @@ __decorate([
 ], CreateTransactionDto.prototype, "supplierId", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
-        description: 'Quantity of items',
-        example: 5,
+        description: 'List of transaction items',
+        type: [create_transaction_item_dto_1.CreateTransactionItemDto],
+        example: [
+            {
+                itemId: 1,
+                quantity: 5,
+                unitPrice: 199.99,
+            },
+            {
+                itemId: 2,
+                quantity: 2,
+                unitPrice: 49.99,
+            },
+        ],
     }),
     (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsInt)(),
-    (0, class_validator_1.IsPositive)(),
-    __metadata("design:type", Number)
-], CreateTransactionDto.prototype, "quantity", void 0);
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ArrayMinSize)(1),
+    (0, class_validator_1.ValidateNested)({ each: true }),
+    (0, class_transformer_1.Type)(() => create_transaction_item_dto_1.CreateTransactionItemDto),
+    __metadata("design:type", Array)
+], CreateTransactionDto.prototype, "items", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
-        description: 'Unit price',
-        example: 199.99,
-    }),
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsNumber)({ maxDecimalPlaces: 2 }),
-    (0, class_validator_1.Min)(0),
-    __metadata("design:type", Number)
-], CreateTransactionDto.prototype, "unitPrice", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'Total amount (unit price * quantity)',
-        example: 999.95,
+        description: 'Total amount (sum of all items) - auto-calculated if not provided',
+        example: 1099.93,
         required: false,
     }),
     (0, class_validator_1.IsOptional)(),

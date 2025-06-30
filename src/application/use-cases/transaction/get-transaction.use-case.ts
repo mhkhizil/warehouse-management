@@ -29,8 +29,8 @@ export class GetTransactionUseCase {
     return this.transactionRepository.findByCustomerId(customerId);
   }
 
-  async findByItemId(itemId: number): Promise<Transaction[]> {
-    this.logger.log(`Fetching transactions for item ID: ${itemId}`);
-    return this.transactionRepository.findByItemId(itemId);
+  async findBySupplierId(supplierId: number): Promise<Transaction[]> {
+    this.logger.log(`Fetching transactions for supplier ID: ${supplierId}`);
+    return this.transactionRepository.findBySupplierId(supplierId);
   }
 }

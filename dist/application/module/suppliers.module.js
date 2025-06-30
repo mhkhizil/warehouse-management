@@ -23,7 +23,6 @@ const delete_supplier_debt_use_case_1 = require("../use-cases/supplier-debt/dele
 const mark_supplier_debt_settled_use_case_1 = require("../use-cases/supplier-debt/mark-supplier-debt-settled.use-case");
 const mark_supplier_debt_alert_sent_use_case_1 = require("../use-cases/supplier-debt/mark-supplier-debt-alert-sent.use-case");
 const find_overdue_supplier_debts_use_case_1 = require("../use-cases/supplier-debt/find-overdue-supplier-debts.use-case");
-const buy_from_supplier_use_case_1 = require("../use-cases/transaction/buy-from-supplier.use-case");
 const repositories_module_1 = require("../../infrastructure/persistence/repositories/repositories.module");
 let SuppliersModule = class SuppliersModule {
 };
@@ -46,9 +45,8 @@ exports.SuppliersModule = SuppliersModule = __decorate([
             mark_supplier_debt_settled_use_case_1.MarkSupplierDebtSettledUseCase,
             mark_supplier_debt_alert_sent_use_case_1.MarkSupplierDebtAlertSentUseCase,
             find_overdue_supplier_debts_use_case_1.FindOverdueSupplierDebtsUseCase,
-            buy_from_supplier_use_case_1.BuyFromSupplierUseCase,
         ],
-        exports: [buy_from_supplier_use_case_1.BuyFromSupplierUseCase],
+        exports: [],
     })
 ], SuppliersModule);
 //# sourceMappingURL=suppliers.module.js.map

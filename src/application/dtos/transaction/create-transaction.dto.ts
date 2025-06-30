@@ -7,15 +7,17 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsPositive,
   Min,
   ValidateIf,
   ValidateNested,
   IsBoolean,
   IsDate,
+  IsArray,
+  ArrayMinSize,
 } from 'class-validator';
 import { CreateDebtDto } from '../debt/create-debt.dto';
 import { CreateSupplierDebtDto } from '../supplier-debt/create-supplier-debt.dto';
+import { CreateTransactionItemDto } from './create-transaction-item.dto';
 
 export class CreateTransactionDto {
   @ApiProperty({
@@ -26,26 +28,6 @@ export class CreateTransactionDto {
   @IsNotEmpty()
   @IsEnum(TransactionType)
   type: TransactionType;
-
-  @ApiProperty({
-    description: 'Item ID',
-    example: 1,
-  })
-  @IsNotEmpty()
-  @IsInt()
-  @Type(() => Number)
-  itemId: number;
-
-  @ApiProperty({
-    description: 'Stock ID (required for BUY transactions)',
-    example: 1,
-    required: false,
-  })
-  @ValidateIf((o) => o.type === TransactionType.BUY)
-  @IsNotEmpty()
-  @IsInt()
-  @Type(() => Number)
-  stockId?: number;
 
   @ApiProperty({
     description: 'Customer ID (required for SELL transactions)',
@@ -70,26 +52,32 @@ export class CreateTransactionDto {
   supplierId?: number;
 
   @ApiProperty({
-    description: 'Quantity of items',
-    example: 5,
+    description: 'List of transaction items',
+    type: [CreateTransactionItemDto],
+    example: [
+      {
+        itemId: 1,
+        quantity: 5,
+        unitPrice: 199.99,
+      },
+      {
+        itemId: 2,
+        quantity: 2,
+        unitPrice: 49.99,
+      },
+    ],
   })
   @IsNotEmpty()
-  @IsInt()
-  @IsPositive()
-  quantity: number;
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => CreateTransactionItemDto)
+  items: CreateTransactionItemDto[];
 
   @ApiProperty({
-    description: 'Unit price',
-    example: 199.99,
-  })
-  @IsNotEmpty()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  unitPrice: number;
-
-  @ApiProperty({
-    description: 'Total amount (unit price * quantity)',
-    example: 999.95,
+    description:
+      'Total amount (sum of all items) - auto-calculated if not provided',
+    example: 1099.93,
     required: false,
   })
   @IsOptional()

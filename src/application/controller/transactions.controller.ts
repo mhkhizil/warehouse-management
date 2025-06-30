@@ -43,13 +43,7 @@ import { TransactionResponseSchema } from './documentation/transaction/ResponseS
 import { PaginatedTransactionResponseSchema } from './documentation/transaction/ResponseSchema/PaginatedTransactionResponseSchema';
 import { TransactionListResponseSchema } from './documentation/transaction/ResponseSchema/TransactionListResponseSchema';
 import { TransactionReportResponseSchema } from './documentation/transaction/ResponseSchema/TransactionReportResponseSchema';
-import { CoreApiResonseSchema } from '../../core/common/schema/ApiResponseSchema';
-import {
-  BuyFromSupplierUseCase,
-  BuyFromSupplierDto,
-} from '../use-cases/transaction/buy-from-supplier.use-case';
 import { AdminGuard } from '../auth/guard/admin.guard';
-import { BuyFromSupplierRequestSchema } from './documentation/transaction/RequestSchema/BuyFromSupplierRequestSchema';
 
 @ApiTags('Transactions')
 @UseGuards(JwtGuard)
@@ -63,7 +57,6 @@ export class TransactionsController {
     private readonly listTransactionsUseCase: ListTransactionsUseCase,
     private readonly updateTransactionUseCase: UpdateTransactionUseCase,
     private readonly getTransactionReportUseCase: GetTransactionReportUseCase,
-    private readonly buyFromSupplierUseCase: BuyFromSupplierUseCase,
   ) {}
 
   @Post()
@@ -327,10 +320,10 @@ export class TransactionsController {
     );
   }
 
-  @Get('item/:itemId')
+  @Get('supplier/:supplierId')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get transactions by item ID' })
-  @ApiParam({ name: 'itemId', type: 'number', description: 'Item ID' })
+  @ApiOperation({ summary: 'Get transactions by supplier ID' })
+  @ApiParam({ name: 'supplierId', type: 'number', description: 'Supplier ID' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Transactions retrieved successfully',
@@ -340,10 +333,11 @@ export class TransactionsController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Unauthorized access',
   })
-  async getTransactionsByItem(
-    @Param('itemId', ParseIntPipe) itemId: number,
+  async getTransactionsBySupplier(
+    @Param('supplierId', ParseIntPipe) supplierId: number,
   ): Promise<ApiResponseDto<TransactionResponseDto[]>> {
-    const transactions = await this.getTransactionUseCase.findByItemId(itemId);
+    const transactions =
+      await this.getTransactionUseCase.findBySupplierId(supplierId);
     return ApiResponseDto.success(
       transactions.map(
         (transaction) => new TransactionResponseDto(transaction),
@@ -440,41 +434,5 @@ export class TransactionsController {
   ): Promise<ApiResponseDto<boolean>> {
     const deleted = await this.deleteTransactionUseCase.execute(id);
     return ApiResponseDto.success(deleted, 'Transaction deleted successfully');
-  }
-
-  @Post('buy-from-supplier')
-  @UseGuards(AdminGuard)
-  @ApiOperation({ summary: 'Buy items from a supplier and update stock' })
-  @ApiBody({
-    type: BuyFromSupplierRequestSchema,
-    description: 'Data for buying items from a supplier',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Items purchased successfully and stock updated',
-    type: TransactionResponseSchema,
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input data or validation error',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Supplier or item not found',
-  })
-  @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: 'User not authenticated',
-  })
-  @ApiResponse({
-    status: HttpStatus.FORBIDDEN,
-    description: 'User not authorized to purchase from suppliers',
-  })
-  async buyFromSupplier(
-    @Body(ValidationPipe) buyFromSupplierDto: BuyFromSupplierDto,
-  ) {
-    const transaction =
-      await this.buyFromSupplierUseCase.execute(buyFromSupplierDto);
-    return CoreApiResonseSchema.success(transaction);
   }
 }

@@ -24,9 +24,13 @@ export class StockRepository implements IStockRepository {
       where: { id },
       include: {
         item: true,
-        transactions: {
+        transactionItems: {
           take: 5,
-          orderBy: { date: 'desc' },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            item: true,
+            transaction: true,
+          },
         },
       },
     });
@@ -62,9 +66,13 @@ export class StockRepository implements IStockRepository {
       where: { itemId },
       include: {
         item: true,
-        transactions: {
+        transactionItems: {
           take: 5,
-          orderBy: { date: 'desc' },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            item: true,
+            transaction: true,
+          },
         },
       },
     });

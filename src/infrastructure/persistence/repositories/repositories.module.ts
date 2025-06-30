@@ -6,6 +6,7 @@ import { ItemRepository } from './item.repository';
 import { StockRepository } from './stock.repository';
 import { CustomerRepository } from './customer.repository';
 import { TransactionRepository } from './transaction.repository';
+import { TransactionItemRepository } from './transaction-item.repository';
 import { DebtRepository } from './debt.repository';
 // import { ReportRepository } from './report.repository';
 import { SupplierRepository } from './supplier.repository';
@@ -17,6 +18,7 @@ import {
   STOCK_REPOSITORY,
   CUSTOMER_REPOSITORY,
   TRANSACTION_REPOSITORY,
+  TRANSACTION_ITEM_REPOSITORY,
   DEBT_REPOSITORY,
   REPORT_REPOSITORY,
   SUPPLIER_REPOSITORY,
@@ -30,6 +32,7 @@ const repositories = [
   { provide: STOCK_REPOSITORY, useClass: StockRepository },
   { provide: CUSTOMER_REPOSITORY, useClass: CustomerRepository },
   { provide: TRANSACTION_REPOSITORY, useClass: TransactionRepository },
+  { provide: TRANSACTION_ITEM_REPOSITORY, useClass: TransactionItemRepository },
   { provide: DEBT_REPOSITORY, useClass: DebtRepository },
   // { provide: REPORT_REPOSITORY, useClass: ReportRepository },
   { provide: SUPPLIER_REPOSITORY, useClass: SupplierRepository },

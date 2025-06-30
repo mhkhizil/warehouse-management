@@ -2,9 +2,8 @@ import { Transaction, TransactionType } from '@prisma/client';
 import { IBaseRepository } from './base.repository.interface';
 export type TransactionFilter = {
     type?: TransactionType;
-    itemId?: number;
     customerId?: number;
-    stockId?: number;
+    supplierId?: number;
     startDate?: Date;
     endDate?: Date;
     minAmount?: number;
@@ -14,7 +13,7 @@ export type TransactionFilter = {
 };
 export interface ITransactionRepository extends IBaseRepository<Transaction, number> {
     findByCustomerId(customerId: number): Promise<Transaction[]>;
-    findByItemId(itemId: number): Promise<Transaction[]>;
+    findBySupplierId(supplierId: number): Promise<Transaction[]>;
     findWithFilters(filter: TransactionFilter): Promise<{
         transactions: Transaction[];
         total: number;

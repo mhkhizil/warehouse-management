@@ -10,7 +10,7 @@ export declare class TransactionRepository implements ITransactionRepository {
     update(id: number, data: Partial<Transaction>): Promise<Transaction>;
     delete(id: number): Promise<boolean>;
     findByCustomerId(customerId: number): Promise<Transaction[]>;
-    findByItemId(itemId: number): Promise<Transaction[]>;
+    findBySupplierId(supplierId: number): Promise<Transaction[]>;
     findWithFilters(filter: TransactionFilter): Promise<{
         transactions: Transaction[];
         total: number;

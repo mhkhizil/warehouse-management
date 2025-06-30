@@ -8,6 +8,7 @@ import {
 import { Transaction, TransactionType } from '@prisma/client';
 import {
   TRANSACTION_REPOSITORY,
+  TRANSACTION_ITEM_REPOSITORY,
   ITEM_REPOSITORY,
   STOCK_REPOSITORY,
   CUSTOMER_REPOSITORY,
@@ -16,6 +17,7 @@ import {
   SUPPLIER_DEBT_REPOSITORY,
 } from '../../../domain/constants/repository.tokens';
 import { ITransactionRepository } from '../../../domain/interfaces/repositories/transaction.repository.interface';
+import { ITransactionItemRepository } from '../../../domain/interfaces/repositories/transaction-item.repository.interface';
 import { IItemRepository } from '../../../domain/interfaces/repositories/item.repository.interface';
 import { IStockRepository } from '../../../domain/interfaces/repositories/stock.repository.interface';
 import { ICustomerRepository } from '../../../domain/interfaces/repositories/customer.repository.interface';
@@ -23,6 +25,7 @@ import { IDebtRepository } from '../../../domain/interfaces/repositories/debt.re
 import { ISupplierRepository } from '../../../domain/interfaces/repositories/supplier.repository.interface';
 import { ISupplierDebtRepository } from '../../../domain/interfaces/repositories/supplier-debt.repository.interface';
 import { CreateTransactionDto } from '../../dtos/transaction/create-transaction.dto';
+import { PrismaService } from '../../../infrastructure/persistence/prisma/prisma.service';
 
 @Injectable()
 export class CreateTransactionUseCase {
@@ -31,6 +34,8 @@ export class CreateTransactionUseCase {
   constructor(
     @Inject(TRANSACTION_REPOSITORY)
     private readonly transactionRepository: ITransactionRepository,
+    @Inject(TRANSACTION_ITEM_REPOSITORY)
+    private readonly transactionItemRepository: ITransactionItemRepository,
     @Inject(ITEM_REPOSITORY)
     private readonly itemRepository: IItemRepository,
     @Inject(STOCK_REPOSITORY)
@@ -43,185 +48,299 @@ export class CreateTransactionUseCase {
     private readonly supplierRepository: ISupplierRepository,
     @Inject(SUPPLIER_DEBT_REPOSITORY)
     private readonly supplierDebtRepository: ISupplierDebtRepository,
+    private readonly prisma: PrismaService,
   ) {}
 
   async execute(
     createTransactionDto: CreateTransactionDto,
   ): Promise<Transaction> {
     this.logger.log(
-      `Creating transaction with type: ${createTransactionDto.type}`,
+      `Creating transaction with type: ${createTransactionDto.type} and ${createTransactionDto.items.length} items`,
     );
 
-    // Validate item exists
-    const item = await this.itemRepository.findById(
-      createTransactionDto.itemId,
-    );
-    if (!item) {
-      throw new NotFoundException(
-        `Item with ID ${createTransactionDto.itemId} not found`,
-      );
-    }
+    // Use Prisma transaction for atomic operations and better performance
+    return await this.prisma.$transaction(async (tx) => {
+      // Validate customer or supplier based on transaction type
+      let customer = null;
+      let supplier = null;
 
-    // Different validation based on transaction type
-    if (createTransactionDto.type === TransactionType.SELL) {
-      // For SELL, validate customer exists and item is sellable
-      if (!createTransactionDto.customerId) {
-        throw new BadRequestException(
-          'Customer ID is required for SELL transactions',
-        );
-      }
+      if (createTransactionDto.type === TransactionType.SELL) {
+        if (!createTransactionDto.customerId) {
+          throw new BadRequestException(
+            'Customer ID is required for SELL transactions',
+          );
+        }
 
-      const customer = await this.customerRepository.findById(
-        createTransactionDto.customerId,
-      );
-      if (!customer) {
-        throw new NotFoundException(
-          `Customer with ID ${createTransactionDto.customerId} not found`,
-        );
-      }
+        customer = await tx.customer.findUnique({
+          where: { id: createTransactionDto.customerId },
+        });
+        if (!customer) {
+          throw new NotFoundException(
+            `Customer with ID ${createTransactionDto.customerId} not found`,
+          );
+        }
+      } else if (createTransactionDto.type === TransactionType.BUY) {
+        if (!createTransactionDto.supplierId) {
+          throw new BadRequestException(
+            'Supplier ID is required for BUY transactions',
+          );
+        }
 
-      if (!item.isSellable) {
-        throw new BadRequestException(
-          `Item with ID ${createTransactionDto.itemId} is not sellable`,
-        );
-      }
+        const supplierId =
+          typeof createTransactionDto.supplierId === 'string'
+            ? parseInt(createTransactionDto.supplierId, 10)
+            : createTransactionDto.supplierId;
 
-      // Check if there's enough stock
-      const stock = await this.stockRepository.findByItemId(
-        createTransactionDto.itemId,
-      );
-      if (!stock) {
-        throw new NotFoundException(
-          `No stock found for item with ID ${createTransactionDto.itemId}`,
-        );
-      }
-
-      if (stock.quantity < createTransactionDto.quantity) {
-        throw new BadRequestException(
-          `Not enough stock. Requested: ${createTransactionDto.quantity}, Available: ${stock.quantity}`,
-        );
-      }
-
-      // Update stock
-      await this.stockRepository.updateQuantity(
-        stock.id,
-        stock.quantity - createTransactionDto.quantity,
-      );
-    } else if (createTransactionDto.type === TransactionType.BUY) {
-      if (!createTransactionDto.supplierId) {
-        throw new BadRequestException(
-          'Supplier ID is required for BUY transactions',
-        );
-      }
-
-      // Convert supplierId to number if it's a string
-      const supplierId =
-        typeof createTransactionDto.supplierId === 'string'
-          ? parseInt(createTransactionDto.supplierId, 10)
-          : createTransactionDto.supplierId;
-
-      console.log(`Supplier ID: ${supplierId}, Type: ${typeof supplierId}`);
-
-      try {
-        // Try direct database query to check if supplier exists
-        const supplier = await this.supplierRepository.findById(supplierId);
-        console.log(
-          'Supplier search result:',
-          supplier ? 'Found' : 'Not found',
-        );
-
+        supplier = await tx.supplier.findUnique({
+          where: { id: supplierId },
+        });
         if (!supplier) {
           throw new NotFoundException(
             `Supplier with ID ${supplierId} not found`,
           );
         }
-      } catch (error) {
-        console.error('Error finding supplier:', error);
-        throw error;
       }
 
-      if (!createTransactionDto.stockId) {
-        // Find or create stock for this item
-        let stock = await this.stockRepository.findByItemId(
-          createTransactionDto.itemId,
-        );
-        if (!stock) {
-          stock = await this.stockRepository.create({
-            itemId: createTransactionDto.itemId,
-            quantity: 0,
-            refillAlert: false,
-            lastRefilled: new Date(),
-          });
+      // Batch fetch all items and stocks in parallel
+      const itemIds = createTransactionDto.items.map((item) => item.itemId);
+      const [items, stocks] = await Promise.all([
+        tx.item.findMany({
+          where: { id: { in: itemIds } },
+        }),
+        tx.stock.findMany({
+          where: { itemId: { in: itemIds } },
+        }),
+      ]);
+
+      // Create maps for quick lookup
+      const itemMap = new Map(items.map((item) => [item.id, item]));
+      const stockMap = new Map(stocks.map((stock) => [stock.itemId, stock]));
+
+      // Validate all items and calculate total amount
+      let calculatedTotalAmount = 0;
+      const validatedItems = [];
+      const stockUpdates = [];
+      const stocksToCreate = [];
+
+      for (const itemDto of createTransactionDto.items) {
+        // Validate item exists
+        const item = itemMap.get(itemDto.itemId);
+        if (!item) {
+          throw new NotFoundException(
+            `Item with ID ${itemDto.itemId} not found`,
+          );
         }
-        createTransactionDto.stockId = stock.id;
+
+        if (createTransactionDto.type === TransactionType.SELL) {
+          // Check if item is sellable
+          if (!item.isSellable) {
+            throw new BadRequestException(
+              `Item with ID ${itemDto.itemId} is not sellable`,
+            );
+          }
+
+          // Check stock availability
+          const stock = stockMap.get(itemDto.itemId);
+          if (!stock) {
+            throw new NotFoundException(
+              `No stock found for item with ID ${itemDto.itemId}`,
+            );
+          }
+
+          if (stock.quantity < itemDto.quantity) {
+            throw new BadRequestException(
+              `Not enough stock for item ${item.name}. Requested: ${itemDto.quantity}, Available: ${stock.quantity}`,
+            );
+          }
+
+          const totalAmount =
+            itemDto.totalAmount || itemDto.unitPrice * itemDto.quantity;
+          validatedItems.push({
+            ...itemDto,
+            stockId: stock.id,
+            totalAmount,
+          });
+
+          // Prepare stock update
+          stockUpdates.push({
+            id: stock.id,
+            quantity: stock.quantity - itemDto.quantity,
+          });
+        } else if (createTransactionDto.type === TransactionType.BUY) {
+          // Find or prepare stock creation for BUY transactions
+          const stock = stockMap.get(itemDto.itemId);
+          const totalAmount =
+            itemDto.totalAmount || itemDto.unitPrice * itemDto.quantity;
+
+          if (!stock) {
+            // Prepare stock creation
+            const newStock = {
+              itemId: itemDto.itemId,
+              quantity: itemDto.quantity,
+              refillAlert: false,
+              lastRefilled: createTransactionDto.date || new Date(),
+            };
+            stocksToCreate.push(newStock);
+
+            validatedItems.push({
+              ...itemDto,
+              stockId: null, // Will be set after stock creation
+              totalAmount,
+            });
+          } else {
+            validatedItems.push({
+              ...itemDto,
+              stockId: stock.id,
+              totalAmount,
+            });
+
+            // Prepare stock update
+            stockUpdates.push({
+              id: stock.id,
+              quantity: stock.quantity + itemDto.quantity,
+              lastRefilled: createTransactionDto.date || new Date(),
+            });
+          }
+        }
+
+        calculatedTotalAmount +=
+          validatedItems[validatedItems.length - 1].totalAmount;
       }
 
-      const stock = await this.stockRepository.findById(
-        createTransactionDto.stockId,
-      );
-      if (!stock) {
-        throw new NotFoundException(
-          `Stock with ID ${createTransactionDto.stockId} not found`,
-        );
-      }
+      // Use provided total amount or calculated amount
+      const totalAmount =
+        createTransactionDto.totalAmount || calculatedTotalAmount;
 
-      // Update stock
-      await this.stockRepository.updateQuantity(
-        stock.id,
-        stock.quantity + createTransactionDto.quantity,
-      );
-    }
+      // Set transaction date if not provided
+      const transactionDate = createTransactionDto.date || new Date();
 
-    // Calculate total amount if not provided
-    if (!createTransactionDto.totalAmount) {
-      createTransactionDto.totalAmount =
-        createTransactionDto.unitPrice * createTransactionDto.quantity;
-    }
+      // Create the main transaction
+      const transactionData = {
+        type: createTransactionDto.type,
+        customerId: createTransactionDto.customerId,
+        supplierId: createTransactionDto.supplierId,
+        totalAmount,
+        date: transactionDate,
+      };
 
-    // Set transaction date if not provided
-    if (!createTransactionDto.date) {
-      createTransactionDto.date = new Date();
-    }
-
-    // Create transaction
-    const transaction =
-      await this.transactionRepository.create(createTransactionDto);
-
-    // Create debt if needed
-    if (
-      createTransactionDto.type === TransactionType.SELL &&
-      createTransactionDto.createDebt &&
-      createTransactionDto.debt
-    ) {
-      // Link the debt to the transaction and customer
-      createTransactionDto.debt.transactionId = transaction.id;
-
-      if (!createTransactionDto.debt.customerId) {
-        createTransactionDto.debt.customerId = createTransactionDto.customerId;
-      }
-
-      await this.debtRepository.create(createTransactionDto.debt);
-    }
-
-    // Create supplier debt if needed
-    if (
-      createTransactionDto.type === TransactionType.BUY &&
-      createTransactionDto.createSupplierDebt &&
-      createTransactionDto.supplierDebt
-    ) {
-      createTransactionDto.supplierDebt.transactionId = transaction.id;
-      if (!createTransactionDto.supplierDebt.supplierId) {
-        createTransactionDto.supplierDebt.supplierId =
-          createTransactionDto.supplierId;
-      }
-
-      // Convert string dueDate to Date object
-      await this.supplierDebtRepository.create({
-        ...createTransactionDto.supplierDebt,
-        dueDate: new Date(createTransactionDto.supplierDebt.dueDate),
+      const transaction = await tx.transaction.create({
+        data: transactionData,
       });
-    }
 
-    return transaction;
+      // Create missing stocks first (for BUY transactions)
+      const createdStocks = [];
+      if (stocksToCreate.length > 0) {
+        for (const stockData of stocksToCreate) {
+          const createdStock = await tx.stock.create({
+            data: stockData,
+          });
+          createdStocks.push(createdStock);
+        }
+
+        // Update validatedItems with new stock IDs
+        let createdStockIndex = 0;
+        for (let i = 0; i < validatedItems.length; i++) {
+          if (validatedItems[i].stockId === null) {
+            validatedItems[i].stockId = createdStocks[createdStockIndex].id;
+            createdStockIndex++;
+          }
+        }
+      }
+
+      // Batch create transaction items
+      const transactionItemsData = validatedItems.map((item) => ({
+        transactionId: transaction.id,
+        itemId: item.itemId,
+        stockId: item.stockId,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalAmount: item.totalAmount,
+      }));
+
+      await tx.transactionItem.createMany({
+        data: transactionItemsData,
+      });
+
+      // Batch update stock quantities
+      await Promise.all(
+        stockUpdates.map((update) =>
+          tx.stock.update({
+            where: { id: update.id },
+            data: {
+              quantity: update.quantity,
+              ...(update.lastRefilled && { lastRefilled: update.lastRefilled }),
+            },
+          }),
+        ),
+      );
+
+      // Create debt if needed
+      let debt = null;
+      if (
+        createTransactionDto.type === TransactionType.SELL &&
+        createTransactionDto.createDebt &&
+        createTransactionDto.debt
+      ) {
+        // Validate debt amount doesn't exceed total transaction amount
+        if (createTransactionDto.debt.amount > totalAmount) {
+          throw new BadRequestException(
+            `Debt amount (${createTransactionDto.debt.amount}) cannot exceed transaction total amount (${totalAmount})`,
+          );
+        }
+
+        const debtData = {
+          ...createTransactionDto.debt,
+          transactionId: transaction.id,
+          customerId:
+            createTransactionDto.debt.customerId ||
+            createTransactionDto.customerId,
+        };
+        debt = await tx.debt.create({ data: debtData });
+      }
+
+      // Create supplier debt if needed
+      let supplierDebt = null;
+      if (
+        createTransactionDto.type === TransactionType.BUY &&
+        createTransactionDto.createSupplierDebt &&
+        createTransactionDto.supplierDebt
+      ) {
+        // Validate supplier debt amount doesn't exceed total transaction amount
+        if (createTransactionDto.supplierDebt.amount > totalAmount) {
+          throw new BadRequestException(
+            `Supplier debt amount (${createTransactionDto.supplierDebt.amount}) cannot exceed transaction total amount (${totalAmount})`,
+          );
+        }
+
+        const supplierDebtData = {
+          ...createTransactionDto.supplierDebt,
+          transactionId: transaction.id,
+          supplierId:
+            createTransactionDto.supplierDebt.supplierId ||
+            createTransactionDto.supplierId,
+          dueDate: new Date(createTransactionDto.supplierDebt.dueDate),
+        };
+        supplierDebt = await tx.supplierDebt.create({ data: supplierDebtData });
+      }
+
+      // Fetch transaction items with relations for the response
+      const transactionItems = await tx.transactionItem.findMany({
+        where: { transactionId: transaction.id },
+        include: {
+          item: true,
+          stock: true,
+        },
+      });
+
+      // Build the complete response manually (much faster than findById with all relations)
+      return {
+        ...transaction,
+        customer,
+        supplier,
+        debt: debt ? [debt] : [],
+        supplierDebt: supplierDebt ? [supplierDebt] : [],
+        transactionItems,
+      } as Transaction;
+    });
   }
 }

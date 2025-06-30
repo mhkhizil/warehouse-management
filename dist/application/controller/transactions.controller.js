@@ -33,19 +33,14 @@ const TransactionResponseSchema_1 = require("./documentation/transaction/Respons
 const PaginatedTransactionResponseSchema_1 = require("./documentation/transaction/ResponseSchema/PaginatedTransactionResponseSchema");
 const TransactionListResponseSchema_1 = require("./documentation/transaction/ResponseSchema/TransactionListResponseSchema");
 const TransactionReportResponseSchema_1 = require("./documentation/transaction/ResponseSchema/TransactionReportResponseSchema");
-const ApiResponseSchema_1 = require("../../core/common/schema/ApiResponseSchema");
-const buy_from_supplier_use_case_1 = require("../use-cases/transaction/buy-from-supplier.use-case");
-const admin_guard_1 = require("../auth/guard/admin.guard");
-const BuyFromSupplierRequestSchema_1 = require("./documentation/transaction/RequestSchema/BuyFromSupplierRequestSchema");
 let TransactionsController = class TransactionsController {
-    constructor(createTransactionUseCase, deleteTransactionUseCase, getTransactionUseCase, listTransactionsUseCase, updateTransactionUseCase, getTransactionReportUseCase, buyFromSupplierUseCase) {
+    constructor(createTransactionUseCase, deleteTransactionUseCase, getTransactionUseCase, listTransactionsUseCase, updateTransactionUseCase, getTransactionReportUseCase) {
         this.createTransactionUseCase = createTransactionUseCase;
         this.deleteTransactionUseCase = deleteTransactionUseCase;
         this.getTransactionUseCase = getTransactionUseCase;
         this.listTransactionsUseCase = listTransactionsUseCase;
         this.updateTransactionUseCase = updateTransactionUseCase;
         this.getTransactionReportUseCase = getTransactionReportUseCase;
-        this.buyFromSupplierUseCase = buyFromSupplierUseCase;
     }
     async createTransaction(createTransactionDto) {
         const transaction = await this.createTransactionUseCase.execute(createTransactionDto);
@@ -90,8 +85,8 @@ let TransactionsController = class TransactionsController {
         const transactions = await this.getTransactionUseCase.findByCustomerId(customerId);
         return api_response_dto_1.ApiResponseDto.success(transactions.map((transaction) => new transaction_response_dto_1.TransactionResponseDto(transaction)), 'Transactions retrieved successfully');
     }
-    async getTransactionsByItem(itemId) {
-        const transactions = await this.getTransactionUseCase.findByItemId(itemId);
+    async getTransactionsBySupplier(supplierId) {
+        const transactions = await this.getTransactionUseCase.findBySupplierId(supplierId);
         return api_response_dto_1.ApiResponseDto.success(transactions.map((transaction) => new transaction_response_dto_1.TransactionResponseDto(transaction)), 'Transactions retrieved successfully');
     }
     async getTransactionById(id) {
@@ -105,10 +100,6 @@ let TransactionsController = class TransactionsController {
     async deleteTransaction(id) {
         const deleted = await this.deleteTransactionUseCase.execute(id);
         return api_response_dto_1.ApiResponseDto.success(deleted, 'Transaction deleted successfully');
-    }
-    async buyFromSupplier(buyFromSupplierDto) {
-        const transaction = await this.buyFromSupplierUseCase.execute(buyFromSupplierDto);
-        return ApiResponseSchema_1.CoreApiResonseSchema.success(transaction);
     }
 };
 exports.TransactionsController = TransactionsController;
@@ -301,10 +292,10 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TransactionsController.prototype, "getTransactionsByCustomer", null);
 __decorate([
-    (0, common_1.Get)('item/:itemId'),
+    (0, common_1.Get)('supplier/:supplierId'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    (0, swagger_1.ApiOperation)({ summary: 'Get transactions by item ID' }),
-    (0, swagger_1.ApiParam)({ name: 'itemId', type: 'number', description: 'Item ID' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Get transactions by supplier ID' }),
+    (0, swagger_1.ApiParam)({ name: 'supplierId', type: 'number', description: 'Supplier ID' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
         description: 'Transactions retrieved successfully',
@@ -314,11 +305,11 @@ __decorate([
         status: common_1.HttpStatus.UNAUTHORIZED,
         description: 'Unauthorized access',
     }),
-    __param(0, (0, common_1.Param)('itemId', common_1.ParseIntPipe)),
+    __param(0, (0, common_1.Param)('supplierId', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
-], TransactionsController.prototype, "getTransactionsByItem", null);
+], TransactionsController.prototype, "getTransactionsBySupplier", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
@@ -397,40 +388,6 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], TransactionsController.prototype, "deleteTransaction", null);
-__decorate([
-    (0, common_1.Post)('buy-from-supplier'),
-    (0, common_1.UseGuards)(admin_guard_1.AdminGuard),
-    (0, swagger_1.ApiOperation)({ summary: 'Buy items from a supplier and update stock' }),
-    (0, swagger_1.ApiBody)({
-        type: BuyFromSupplierRequestSchema_1.BuyFromSupplierRequestSchema,
-        description: 'Data for buying items from a supplier',
-    }),
-    (0, swagger_1.ApiResponse)({
-        status: common_1.HttpStatus.OK,
-        description: 'Items purchased successfully and stock updated',
-        type: TransactionResponseSchema_1.TransactionResponseSchema,
-    }),
-    (0, swagger_1.ApiResponse)({
-        status: common_1.HttpStatus.BAD_REQUEST,
-        description: 'Invalid input data or validation error',
-    }),
-    (0, swagger_1.ApiResponse)({
-        status: common_1.HttpStatus.NOT_FOUND,
-        description: 'Supplier or item not found',
-    }),
-    (0, swagger_1.ApiResponse)({
-        status: common_1.HttpStatus.UNAUTHORIZED,
-        description: 'User not authenticated',
-    }),
-    (0, swagger_1.ApiResponse)({
-        status: common_1.HttpStatus.FORBIDDEN,
-        description: 'User not authorized to purchase from suppliers',
-    }),
-    __param(0, (0, common_1.Body)(common_1.ValidationPipe)),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], TransactionsController.prototype, "buyFromSupplier", null);
 exports.TransactionsController = TransactionsController = __decorate([
     (0, swagger_1.ApiTags)('Transactions'),
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
@@ -441,7 +398,6 @@ exports.TransactionsController = TransactionsController = __decorate([
         get_transaction_use_case_1.GetTransactionUseCase,
         list_transactions_use_case_1.ListTransactionsUseCase,
         update_transaction_use_case_1.UpdateTransactionUseCase,
-        get_transaction_report_use_case_1.GetTransactionReportUseCase,
-        buy_from_supplier_use_case_1.BuyFromSupplierUseCase])
+        get_transaction_report_use_case_1.GetTransactionReportUseCase])
 ], TransactionsController);
 //# sourceMappingURL=transactions.controller.js.map

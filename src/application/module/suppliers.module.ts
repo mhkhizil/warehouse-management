@@ -14,7 +14,6 @@ import { DeleteSupplierDebtUseCase } from '../use-cases/supplier-debt/delete-sup
 import { MarkSupplierDebtSettledUseCase } from '../use-cases/supplier-debt/mark-supplier-debt-settled.use-case';
 import { MarkSupplierDebtAlertSentUseCase } from '../use-cases/supplier-debt/mark-supplier-debt-alert-sent.use-case';
 import { FindOverdueSupplierDebtsUseCase } from '../use-cases/supplier-debt/find-overdue-supplier-debts.use-case';
-import { BuyFromSupplierUseCase } from '../use-cases/transaction/buy-from-supplier.use-case';
 import { RepositoriesModule } from '../../infrastructure/persistence/repositories/repositories.module';
 
 @Module({
@@ -34,8 +33,7 @@ import { RepositoriesModule } from '../../infrastructure/persistence/repositorie
     MarkSupplierDebtSettledUseCase,
     MarkSupplierDebtAlertSentUseCase,
     FindOverdueSupplierDebtsUseCase,
-    BuyFromSupplierUseCase,
   ],
-  exports: [BuyFromSupplierUseCase],
+  exports: [],
 })
 export class SuppliersModule {}

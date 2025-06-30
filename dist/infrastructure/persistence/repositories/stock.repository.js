@@ -29,9 +29,13 @@ let StockRepository = class StockRepository {
             where: { id },
             include: {
                 item: true,
-                transactions: {
+                transactionItems: {
                     take: 5,
-                    orderBy: { date: 'desc' },
+                    orderBy: { createdAt: 'desc' },
+                    include: {
+                        item: true,
+                        transaction: true,
+                    },
                 },
             },
         });
@@ -63,9 +67,13 @@ let StockRepository = class StockRepository {
             where: { itemId },
             include: {
                 item: true,
-                transactions: {
+                transactionItems: {
                     take: 5,
-                    orderBy: { date: 'desc' },
+                    orderBy: { createdAt: 'desc' },
+                    include: {
+                        item: true,
+                        transaction: true,
+                    },
                 },
             },
         });

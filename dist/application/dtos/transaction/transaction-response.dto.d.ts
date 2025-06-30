@@ -1,28 +1,30 @@
-import { Customer, Debt, Item, Stock, Transaction, TransactionType } from '@prisma/client';
+import { Customer, Debt, Supplier, SupplierDebt, Transaction, TransactionType, TransactionItem } from '@prisma/client';
 import { CustomerResponseDto } from '../customer/customer-response.dto';
 import { DebtResponseDto } from '../debt/debt-response.dto';
-import { ItemResponseDto } from '../item/item-response.dto';
-import { StockResponseDto } from '../stock/stock-response.dto';
+import { SupplierResponseDto } from '../supplier/supplier-response.dto';
+import { SupplierDebtResponseDto } from '../supplier-debt/supplier-debt-response.dto';
+import { TransactionItemResponseDto } from './transaction-item-response.dto';
+interface TransactionWithRelations extends Transaction {
+    customer?: Customer;
+    supplier?: Supplier;
+    debt?: Debt[];
+    supplierDebt?: SupplierDebt[];
+    transactionItems?: TransactionItem[];
+}
 export declare class TransactionResponseDto implements Partial<Transaction> {
     id: number;
     type: TransactionType;
-    itemId: number;
-    item?: ItemResponseDto;
-    stockId: number | null;
-    stock?: StockResponseDto;
     customerId: number | null;
     customer?: CustomerResponseDto;
-    quantity: number;
-    unitPrice: number;
+    supplierId: number | null;
+    supplier?: SupplierResponseDto;
+    transactionItems?: TransactionItemResponseDto[];
     totalAmount: number;
     date: Date;
     debt?: DebtResponseDto[];
+    supplierDebt?: SupplierDebtResponseDto[];
     createdAt: Date;
     updatedAt: Date;
-    constructor(partial: Partial<Transaction> & {
-        item?: Partial<Item>;
-        stock?: Partial<Stock>;
-        customer?: Partial<Customer>;
-        debt?: Partial<Debt>[];
-    });
+    constructor(partial: Partial<TransactionWithRelations>);
 }
+export {};

@@ -17,16 +17,23 @@ export class TransactionRepository implements ITransactionRepository {
       debt,
       createSupplierDebt,
       supplierDebt,
+      items,
       ...transactionData
     } = data as any;
 
     return this.prisma.transaction.create({
       data: transactionData,
       include: {
-        item: true,
         customer: true,
-        stock: true,
+        supplier: true,
         debt: true,
+        supplierDebt: true,
+        transactionItems: {
+          include: {
+            item: true,
+            stock: true,
+          },
+        },
       },
     });
   }
@@ -35,10 +42,16 @@ export class TransactionRepository implements ITransactionRepository {
     return this.prisma.transaction.findUnique({
       where: { id },
       include: {
-        item: true,
         customer: true,
-        stock: true,
+        supplier: true,
         debt: true,
+        supplierDebt: true,
+        transactionItems: {
+          include: {
+            item: true,
+            stock: true,
+          },
+        },
       },
     });
   }
@@ -46,9 +59,16 @@ export class TransactionRepository implements ITransactionRepository {
   async findAll(): Promise<Transaction[]> {
     return this.prisma.transaction.findMany({
       include: {
-        item: true,
         customer: true,
-        stock: true,
+        supplier: true,
+        debt: true,
+        supplierDebt: true,
+        transactionItems: {
+          include: {
+            item: true,
+            stock: true,
+          },
+        },
       },
       orderBy: { date: 'desc' },
     });
@@ -59,10 +79,16 @@ export class TransactionRepository implements ITransactionRepository {
       where: { id },
       data,
       include: {
-        item: true,
         customer: true,
-        stock: true,
+        supplier: true,
         debt: true,
+        supplierDebt: true,
+        transactionItems: {
+          include: {
+            item: true,
+            stock: true,
+          },
+        },
       },
     });
   }
@@ -78,21 +104,35 @@ export class TransactionRepository implements ITransactionRepository {
     return this.prisma.transaction.findMany({
       where: { customerId },
       include: {
-        item: true,
-        stock: true,
+        customer: true,
+        supplier: true,
         debt: true,
+        supplierDebt: true,
+        transactionItems: {
+          include: {
+            item: true,
+            stock: true,
+          },
+        },
       },
       orderBy: { date: 'desc' },
     });
   }
 
-  async findByItemId(itemId: number): Promise<Transaction[]> {
+  async findBySupplierId(supplierId: number): Promise<Transaction[]> {
     return this.prisma.transaction.findMany({
-      where: { itemId },
+      where: { supplierId },
       include: {
-        item: true,
         customer: true,
-        stock: true,
+        supplier: true,
+        debt: true,
+        supplierDebt: true,
+        transactionItems: {
+          include: {
+            item: true,
+            stock: true,
+          },
+        },
       },
       orderBy: { date: 'desc' },
     });
@@ -103,9 +143,8 @@ export class TransactionRepository implements ITransactionRepository {
   ): Promise<{ transactions: Transaction[]; total: number }> {
     const {
       type,
-      itemId,
       customerId,
-      stockId,
+      supplierId,
       startDate,
       endDate,
       minAmount,
@@ -116,9 +155,8 @@ export class TransactionRepository implements ITransactionRepository {
 
     const where: Prisma.TransactionWhereInput = {
       ...(type && { type }),
-      ...(itemId && { itemId }),
       ...(customerId && { customerId }),
-      ...(stockId && { stockId }),
+      ...(supplierId && { supplierId }),
       ...((startDate || endDate) && {
         date: {
           ...(startDate && { gte: startDate }),
@@ -140,10 +178,16 @@ export class TransactionRepository implements ITransactionRepository {
         take,
         orderBy: { date: 'desc' },
         include: {
-          item: true,
           customer: true,
-          stock: true,
+          supplier: true,
           debt: true,
+          supplierDebt: true,
+          transactionItems: {
+            include: {
+              item: true,
+              stock: true,
+            },
+          },
         },
       }),
       this.prisma.transaction.count({ where }),
@@ -165,8 +209,13 @@ export class TransactionRepository implements ITransactionRepository {
         },
       },
       include: {
-        item: true,
         customer: true,
+        debt: true,
+        transactionItems: {
+          include: {
+            item: true,
+          },
+        },
       },
       orderBy: { date: 'desc' },
     });
@@ -192,7 +241,14 @@ export class TransactionRepository implements ITransactionRepository {
         },
       },
       include: {
-        item: true,
+        customer: true,
+        supplier: true,
+        supplierDebt: true,
+        transactionItems: {
+          include: {
+            item: true,
+          },
+        },
       },
       orderBy: { date: 'desc' },
     });

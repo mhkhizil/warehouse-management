@@ -19,6 +19,7 @@ const get_transaction_report_use_case_1 = require("../use-cases/transaction/get-
 const repository_tokens_1 = require("../../domain/constants/repository.tokens");
 const transaction_repository_1 = require("../../infrastructure/persistence/repositories/transaction.repository");
 const suppliers_module_1 = require("./suppliers.module");
+const prisma_service_1 = require("../../infrastructure/persistence/prisma/prisma.service");
 let TransactionsModule = class TransactionsModule {
 };
 exports.TransactionsModule = TransactionsModule;
@@ -29,18 +30,20 @@ exports.TransactionsModule = TransactionsModule = __decorate([
         providers: [
             {
                 provide: create_transaction_use_case_1.CreateTransactionUseCase,
-                useFactory: (transactionRepo, itemRepo, stockRepo, customerRepo, debtRepo, supplierRepo, supplierDebtRepo) => {
+                useFactory: (transactionRepo, transactionItemRepo, itemRepo, stockRepo, customerRepo, debtRepo, supplierRepo, supplierDebtRepo, prisma) => {
                     console.log('Creating CreateTransactionUseCase with supplier repo:', !!supplierRepo);
-                    return new create_transaction_use_case_1.CreateTransactionUseCase(transactionRepo, itemRepo, stockRepo, customerRepo, debtRepo, supplierRepo, supplierDebtRepo);
+                    return new create_transaction_use_case_1.CreateTransactionUseCase(transactionRepo, transactionItemRepo, itemRepo, stockRepo, customerRepo, debtRepo, supplierRepo, supplierDebtRepo, prisma);
                 },
                 inject: [
                     repository_tokens_1.TRANSACTION_REPOSITORY,
+                    repository_tokens_1.TRANSACTION_ITEM_REPOSITORY,
                     repository_tokens_1.ITEM_REPOSITORY,
                     repository_tokens_1.STOCK_REPOSITORY,
                     repository_tokens_1.CUSTOMER_REPOSITORY,
                     repository_tokens_1.DEBT_REPOSITORY,
                     repository_tokens_1.SUPPLIER_REPOSITORY,
                     repository_tokens_1.SUPPLIER_DEBT_REPOSITORY,
+                    prisma_service_1.PrismaService,
                 ],
             },
             {

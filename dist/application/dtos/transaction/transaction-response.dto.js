@@ -15,22 +15,26 @@ const client_1 = require("@prisma/client");
 const class_transformer_1 = require("class-transformer");
 const customer_response_dto_1 = require("../customer/customer-response.dto");
 const debt_response_dto_1 = require("../debt/debt-response.dto");
-const item_response_dto_1 = require("../item/item-response.dto");
-const stock_response_dto_1 = require("../stock/stock-response.dto");
+const supplier_response_dto_1 = require("../supplier/supplier-response.dto");
+const supplier_debt_response_dto_1 = require("../supplier-debt/supplier-debt-response.dto");
+const transaction_item_response_dto_1 = require("./transaction-item-response.dto");
 class TransactionResponseDto {
     constructor(partial) {
         Object.assign(this, partial);
-        if (partial.item) {
-            this.item = new item_response_dto_1.ItemResponseDto(partial.item);
-        }
-        if (partial.stock) {
-            this.stock = new stock_response_dto_1.StockResponseDto(partial.stock);
-        }
         if (partial.customer) {
             this.customer = new customer_response_dto_1.CustomerResponseDto(partial.customer);
         }
-        if (partial.debt && Array.isArray(partial.debt)) {
+        if (partial.supplier) {
+            this.supplier = new supplier_response_dto_1.SupplierResponseDto(partial.supplier);
+        }
+        if (partial.debt) {
             this.debt = partial.debt.map((debt) => new debt_response_dto_1.DebtResponseDto(debt));
+        }
+        if (partial.supplierDebt) {
+            this.supplierDebt = partial.supplierDebt.map((supplierDebt) => new supplier_debt_response_dto_1.SupplierDebtResponseDto(supplierDebt));
+        }
+        if (partial.transactionItems) {
+            this.transactionItems = partial.transactionItems.map((item) => new transaction_item_response_dto_1.TransactionItemResponseDto(item));
         }
     }
 }
@@ -48,31 +52,6 @@ __decorate([
     __metadata("design:type", String)
 ], TransactionResponseDto.prototype, "type", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Item ID', example: 1 }),
-    __metadata("design:type", Number)
-], TransactionResponseDto.prototype, "itemId", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'Item information',
-        type: item_response_dto_1.ItemResponseDto,
-    }),
-    (0, class_transformer_1.Type)(() => item_response_dto_1.ItemResponseDto),
-    __metadata("design:type", item_response_dto_1.ItemResponseDto)
-], TransactionResponseDto.prototype, "item", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Stock ID', example: 1, required: false }),
-    __metadata("design:type", Number)
-], TransactionResponseDto.prototype, "stockId", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'Stock information',
-        type: stock_response_dto_1.StockResponseDto,
-        required: false,
-    }),
-    (0, class_transformer_1.Type)(() => stock_response_dto_1.StockResponseDto),
-    __metadata("design:type", stock_response_dto_1.StockResponseDto)
-], TransactionResponseDto.prototype, "stock", void 0);
-__decorate([
     (0, swagger_1.ApiProperty)({ description: 'Customer ID', example: 1, required: false }),
     __metadata("design:type", Number)
 ], TransactionResponseDto.prototype, "customerId", void 0);
@@ -86,13 +65,26 @@ __decorate([
     __metadata("design:type", customer_response_dto_1.CustomerResponseDto)
 ], TransactionResponseDto.prototype, "customer", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Quantity', example: 5 }),
+    (0, swagger_1.ApiProperty)({ description: 'Supplier ID', example: 1, required: false }),
     __metadata("design:type", Number)
-], TransactionResponseDto.prototype, "quantity", void 0);
+], TransactionResponseDto.prototype, "supplierId", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Unit price', example: 199.99 }),
-    __metadata("design:type", Number)
-], TransactionResponseDto.prototype, "unitPrice", void 0);
+    (0, swagger_1.ApiProperty)({
+        description: 'Supplier information',
+        type: supplier_response_dto_1.SupplierResponseDto,
+        required: false,
+    }),
+    (0, class_transformer_1.Type)(() => supplier_response_dto_1.SupplierResponseDto),
+    __metadata("design:type", supplier_response_dto_1.SupplierResponseDto)
+], TransactionResponseDto.prototype, "supplier", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Transaction items',
+        type: [transaction_item_response_dto_1.TransactionItemResponseDto],
+    }),
+    (0, class_transformer_1.Type)(() => transaction_item_response_dto_1.TransactionItemResponseDto),
+    __metadata("design:type", Array)
+], TransactionResponseDto.prototype, "transactionItems", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Total amount', example: 999.95 }),
     __metadata("design:type", Number)
@@ -113,6 +105,15 @@ __decorate([
     (0, class_transformer_1.Type)(() => debt_response_dto_1.DebtResponseDto),
     __metadata("design:type", Array)
 ], TransactionResponseDto.prototype, "debt", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Associated supplier debt records',
+        type: [supplier_debt_response_dto_1.SupplierDebtResponseDto],
+        required: false,
+    }),
+    (0, class_transformer_1.Type)(() => supplier_debt_response_dto_1.SupplierDebtResponseDto),
+    __metadata("design:type", Array)
+], TransactionResponseDto.prototype, "supplierDebt", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Creation timestamp',

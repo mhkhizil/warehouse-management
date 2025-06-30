@@ -25,12 +25,12 @@ export declare class SupplierDebtsController {
         createdAt: Date;
         updatedAt: Date;
         remarks: string | null;
+        transactionId: number | null;
         supplierId: number;
         amount: number;
         dueDate: Date;
         isSettled: boolean;
         alertSent: boolean;
-        transactionId: number | null;
     }>>;
     findAll(filter: SupplierDebtFilterDto): Promise<CoreApiResonseSchema<{
         debts: import(".prisma/client").SupplierDebt[];
@@ -41,96 +41,96 @@ export declare class SupplierDebtsController {
         createdAt: Date;
         updatedAt: Date;
         remarks: string | null;
+        transactionId: number | null;
         supplierId: number;
         amount: number;
         dueDate: Date;
         isSettled: boolean;
         alertSent: boolean;
-        transactionId: number | null;
     }[]>>;
     findOverdueDebts(): Promise<CoreApiResonseSchema<{
         id: number;
         createdAt: Date;
         updatedAt: Date;
         remarks: string | null;
+        transactionId: number | null;
         supplierId: number;
         amount: number;
         dueDate: Date;
         isSettled: boolean;
         alertSent: boolean;
-        transactionId: number | null;
     }[]>>;
     findBySupplier(supplierId: number): Promise<CoreApiResonseSchema<{
         id: number;
         createdAt: Date;
         updatedAt: Date;
         remarks: string | null;
+        transactionId: number | null;
         supplierId: number;
         amount: number;
         dueDate: Date;
         isSettled: boolean;
         alertSent: boolean;
-        transactionId: number | null;
     }[]>>;
     findByTransaction(transactionId: number): Promise<CoreApiResonseSchema<{
         id: number;
         createdAt: Date;
         updatedAt: Date;
         remarks: string | null;
+        transactionId: number | null;
         supplierId: number;
         amount: number;
         dueDate: Date;
         isSettled: boolean;
         alertSent: boolean;
-        transactionId: number | null;
     }>>;
     findOne(id: number): Promise<CoreApiResonseSchema<{
         id: number;
         createdAt: Date;
         updatedAt: Date;
         remarks: string | null;
+        transactionId: number | null;
         supplierId: number;
         amount: number;
         dueDate: Date;
         isSettled: boolean;
         alertSent: boolean;
-        transactionId: number | null;
     }>>;
     update(id: number, updateSupplierDebtDto: UpdateSupplierDebtDto): Promise<CoreApiResonseSchema<{
         id: number;
         createdAt: Date;
         updatedAt: Date;
         remarks: string | null;
+        transactionId: number | null;
         supplierId: number;
         amount: number;
         dueDate: Date;
         isSettled: boolean;
         alertSent: boolean;
-        transactionId: number | null;
     }>>;
     settleDebt(id: number): Promise<CoreApiResonseSchema<{
         id: number;
         createdAt: Date;
         updatedAt: Date;
         remarks: string | null;
+        transactionId: number | null;
         supplierId: number;
         amount: number;
         dueDate: Date;
         isSettled: boolean;
         alertSent: boolean;
-        transactionId: number | null;
     }>>;
     markAlertSent(id: number): Promise<CoreApiResonseSchema<{
         id: number;
         createdAt: Date;
         updatedAt: Date;
         remarks: string | null;
+        transactionId: number | null;
         supplierId: number;
         amount: number;
         dueDate: Date;
         isSettled: boolean;
         alertSent: boolean;
-        transactionId: number | null;
     }>>;
     remove(id: number): Promise<CoreApiResonseSchema<boolean>>;
 }

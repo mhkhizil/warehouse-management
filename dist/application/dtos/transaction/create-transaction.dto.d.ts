@@ -1,14 +1,12 @@
 import { TransactionType } from '@prisma/client';
 import { CreateDebtDto } from '../debt/create-debt.dto';
 import { CreateSupplierDebtDto } from '../supplier-debt/create-supplier-debt.dto';
+import { CreateTransactionItemDto } from './create-transaction-item.dto';
 export declare class CreateTransactionDto {
     type: TransactionType;
-    itemId: number;
-    stockId?: number;
     customerId?: number;
     supplierId?: number;
-    quantity: number;
-    unitPrice: number;
+    items: CreateTransactionItemDto[];
     totalAmount?: number;
     date?: Date;
     createDebt?: boolean;

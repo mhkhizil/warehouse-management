@@ -90,7 +90,7 @@ model Stock {
   refillAlert   Boolean     // Threshold for stock refill alert
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  transactions  Transaction[] // Link to buy/sell transactions
+  transactionItems TransactionItem[] // Link to buy/sell transaction items
 }
 
 // Item model for main items and their sub-items
@@ -106,7 +106,7 @@ model Item {
   parentItem    Item?     @relation("SubItems", fields: [parentItemId], references: [id])
   subItems      Item[]    @relation("SubItems") // Sub-items linked to main item
   stock         Stock[]
-  transactions  Transaction[]
+  transactionItems TransactionItem[]
   reportsAsMostSold Report[] // Add this relation field for reports
   isDeleted     Boolean   @default(false) // Flag for soft delete
   createdAt     DateTime  @default(now())
@@ -148,20 +148,31 @@ model Debt {
 model Transaction {
   id            Int       @id @default(autoincrement())
   type          TransactionType // Buy or Sell
-  itemId        Int
-  item          Item      @relation(fields: [itemId], references: [id])
-  stockId       Int?
-  stock         Stock?    @relation(fields: [stockId], references: [id])
   customerId    Int?
   customer      Customer? @relation(fields: [customerId], references: [id])
   supplierId    Int?
   supplier      Supplier? @relation(fields: [supplierId], references: [id])
-  quantity      Int
-  unitPrice     Float
   totalAmount   Float
   debt          Debt[]
   supplierDebt  SupplierDebt[]
+  transactionItems TransactionItem[] // Line items for this transaction
   date          DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// TransactionItem model for individual line items in a transaction
+model TransactionItem {
+  id            Int       @id @default(autoincrement())
+  transactionId Int
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  itemId        Int
+  item          Item      @relation(fields: [itemId], references: [id])
+  stockId       Int?
+  stock         Stock?    @relation(fields: [stockId], references: [id])
+  quantity      Int
+  unitPrice     Float
+  totalAmount   Float     // quantity * unitPrice
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }

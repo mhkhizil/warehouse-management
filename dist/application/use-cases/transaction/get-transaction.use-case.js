@@ -34,9 +34,9 @@ let GetTransactionUseCase = GetTransactionUseCase_1 = class GetTransactionUseCas
         this.logger.log(`Fetching transactions for customer ID: ${customerId}`);
         return this.transactionRepository.findByCustomerId(customerId);
     }
-    async findByItemId(itemId) {
-        this.logger.log(`Fetching transactions for item ID: ${itemId}`);
-        return this.transactionRepository.findByItemId(itemId);
+    async findBySupplierId(supplierId) {
+        this.logger.log(`Fetching transactions for supplier ID: ${supplierId}`);
+        return this.transactionRepository.findBySupplierId(supplierId);
     }
 };
 exports.GetTransactionUseCase = GetTransactionUseCase;

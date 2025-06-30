@@ -2,23 +2,26 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   Customer,
   Debt,
-  Item,
-  Stock,
+  Supplier,
+  SupplierDebt,
   Transaction,
   TransactionType,
+  TransactionItem,
 } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { CustomerResponseDto } from '../customer/customer-response.dto';
 import { DebtResponseDto } from '../debt/debt-response.dto';
-import { ItemResponseDto } from '../item/item-response.dto';
-import { StockResponseDto } from '../stock/stock-response.dto';
+import { SupplierResponseDto } from '../supplier/supplier-response.dto';
+import { SupplierDebtResponseDto } from '../supplier-debt/supplier-debt-response.dto';
+import { TransactionItemResponseDto } from './transaction-item-response.dto';
 
 // Define interface with relations
 interface TransactionWithRelations extends Transaction {
-  item?: Item;
-  stock?: Stock;
   customer?: Customer;
+  supplier?: Supplier;
   debt?: Debt[];
+  supplierDebt?: SupplierDebt[];
+  transactionItems?: TransactionItem[];
 }
 
 export class TransactionResponseDto implements Partial<Transaction> {
@@ -32,27 +35,6 @@ export class TransactionResponseDto implements Partial<Transaction> {
   })
   type: TransactionType;
 
-  @ApiProperty({ description: 'Item ID', example: 1 })
-  itemId: number;
-
-  @ApiProperty({
-    description: 'Item information',
-    type: ItemResponseDto,
-  })
-  @Type(() => ItemResponseDto)
-  item?: ItemResponseDto;
-
-  @ApiProperty({ description: 'Stock ID', example: 1, required: false })
-  stockId: number | null;
-
-  @ApiProperty({
-    description: 'Stock information',
-    type: StockResponseDto,
-    required: false,
-  })
-  @Type(() => StockResponseDto)
-  stock?: StockResponseDto;
-
   @ApiProperty({ description: 'Customer ID', example: 1, required: false })
   customerId: number | null;
 
@@ -64,11 +46,23 @@ export class TransactionResponseDto implements Partial<Transaction> {
   @Type(() => CustomerResponseDto)
   customer?: CustomerResponseDto;
 
-  @ApiProperty({ description: 'Quantity', example: 5 })
-  quantity: number;
+  @ApiProperty({ description: 'Supplier ID', example: 1, required: false })
+  supplierId: number | null;
 
-  @ApiProperty({ description: 'Unit price', example: 199.99 })
-  unitPrice: number;
+  @ApiProperty({
+    description: 'Supplier information',
+    type: SupplierResponseDto,
+    required: false,
+  })
+  @Type(() => SupplierResponseDto)
+  supplier?: SupplierResponseDto;
+
+  @ApiProperty({
+    description: 'Transaction items',
+    type: [TransactionItemResponseDto],
+  })
+  @Type(() => TransactionItemResponseDto)
+  transactionItems?: TransactionItemResponseDto[];
 
   @ApiProperty({ description: 'Total amount', example: 999.95 })
   totalAmount: number;
@@ -88,6 +82,14 @@ export class TransactionResponseDto implements Partial<Transaction> {
   debt?: DebtResponseDto[];
 
   @ApiProperty({
+    description: 'Associated supplier debt records',
+    type: [SupplierDebtResponseDto],
+    required: false,
+  })
+  @Type(() => SupplierDebtResponseDto)
+  supplierDebt?: SupplierDebtResponseDto[];
+
+  @ApiProperty({
     description: 'Creation timestamp',
     example: '2023-01-01T00:00:00Z',
   })
@@ -99,30 +101,31 @@ export class TransactionResponseDto implements Partial<Transaction> {
   })
   updatedAt: Date;
 
-  constructor(
-    partial: Partial<Transaction> & {
-      item?: Partial<Item>;
-      stock?: Partial<Stock>;
-      customer?: Partial<Customer>;
-      debt?: Partial<Debt>[];
-    },
-  ) {
+  constructor(partial: Partial<TransactionWithRelations>) {
     Object.assign(this, partial);
-
-    if (partial.item) {
-      this.item = new ItemResponseDto(partial.item);
-    }
-
-    if (partial.stock) {
-      this.stock = new StockResponseDto(partial.stock);
-    }
 
     if (partial.customer) {
       this.customer = new CustomerResponseDto(partial.customer);
     }
 
-    if (partial.debt && Array.isArray(partial.debt)) {
+    if (partial.supplier) {
+      this.supplier = new SupplierResponseDto(partial.supplier);
+    }
+
+    if (partial.debt) {
       this.debt = partial.debt.map((debt) => new DebtResponseDto(debt));
+    }
+
+    if (partial.supplierDebt) {
+      this.supplierDebt = partial.supplierDebt.map(
+        (supplierDebt) => new SupplierDebtResponseDto(supplierDebt),
+      );
+    }
+
+    if (partial.transactionItems) {
+      this.transactionItems = partial.transactionItems.map(
+        (item) => new TransactionItemResponseDto(item),
+      );
     }
   }
 }

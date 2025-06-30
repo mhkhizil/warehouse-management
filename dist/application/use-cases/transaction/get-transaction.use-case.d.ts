@@ -6,5 +6,5 @@ export declare class GetTransactionUseCase {
     constructor(transactionRepository: ITransactionRepository);
     execute(id: number): Promise<Transaction>;
     findByCustomerId(customerId: number): Promise<Transaction[]>;
-    findByItemId(itemId: number): Promise<Transaction[]>;
+    findBySupplierId(supplierId: number): Promise<Transaction[]>;
 }
