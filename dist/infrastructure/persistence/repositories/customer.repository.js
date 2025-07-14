@@ -85,6 +85,20 @@ let CustomerRepository = class CustomerRepository {
             },
         });
     }
+    async findByEmailForValidation(email) {
+        return this.prisma.customer.findFirst({
+            where: {
+                email,
+            },
+        });
+    }
+    async findByPhoneForValidation(phone) {
+        return this.prisma.customer.findFirst({
+            where: {
+                phone,
+            },
+        });
+    }
     async findWithDebts() {
         return this.prisma.customer.findMany({
             where: {

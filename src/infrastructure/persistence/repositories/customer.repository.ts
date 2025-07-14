@@ -85,6 +85,23 @@ export class CustomerRepository implements ICustomerRepository {
     });
   }
 
+  // New validation methods that don't filter by isActive
+  async findByEmailForValidation(email: string): Promise<Customer | null> {
+    return this.prisma.customer.findFirst({
+      where: {
+        email,
+      },
+    });
+  }
+
+  async findByPhoneForValidation(phone: string): Promise<Customer | null> {
+    return this.prisma.customer.findFirst({
+      where: {
+        phone,
+      },
+    });
+  }
+
   async findWithDebts(): Promise<Customer[]> {
     return this.prisma.customer.findMany({
       where: {

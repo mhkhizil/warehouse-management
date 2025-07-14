@@ -30,10 +30,15 @@ export class UpdateCustomerUseCase {
     // Check if updating email and it's already in use by another customer
     if (updateCustomerDto.email && updateCustomerDto.email !== customer.email) {
       const existingCustomerWithEmail =
-        await this.customerRepository.findByEmail(updateCustomerDto.email);
+        await this.customerRepository.findByEmailForValidation(
+          updateCustomerDto.email,
+        );
       if (existingCustomerWithEmail && existingCustomerWithEmail.id !== id) {
+        const customerStatus = existingCustomerWithEmail.isActive
+          ? 'active'
+          : 'inactive';
         this.logger.warn(
-          `Email ${updateCustomerDto.email} already in use by another customer`,
+          `Email ${updateCustomerDto.email} already in use by another customer (customer is ${customerStatus}, ID: ${existingCustomerWithEmail.id})`,
         );
         throw new BadRequestException(
           `Email ${updateCustomerDto.email} already in use by another customer`,
@@ -44,10 +49,15 @@ export class UpdateCustomerUseCase {
     // Check if updating phone and it's already in use by another customer
     if (updateCustomerDto.phone && updateCustomerDto.phone !== customer.phone) {
       const existingCustomerWithPhone =
-        await this.customerRepository.findByPhone(updateCustomerDto.phone);
+        await this.customerRepository.findByPhoneForValidation(
+          updateCustomerDto.phone,
+        );
       if (existingCustomerWithPhone && existingCustomerWithPhone.id !== id) {
+        const customerStatus = existingCustomerWithPhone.isActive
+          ? 'active'
+          : 'inactive';
         this.logger.warn(
-          `Phone ${updateCustomerDto.phone} already in use by another customer`,
+          `Phone ${updateCustomerDto.phone} already in use by another customer (customer is ${customerStatus}, ID: ${existingCustomerWithPhone.id})`,
         );
         throw new BadRequestException(
           `Phone ${updateCustomerDto.phone} already in use by another customer`,
