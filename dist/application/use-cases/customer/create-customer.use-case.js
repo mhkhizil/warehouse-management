@@ -20,16 +20,22 @@ let CreateCustomerUseCase = CreateCustomerUseCase_1 = class CreateCustomerUseCas
     async execute(createCustomerDto) {
         this.logger.log(`Creating customer with name: ${createCustomerDto.name}`);
         if (createCustomerDto.email) {
-            const existingCustomerWithEmail = await this.customerRepository.findByEmail(createCustomerDto.email);
+            const existingCustomerWithEmail = await this.customerRepository.findByEmailForValidation(createCustomerDto.email);
             if (existingCustomerWithEmail) {
-                this.logger.warn(`Customer with email ${createCustomerDto.email} already exists`);
+                const customerStatus = existingCustomerWithEmail.isActive
+                    ? 'active'
+                    : 'inactive';
+                this.logger.warn(`Customer with email ${createCustomerDto.email} already exists (customer is ${customerStatus}, ID: ${existingCustomerWithEmail.id})`);
                 throw new common_1.BadRequestException(`Customer with email ${createCustomerDto.email} already exists`);
             }
         }
         if (createCustomerDto.phone) {
-            const existingCustomerWithPhone = await this.customerRepository.findByPhone(createCustomerDto.phone);
+            const existingCustomerWithPhone = await this.customerRepository.findByPhoneForValidation(createCustomerDto.phone);
             if (existingCustomerWithPhone) {
-                this.logger.warn(`Customer with phone ${createCustomerDto.phone} already exists`);
+                const customerStatus = existingCustomerWithPhone.isActive
+                    ? 'active'
+                    : 'inactive';
+                this.logger.warn(`Customer with phone ${createCustomerDto.phone} already exists (customer is ${customerStatus}, ID: ${existingCustomerWithPhone.id})`);
                 throw new common_1.BadRequestException(`Customer with phone ${createCustomerDto.phone} already exists`);
             }
         }

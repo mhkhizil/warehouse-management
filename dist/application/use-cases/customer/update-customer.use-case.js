@@ -25,16 +25,22 @@ let UpdateCustomerUseCase = UpdateCustomerUseCase_1 = class UpdateCustomerUseCas
             throw new common_1.NotFoundException(`Customer with ID ${id} not found`);
         }
         if (updateCustomerDto.email && updateCustomerDto.email !== customer.email) {
-            const existingCustomerWithEmail = await this.customerRepository.findByEmail(updateCustomerDto.email);
+            const existingCustomerWithEmail = await this.customerRepository.findByEmailForValidation(updateCustomerDto.email);
             if (existingCustomerWithEmail && existingCustomerWithEmail.id !== id) {
-                this.logger.warn(`Email ${updateCustomerDto.email} already in use by another customer`);
+                const customerStatus = existingCustomerWithEmail.isActive
+                    ? 'active'
+                    : 'inactive';
+                this.logger.warn(`Email ${updateCustomerDto.email} already in use by another customer (customer is ${customerStatus}, ID: ${existingCustomerWithEmail.id})`);
                 throw new common_1.BadRequestException(`Email ${updateCustomerDto.email} already in use by another customer`);
             }
         }
         if (updateCustomerDto.phone && updateCustomerDto.phone !== customer.phone) {
-            const existingCustomerWithPhone = await this.customerRepository.findByPhone(updateCustomerDto.phone);
+            const existingCustomerWithPhone = await this.customerRepository.findByPhoneForValidation(updateCustomerDto.phone);
             if (existingCustomerWithPhone && existingCustomerWithPhone.id !== id) {
-                this.logger.warn(`Phone ${updateCustomerDto.phone} already in use by another customer`);
+                const customerStatus = existingCustomerWithPhone.isActive
+                    ? 'active'
+                    : 'inactive';
+                this.logger.warn(`Phone ${updateCustomerDto.phone} already in use by another customer (customer is ${customerStatus}, ID: ${existingCustomerWithPhone.id})`);
                 throw new common_1.BadRequestException(`Phone ${updateCustomerDto.phone} already in use by another customer`);
             }
         }

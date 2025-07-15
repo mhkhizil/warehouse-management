@@ -14,6 +14,8 @@ export type CustomerFilter = {
 export interface ICustomerRepository extends IBaseRepository<Customer, number> {
   findByEmail(email: string): Promise<Customer | null>;
   findByPhone(phone: string): Promise<Customer | null>;
+  findByEmailForValidation(email: string): Promise<Customer | null>;
+  findByPhoneForValidation(phone: string): Promise<Customer | null>;
   findWithDebts(): Promise<Customer[]>;
   findWithFilters(
     filter: CustomerFilter,
