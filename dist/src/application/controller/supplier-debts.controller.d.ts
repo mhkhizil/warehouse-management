@@ -22,9 +22,9 @@ export declare class SupplierDebtsController {
     constructor(createSupplierDebtUseCase: CreateSupplierDebtUseCase, getSupplierDebtUseCase: GetSupplierDebtUseCase, updateSupplierDebtUseCase: UpdateSupplierDebtUseCase, listSupplierDebtsUseCase: ListSupplierDebtsUseCase, deleteSupplierDebtUseCase: DeleteSupplierDebtUseCase, markSupplierDebtSettledUseCase: MarkSupplierDebtSettledUseCase, markSupplierDebtAlertSentUseCase: MarkSupplierDebtAlertSentUseCase, findOverdueSupplierDebtsUseCase: FindOverdueSupplierDebtsUseCase);
     create(createSupplierDebtDto: CreateSupplierDebtDto): Promise<CoreApiResonseSchema<{
         id: number;
+        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
-        remarks: string | null;
         transactionId: number | null;
         supplierId: number;
         amount: number;
@@ -38,9 +38,9 @@ export declare class SupplierDebtsController {
     }>>;
     findAllDebts(): Promise<CoreApiResonseSchema<{
         id: number;
+        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
-        remarks: string | null;
         transactionId: number | null;
         supplierId: number;
         amount: number;
@@ -50,9 +50,9 @@ export declare class SupplierDebtsController {
     }[]>>;
     findOverdueDebts(): Promise<CoreApiResonseSchema<{
         id: number;
+        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
-        remarks: string | null;
         transactionId: number | null;
         supplierId: number;
         amount: number;
@@ -62,9 +62,9 @@ export declare class SupplierDebtsController {
     }[]>>;
     findBySupplier(supplierId: number): Promise<CoreApiResonseSchema<{
         id: number;
+        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
-        remarks: string | null;
         transactionId: number | null;
         supplierId: number;
         amount: number;
@@ -74,9 +74,9 @@ export declare class SupplierDebtsController {
     }[]>>;
     findByTransaction(transactionId: number): Promise<CoreApiResonseSchema<{
         id: number;
+        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
-        remarks: string | null;
         transactionId: number | null;
         supplierId: number;
         amount: number;
@@ -86,9 +86,9 @@ export declare class SupplierDebtsController {
     }>>;
     findOne(id: number): Promise<CoreApiResonseSchema<{
         id: number;
+        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
-        remarks: string | null;
         transactionId: number | null;
         supplierId: number;
         amount: number;
@@ -98,9 +98,9 @@ export declare class SupplierDebtsController {
     }>>;
     update(id: number, updateSupplierDebtDto: UpdateSupplierDebtDto): Promise<CoreApiResonseSchema<{
         id: number;
+        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
-        remarks: string | null;
         transactionId: number | null;
         supplierId: number;
         amount: number;
@@ -110,9 +110,9 @@ export declare class SupplierDebtsController {
     }>>;
     settleDebt(id: number): Promise<CoreApiResonseSchema<{
         id: number;
+        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
-        remarks: string | null;
         transactionId: number | null;
         supplierId: number;
         amount: number;
@@ -122,9 +122,9 @@ export declare class SupplierDebtsController {
     }>>;
     markAlertSent(id: number): Promise<CoreApiResonseSchema<{
         id: number;
+        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
-        remarks: string | null;
         transactionId: number | null;
         supplierId: number;
         amount: number;

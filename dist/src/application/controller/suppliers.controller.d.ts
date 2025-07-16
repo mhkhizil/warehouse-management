@@ -17,11 +17,11 @@ export declare class SuppliersController {
     create(createSupplierDto: CreateSupplierDto): Promise<CoreApiResonseSchema<{
         name: string;
         id: number;
-        email: string | null;
-        phone: string | null;
+        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
-        remarks: string | null;
+        email: string | null;
+        phone: string | null;
         address: string | null;
         isActive: boolean;
         contactPerson: string | null;
@@ -33,11 +33,11 @@ export declare class SuppliersController {
     findAllSuppliers(): Promise<CoreApiResonseSchema<{
         name: string;
         id: number;
-        email: string | null;
-        phone: string | null;
+        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
-        remarks: string | null;
+        email: string | null;
+        phone: string | null;
         address: string | null;
         isActive: boolean;
         contactPerson: string | null;
@@ -45,11 +45,11 @@ export declare class SuppliersController {
     findWithDebts(): Promise<CoreApiResonseSchema<{
         name: string;
         id: number;
-        email: string | null;
-        phone: string | null;
+        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
-        remarks: string | null;
+        email: string | null;
+        phone: string | null;
         address: string | null;
         isActive: boolean;
         contactPerson: string | null;
@@ -57,11 +57,11 @@ export declare class SuppliersController {
     findByEmail(email: string): Promise<CoreApiResonseSchema<{
         name: string;
         id: number;
-        email: string | null;
-        phone: string | null;
+        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
-        remarks: string | null;
+        email: string | null;
+        phone: string | null;
         address: string | null;
         isActive: boolean;
         contactPerson: string | null;
@@ -69,11 +69,11 @@ export declare class SuppliersController {
     findByPhone(phone: string): Promise<CoreApiResonseSchema<{
         name: string;
         id: number;
-        email: string | null;
-        phone: string | null;
+        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
-        remarks: string | null;
+        email: string | null;
+        phone: string | null;
         address: string | null;
         isActive: boolean;
         contactPerson: string | null;
@@ -81,11 +81,11 @@ export declare class SuppliersController {
     findOne(id: number): Promise<CoreApiResonseSchema<{
         name: string;
         id: number;
-        email: string | null;
-        phone: string | null;
+        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
-        remarks: string | null;
+        email: string | null;
+        phone: string | null;
         address: string | null;
         isActive: boolean;
         contactPerson: string | null;
@@ -93,11 +93,11 @@ export declare class SuppliersController {
     update(id: number, updateSupplierDto: UpdateSupplierDto): Promise<CoreApiResonseSchema<{
         name: string;
         id: number;
-        email: string | null;
-        phone: string | null;
+        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
-        remarks: string | null;
+        email: string | null;
+        phone: string | null;
         address: string | null;
         isActive: boolean;
         contactPerson: string | null;
