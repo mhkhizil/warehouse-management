@@ -10,11 +10,9 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
-const users_module_1 = require("./application/module/users.module");
 const throttler_1 = require("@nestjs/throttler");
 const core_1 = require("@nestjs/core");
-const auth_module_1 = require("./application/module/auth.module");
-const prisma_module_1 = require("./application/module/prisma.module");
+const prisma_module_1 = require("./infrastructure/persistence/prisma/prisma.module");
 const items_module_1 = require("./application/module/items.module");
 const stocks_module_1 = require("./application/module/stocks.module");
 const customers_module_1 = require("./application/module/customers.module");
@@ -27,8 +25,6 @@ exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            users_module_1.UsersModule,
-            auth_module_1.AuthModule,
             prisma_module_1.PrismaModule,
             items_module_1.ItemsModule,
             stocks_module_1.StocksModule,
