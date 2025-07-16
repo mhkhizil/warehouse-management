@@ -14,11 +14,25 @@ export class PrismaService
     super({
       log:
         process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+      // Optimize for serverless environments
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL,
+        },
+      },
     });
   }
 
   async onModuleInit() {
-    await this.$connect();
+    try {
+      await this.$connect();
+    } catch (error) {
+      console.error('Failed to connect to database:', error);
+      // In serverless environments, we might want to continue without throwing
+      if (process.env.NODE_ENV !== 'production') {
+        throw error;
+      }
+    }
   }
 
   async onModuleDestroy() {
