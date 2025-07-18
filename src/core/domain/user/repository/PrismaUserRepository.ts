@@ -82,6 +82,7 @@ export class PrismaUserRepository implements IUserRepository {
         data: {
           username: userData.name,
           email: userData.email,
+          phone: userData.phone,
           password: userData.password,
           role: userData.role as unknown as Role,
           updatedAt: new Date(),

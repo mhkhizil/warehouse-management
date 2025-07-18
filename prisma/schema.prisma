@@ -20,7 +20,7 @@ model User {
   id          Int       @id @default(autoincrement())
   username    String    @unique
   password    String    // Hashed password
-  email       String?   @unique
+  email       String    @unique
   phone       String    @unique
   role        Role      @default(STAFF) // Enum for permissions
   createdAt   DateTime  @default(now())
