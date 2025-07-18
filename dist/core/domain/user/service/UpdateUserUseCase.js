@@ -21,6 +21,26 @@ let UpdateUserUseCase = class UpdateUserUseCase {
         this.userRepository = userRepository;
     }
     async execute(data) {
+        const currentUser = await this.userRepository.find({ id: data?.id });
+        if (!currentUser) {
+            throw new common_1.BadRequestException('User not found');
+        }
+        if (data?.phone && data.phone !== currentUser.phone) {
+            const existingUserWithPhone = await this.userRepository.find({
+                phone: data.phone,
+            });
+            if (existingUserWithPhone && existingUserWithPhone.id !== data.id) {
+                throw new common_1.BadRequestException('Phone number already in use by another user');
+            }
+        }
+        if (data?.email && data.email !== currentUser.email) {
+            const existingUserWithEmail = await this.userRepository.find({
+                email: data.email,
+            });
+            if (existingUserWithEmail && existingUserWithEmail.id !== data.id) {
+                throw new common_1.BadRequestException('Email already in use by another user');
+            }
+        }
         const newUser = new User_1.UserEntity(data?.id, data?.name, data?.email, data?.phone, data?.role);
         const createdUser = await this.userRepository.update(newUser);
         return createdUser;
