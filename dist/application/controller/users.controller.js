@@ -81,7 +81,7 @@ let UsersController = class UsersController {
             if (!user || user.role !== UserEnum_1.UserRole.ADMIN) {
                 throw new common_1.ForbiddenException('Access denied. Only administrators can view user list.');
             }
-            const filter = new UserFilter_1.UserFilter(params.name, params.role, parseInt(params?.take.toString()), parseInt(params?.skip.toString()));
+            const filter = new UserFilter_1.UserFilter(params.name, params.role, params.email, params.phone, params.sortBy, params.sortOrder, parseInt(params?.take.toString()), parseInt(params?.skip.toString()));
             return ApiResponseSchema_1.CoreApiResonseSchema.success(await this.getUserListWithFilter.execute(filter));
         }
         catch (error) {

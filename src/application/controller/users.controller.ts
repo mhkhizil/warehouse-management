@@ -40,7 +40,11 @@ import { CreateUserResonseSchema } from './documentation/user/ResponseSchema/Cre
 import { GetUserUseCase } from 'src/core/domain/user/service/GetUserUsecase';
 import { GetUserResonseSchema } from './documentation/user/ResponseSchema/GetUserResponseSchema';
 import { CreateUserSchema } from './documentation/user/RequsetSchema/CreateUserRequestSchema';
-import { UserFilter } from '@src/core/domain/user/dto/UserFilter';
+import {
+  UserFilter,
+  UserSortBy,
+  SortOrder,
+} from '@src/core/domain/user/dto/UserFilter';
 import { GetUserListWithFilterUseCase } from '@src/core/domain/user/service/GetUserListUsecase';
 import { UserFilterSchama } from './documentation/user/RequsetSchema/UserFilterSchema';
 import { GetUserListResponseSchema } from './documentation/user/ResponseSchema/GetUserListResponseSchema';
@@ -146,6 +150,10 @@ export class UsersController {
       const filter = new UserFilter(
         params.name,
         params.role,
+        params.email,
+        params.phone,
+        params.sortBy,
+        params.sortOrder,
         parseInt(params?.take.toString()),
         parseInt(params?.skip.toString()),
       );

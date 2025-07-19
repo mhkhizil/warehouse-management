@@ -161,9 +161,26 @@ let PrismaUserRepository = class PrismaUserRepository {
         try {
             const where = {};
             if (filter.name)
-                where.username = { contains: filter.name };
+                where.username = { contains: filter.name, mode: 'insensitive' };
+            if (filter.email)
+                where.email = { contains: filter.email, mode: 'insensitive' };
+            if (filter.phone)
+                where.phone = { contains: filter.phone };
             if (filter.role)
                 where.role = filter.role;
+            const orderBy = {};
+            const sortField = filter.sortBy || 'createdAt';
+            const sortOrder = filter.sortOrder || 'desc';
+            const fieldMapping = {
+                name: 'username',
+                email: 'email',
+                phone: 'phone',
+                role: 'role',
+                createdAt: 'createdAt',
+                updatedAt: 'updatedAt',
+            };
+            const prismaFieldName = fieldMapping[sortField] || 'createdAt';
+            orderBy[prismaFieldName] = sortOrder;
             const totalCounts = await this.prisma.user.count({
                 where,
             });
@@ -171,6 +188,7 @@ let PrismaUserRepository = class PrismaUserRepository {
                 where,
                 take: filter.take,
                 skip: filter.skip,
+                orderBy: orderBy,
             });
             return {
                 users: users.map((product) => User_1.UserEntity.toEntity(product)),
