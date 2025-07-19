@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
 const CreateUserUsecase_1 = require("../../core/domain/user/service/CreateUserUsecase");
 const CreateUserDto_1 = require("../../core/domain/user/dto/CreateUserDto");
 const jwt_guard_1 = require("../auth/guard/jwt.guard");
@@ -34,8 +35,9 @@ const PrismaService_1 = require("../../core/common/prisma/PrismaService");
 const UpdateProfileUseCase_1 = require("../../core/domain/user/service/UpdateProfileUseCase");
 const UpdateProfileRequestSchema_1 = require("./documentation/user/RequsetSchema/UpdateProfileRequestSchema");
 const DeleteUserUseCase_1 = require("../../core/domain/user/service/DeleteUserUseCase");
+const LocalFileUploadService_1 = require("../../core/common/file-upload/LocalFileUploadService");
 let UsersController = class UsersController {
-    constructor(getUserUseCase, createUserUseCase, getUserListWithFilter, updateUserUseCase, updateProfileUseCase, deleteUserUseCase, prisma) {
+    constructor(getUserUseCase, createUserUseCase, getUserListWithFilter, updateUserUseCase, updateProfileUseCase, deleteUserUseCase, prisma, localFileUploadService) {
         this.getUserUseCase = getUserUseCase;
         this.createUserUseCase = createUserUseCase;
         this.getUserListWithFilter = getUserListWithFilter;
@@ -43,6 +45,7 @@ let UsersController = class UsersController {
         this.updateProfileUseCase = updateProfileUseCase;
         this.deleteUserUseCase = deleteUserUseCase;
         this.prisma = prisma;
+        this.localFileUploadService = localFileUploadService;
     }
     async findOne(req) {
         try {
@@ -81,7 +84,7 @@ let UsersController = class UsersController {
             if (!user || user.role !== UserEnum_1.UserRole.ADMIN) {
                 throw new common_1.ForbiddenException('Access denied. Only administrators can view user list.');
             }
-            const filter = new UserFilter_1.UserFilter(params.name, params.role, parseInt(params?.take.toString()), parseInt(params?.skip.toString()));
+            const filter = new UserFilter_1.UserFilter(params.name, params.role, params.email, params.phone, params.sortBy, params.sortOrder, parseInt(params?.take.toString()), parseInt(params?.skip.toString()));
             return ApiResponseSchema_1.CoreApiResonseSchema.success(await this.getUserListWithFilter.execute(filter));
         }
         catch (error) {
@@ -159,6 +162,41 @@ let UsersController = class UsersController {
             throw new common_1.BadRequestException('Error deleting user: ' + error.message);
         }
     }
+    async uploadProfileImage(file, req) {
+        try {
+            const userId = req.user?.user?.id;
+            if (!userId) {
+                throw new common_1.ForbiddenException('Authentication required');
+            }
+            if (!file) {
+                throw new common_1.BadRequestException('No file uploaded');
+            }
+            const profileImageUrl = await this.localFileUploadService.uploadProfileImage(file);
+            const currentUser = await this.prisma.user.findUnique({
+                where: { id: Number(userId) },
+                select: { profileImageUrl: true },
+            });
+            if (currentUser?.profileImageUrl) {
+                await this.localFileUploadService.deleteProfileImage(currentUser.profileImageUrl);
+            }
+            await this.prisma.user.update({
+                where: { id: Number(userId) },
+                data: { profileImageUrl },
+            });
+            return ApiResponseSchema_1.CoreApiResonseSchema.success({
+                profileImageUrl,
+                message: 'Profile image uploaded successfully',
+            });
+        }
+        catch (error) {
+            if (error instanceof common_1.ForbiddenException ||
+                error instanceof common_1.BadRequestException ||
+                error instanceof common_1.UnauthorizedException) {
+                throw error;
+            }
+            throw new common_1.BadRequestException('Error uploading profile image: ' + error.message);
+        }
+    }
 };
 exports.UsersController = UsersController;
 __decorate([
@@ -234,6 +272,47 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "deleteUser", null);
+__decorate([
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, common_1.Post)('upload-profile-image'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('profileImage')),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
+    (0, swagger_1.ApiBody)({
+        description: 'Profile image upload',
+        schema: {
+            type: 'object',
+            properties: {
+                profileImage: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+        },
+    }),
+    (0, swagger_1.ApiResponse)({
+        description: 'Profile image uploaded successfully',
+        schema: {
+            type: 'object',
+            properties: {
+                success: { type: 'boolean' },
+                data: {
+                    type: 'object',
+                    properties: {
+                        profileImageUrl: { type: 'string' },
+                        message: { type: 'string' },
+                    },
+                },
+            },
+        },
+    }),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.UploadedFile)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "uploadProfileImage", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)('User'),
     (0, swagger_1.ApiTags)('users'),
@@ -243,6 +322,7 @@ exports.UsersController = UsersController = __decorate([
         UpdateUserUseCase_1.UpdateUserUseCase,
         UpdateProfileUseCase_1.UpdateProfileUseCase,
         DeleteUserUseCase_1.DeleteUserUseCase,
-        PrismaService_1.PrismaService])
+        PrismaService_1.PrismaService,
+        LocalFileUploadService_1.LocalFileUploadService])
 ], UsersController);
 //# sourceMappingURL=users.controller.js.map

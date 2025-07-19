@@ -172,8 +172,30 @@ export class PrismaUserRepository implements IUserRepository {
     try {
       const where: any = {};
 
-      if (filter.name) where.username = { contains: filter.name };
+      if (filter.name)
+        where.username = { contains: filter.name, mode: 'insensitive' };
+      if (filter.email)
+        where.email = { contains: filter.email, mode: 'insensitive' };
+      if (filter.phone) where.phone = { contains: filter.phone };
       if (filter.role) where.role = filter.role as unknown as Role;
+
+      // Build order by clause
+      const orderBy: any = {};
+      const sortField = filter.sortBy || 'createdAt';
+      const sortOrder = filter.sortOrder || 'desc';
+
+      // Map UserSortBy enum values to Prisma field names
+      const fieldMapping = {
+        name: 'username',
+        email: 'email',
+        phone: 'phone',
+        role: 'role',
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt',
+      };
+
+      const prismaFieldName = fieldMapping[sortField] || 'createdAt';
+      orderBy[prismaFieldName] = sortOrder;
 
       const totalCounts = await this.prisma.user.count({
         where,
@@ -183,6 +205,7 @@ export class PrismaUserRepository implements IUserRepository {
         where,
         take: filter.take,
         skip: filter.skip,
+        orderBy: orderBy,
       });
 
       return {

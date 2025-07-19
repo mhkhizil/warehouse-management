@@ -6,9 +6,13 @@ const app_module_1 = require("./app.module");
 const swagger_1 = require("@nestjs/swagger");
 const global_exception_filter_1 = require("./application/exception/global-exception.filter");
 const common_1 = require("@nestjs/common");
+const path_1 = require("path");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const logger = new common_1.Logger('Main');
+    app.useStaticAssets((0, path_1.join)(__dirname, '..', 'uploads'), {
+        prefix: '/uploads',
+    });
     const config = new swagger_1.DocumentBuilder()
         .setTitle('Car auto parts warehouse management system')
         .setDescription('This is WMS REST API')

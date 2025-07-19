@@ -9,6 +9,7 @@ import { PrismaService } from '@src/core/common/prisma/PrismaService';
 import { UpdateProfileUseCase } from '@src/core/domain/user/service/UpdateProfileUseCase';
 import { UpdateProfileRequestSchema } from './documentation/user/RequsetSchema/UpdateProfileRequestSchema';
 import { DeleteUserUseCase } from '@src/core/domain/user/service/DeleteUserUseCase';
+import { LocalFileUploadService } from '@src/core/common/file-upload/LocalFileUploadService';
 export declare class UsersController {
     private getUserUseCase;
     private createUserUseCase;
@@ -17,7 +18,8 @@ export declare class UsersController {
     private updateProfileUseCase;
     private deleteUserUseCase;
     private prisma;
-    constructor(getUserUseCase: GetUserUseCase, createUserUseCase: CreateUserUseCase, getUserListWithFilter: GetUserListWithFilterUseCase, updateUserUseCase: UpdateUserUseCase, updateProfileUseCase: UpdateProfileUseCase, deleteUserUseCase: DeleteUserUseCase, prisma: PrismaService);
+    private localFileUploadService;
+    constructor(getUserUseCase: GetUserUseCase, createUserUseCase: CreateUserUseCase, getUserListWithFilter: GetUserListWithFilterUseCase, updateUserUseCase: UpdateUserUseCase, updateProfileUseCase: UpdateProfileUseCase, deleteUserUseCase: DeleteUserUseCase, prisma: PrismaService, localFileUploadService: LocalFileUploadService);
     findOne(req: any): Promise<CoreApiResonseSchema<any>>;
     findOneById(req: any, params: {
         id: string;
@@ -31,4 +33,5 @@ export declare class UsersController {
     }, req: any): Promise<CoreApiResonseSchema<any>>;
     updateProfile(profileData: UpdateProfileRequestSchema, req: any): Promise<CoreApiResonseSchema<any>>;
     deleteUser(id: string, req: any): Promise<CoreApiResonseSchema<any>>;
+    uploadProfileImage(file: any, req: any): Promise<CoreApiResonseSchema<any>>;
 }
