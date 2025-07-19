@@ -19,6 +19,7 @@ const UpdateUserUseCase_1 = require("../../core/domain/user/service/UpdateUserUs
 const PrismaService_1 = require("../../core/common/prisma/PrismaService");
 const UpdateProfileUseCase_1 = require("../../core/domain/user/service/UpdateProfileUseCase");
 const DeleteUserUseCase_1 = require("../../core/domain/user/service/DeleteUserUseCase");
+const LocalFileUploadService_1 = require("../../core/common/file-upload/LocalFileUploadService");
 let UsersModule = class UsersModule {
 };
 exports.UsersModule = UsersModule;
@@ -34,6 +35,7 @@ exports.UsersModule = UsersModule = __decorate([
             UpdateProfileUseCase_1.UpdateProfileUseCase,
             DeleteUserUseCase_1.DeleteUserUseCase,
             PrismaService_1.PrismaService,
+            LocalFileUploadService_1.LocalFileUploadService,
             {
                 provide: IUserRepositoryPort_1.IUserRepository,
                 useClass: PrismaUserRepository_1.PrismaUserRepository,

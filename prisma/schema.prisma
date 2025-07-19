@@ -22,6 +22,7 @@ model User {
   password    String    // Hashed password
   email       String    @unique
   phone       String    @unique
+  profileImageUrl String?  // Profile image path
   role        Role      @default(STAFF) // Enum for permissions
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

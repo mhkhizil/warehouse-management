@@ -14,6 +14,7 @@ import { UpdateUserUseCase } from '@src/core/domain/user/service/UpdateUserUseCa
 import { PrismaService } from '@src/core/common/prisma/PrismaService';
 import { UpdateProfileUseCase } from '@src/core/domain/user/service/UpdateProfileUseCase';
 import { DeleteUserUseCase } from '@src/core/domain/user/service/DeleteUserUseCase';
+import { LocalFileUploadService } from '@src/core/common/file-upload/LocalFileUploadService';
 
 @Module({
   controllers: [UsersController],
@@ -26,6 +27,7 @@ import { DeleteUserUseCase } from '@src/core/domain/user/service/DeleteUserUseCa
     UpdateProfileUseCase,
     DeleteUserUseCase,
     PrismaService,
+    LocalFileUploadService,
     {
       provide: IUserRepository,
       useClass: PrismaUserRepository,

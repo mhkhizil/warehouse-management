@@ -10,6 +10,8 @@ export class UserEntity {
 
   phone: string;
 
+  profileImageUrl: string;
+
   role: UserRole;
 
   password: string;
@@ -25,6 +27,7 @@ export class UserEntity {
     phone: string,
     role: UserRole,
     password?: string,
+    profileImageUrl?: string,
     createdDate?: Date,
     updatedDate?: Date,
   ) {
@@ -34,6 +37,7 @@ export class UserEntity {
     this.phone = phone;
     this.role = role;
     this.password = password;
+    this.profileImageUrl = profileImageUrl;
     this.createdDate = createdDate;
     this.updatedDate = updatedDate;
   }
@@ -46,6 +50,7 @@ export class UserEntity {
       user?.phone,
       user?.role as unknown as UserRole,
       user?.password,
+      user?.profileImageUrl,
       user?.createdAt,
       user?.updatedAt,
     );
