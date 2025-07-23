@@ -26,6 +26,7 @@ const CreateUserUsecase_1 = require("../../core/domain/user/service/CreateUserUs
 const CreateUserDto_1 = require("../../core/domain/user/dto/CreateUserDto");
 const jwt_guard_1 = require("../auth/guard/jwt.guard");
 const admin_guard_1 = require("../auth/guard/admin.guard");
+const skip_csrf_decorator_1 = require("../../core/common/decorator/skip-csrf.decorator");
 let AuthController = class AuthController {
     constructor(authService, createUserUseCase) {
         this.authService = authService;
@@ -48,6 +49,7 @@ let AuthController = class AuthController {
 exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Post)('login'),
+    (0, skip_csrf_decorator_1.SkipCsrf)(),
     (0, common_1.UseGuards)(local_guard_1.LocalGuard),
     (0, swagger_1.ApiBody)({ type: AuthRequestSchema_1.AuthRequestSchema }),
     (0, swagger_1.ApiResponse)({ type: AuthResponseSchema_1.AuthResponseSchema }),

@@ -1,9 +1,9 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './application/module/users.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './application/module/auth.module';
 import { PrismaModule } from './application/module/prisma.module';
 import { ItemsModule } from './application/module/items.module';
@@ -12,6 +12,9 @@ import { CustomersModule } from './application/module/customers.module';
 import { TransactionsModule } from './application/module/transactions.module';
 import { DebtsModule } from './application/module/debts.module';
 import { SuppliersModule } from './application/module/suppliers.module';
+import { CsrfModule } from './core/common/module/csrf.module';
+import { CsrfMiddleware } from './core/common/middleware/csrf.middleware';
+import { CsrfGuard } from './core/common/guard/csrf.guard';
 
 @Module({
   imports: [
@@ -24,6 +27,7 @@ import { SuppliersModule } from './application/module/suppliers.module';
     TransactionsModule,
     DebtsModule,
     SuppliersModule,
+    CsrfModule,
     ThrottlerModule.forRoot([
       {
         name: 'short',
@@ -39,6 +43,14 @@ import { SuppliersModule } from './application/module/suppliers.module';
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    {
+      provide: APP_GUARD,
+      useClass: CsrfGuard,
+    },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CsrfMiddleware).forRoutes('*');
+  }
+}
