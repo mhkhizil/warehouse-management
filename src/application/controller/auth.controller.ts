@@ -27,6 +27,7 @@ import { PrismaClient } from '@prisma/client';
 import { CreateUserDto } from 'src/core/domain/user/dto/CreateUserDto';
 import { JwtGuard } from '../auth/guard/jwt.guard';
 import { AdminGuard } from '../auth/guard/admin.guard';
+import { SkipCsrf } from 'src/core/common/decorator/skip-csrf.decorator';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -37,6 +38,7 @@ export class AuthController {
   ) {}
 
   @Post('login')
+  @SkipCsrf()
   @UseGuards(LocalGuard)
   @ApiBody({ type: AuthRequestSchema })
   @ApiResponse({ type: AuthResponseSchema })

@@ -5,10 +5,33 @@ import { GlobalExceptionFilter } from './application/exception/global-exception.
 import { Logger } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const logger = new Logger('Main');
+
+  // Security headers with custom configuration for uploads
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: {
+        policy: 'cross-origin',
+      },
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", 'data:', 'blob:', 'http:', 'https:'],
+          connectSrc: ["'self'"],
+          fontSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          mediaSrc: ["'self'"],
+          frameSrc: ["'none'"],
+        },
+      },
+    }),
+  );
 
   // Serve static files from uploads directory
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
@@ -23,12 +46,18 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
+
+  // Configure CORS with more restrictive settings
   app.enableCors({
-    origin: '*',
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || [
+      'http://localhost:3000',
+      'http://localhost:3001',
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
   });
+
   app.useGlobalFilters(new GlobalExceptionFilter(logger));
 
   // Only listen on port in development
