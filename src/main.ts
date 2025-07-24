@@ -11,7 +11,7 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const logger = new Logger('Main');
 
-  // Security headers with custom configuration for uploads
+  // Security headers with comprehensive CSP configuration
   app.use(
     helmet({
       crossOriginResourcePolicy: {
@@ -22,14 +22,32 @@ async function bootstrap() {
           defaultSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           scriptSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'blob:', 'http:', 'https:'],
+          imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
           connectSrc: ["'self'"],
-          fontSrc: ["'self'"],
+          fontSrc: ["'self'", 'https:'],
           objectSrc: ["'none'"],
           mediaSrc: ["'self'"],
           frameSrc: ["'none'"],
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          frameAncestors: ["'none'"],
+          upgradeInsecureRequests: [],
+          workerSrc: ["'self'"],
+          manifestSrc: ["'self'"],
+          prefetchSrc: ["'self'"],
+          navigateTo: ["'self'"],
         },
+        reportOnly: false,
       },
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      },
+      noSniff: true,
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      xssFilter: true,
+      frameguard: { action: 'deny' },
     }),
   );
 
