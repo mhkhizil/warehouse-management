@@ -122,6 +122,36 @@ export class CustomerRepository implements ICustomerRepository {
     });
   }
 
+  async findDeleted(): Promise<Customer[]> {
+    return this.prisma.customer.findMany({
+      where: {
+        isActive: false,
+      },
+      include: {
+        debt: true,
+      },
+    });
+  }
+
+  async findByIdForRestore(id: number): Promise<Customer | null> {
+    return this.prisma.customer.findUnique({
+      where: { id },
+      include: {
+        debt: true,
+      },
+    });
+  }
+
+  async restore(id: number): Promise<Customer> {
+    return this.prisma.customer.update({
+      where: { id },
+      data: { isActive: true },
+      include: {
+        debt: true,
+      },
+    });
+  }
+
   async findWithFilters(
     filter: CustomerFilter,
   ): Promise<{ customers: Customer[]; total: number }> {

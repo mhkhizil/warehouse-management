@@ -26,4 +26,9 @@ export class ListCustomersUseCase {
     this.logger.log('Fetching all customers');
     return await this.customerRepository.findAll();
   }
+
+  async findDeleted(): Promise<Customer[]> {
+    this.logger.log('Fetching all soft-deleted customers');
+    return await this.customerRepository.findDeleted();
+  }
 }
