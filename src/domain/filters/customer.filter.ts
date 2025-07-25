@@ -4,6 +4,7 @@ export class CustomerFilter extends PaginationFilter {
   name?: string;
   phone?: string;
   email?: string;
+  address?: string;
   hasDebts?: boolean;
   isActive?: boolean;
   createdAtFrom?: Date;

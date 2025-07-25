@@ -104,6 +104,11 @@ export class CustomersController {
     description: 'Filter by email address',
   })
   @ApiQuery({
+    name: 'address',
+    required: false,
+    description: 'Filter by customer address',
+  })
+  @ApiQuery({
     name: 'hasDebt',
     required: false,
     enum: ['true', 'false'],
@@ -129,15 +134,17 @@ export class CustomersController {
     @Query('name') name?: string,
     @Query('phone') phone?: string,
     @Query('email') email?: string,
+    @Query('address') address?: string,
     @Query('hasDebt') hasDebt?: string,
     @Query('isActive') isActive?: string,
   ): Promise<ApiResponseDto<PaginatedResponseDto<CustomerResponseDto>>> {
     const filter = new CustomerFilter({
-      skip: paginationQuery.skip,
-      take: paginationQuery.take,
+      skip: Number(paginationQuery.skip) || 0,
+      take: Number(paginationQuery.take) || 10,
       name,
       phone,
       email,
+      address,
       hasDebts:
         hasDebt === 'true' ? true : hasDebt === 'false' ? false : undefined,
       isActive:
@@ -153,8 +160,8 @@ export class CustomersController {
     const paginatedResponse = new PaginatedResponseDto<CustomerResponseDto>(
       customerDtos,
       total,
-      paginationQuery.skip,
-      paginationQuery.take,
+      Number(paginationQuery.skip) || 0,
+      Number(paginationQuery.take) || 10,
     );
 
     return ApiResponseDto.success(

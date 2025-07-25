@@ -129,6 +129,7 @@ export class CustomerRepository implements ICustomerRepository {
       name,
       phone,
       email,
+      address,
       hasDebt,
       skip = 0,
       take = 10,
@@ -145,6 +146,9 @@ export class CustomerRepository implements ICustomerRepository {
       }),
       ...(email && {
         email: { contains: email, mode: Prisma.QueryMode.insensitive },
+      }),
+      ...(address && {
+        address: { contains: address, mode: Prisma.QueryMode.insensitive },
       }),
       ...(hasDebt !== undefined &&
         hasDebt && {
