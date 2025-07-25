@@ -5,6 +5,7 @@ export type CustomerFilter = {
   name?: string;
   phone?: string;
   email?: string;
+  address?: string;
   hasDebt?: boolean;
   isActive?: boolean;
   skip?: number;
