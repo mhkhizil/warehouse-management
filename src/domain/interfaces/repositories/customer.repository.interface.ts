@@ -18,6 +18,9 @@ export interface ICustomerRepository extends IBaseRepository<Customer, number> {
   findByEmailForValidation(email: string): Promise<Customer | null>;
   findByPhoneForValidation(phone: string): Promise<Customer | null>;
   findWithDebts(): Promise<Customer[]>;
+  findDeleted(): Promise<Customer[]>;
+  findByIdForRestore(id: number): Promise<Customer | null>;
+  restore(id: number): Promise<Customer>;
   findWithFilters(
     filter: CustomerFilter,
   ): Promise<{ customers: Customer[]; total: number }>;

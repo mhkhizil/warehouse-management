@@ -74,4 +74,27 @@ export class UpdateCustomerUseCase {
     this.logger.log(`Customer with ID ${id} updated successfully`);
     return updatedCustomer;
   }
+
+  async restore(id: number): Promise<Customer> {
+    this.logger.log(`Restoring customer with ID: ${id}`);
+
+    // Check if customer exists (including soft-deleted ones)
+    const customer = await this.customerRepository.findByIdForRestore(id);
+    if (!customer) {
+      this.logger.warn(`Customer with ID ${id} not found`);
+      throw new NotFoundException(`Customer with ID ${id} not found`);
+    }
+
+    // Check if customer is already active
+    if (customer.isActive) {
+      this.logger.warn(`Customer with ID ${id} is already active`);
+      throw new BadRequestException(`Customer with ID ${id} is already active`);
+    }
+
+    // Restore customer
+    const restoredCustomer = await this.customerRepository.restore(id);
+
+    this.logger.log(`Customer with ID ${id} restored successfully`);
+    return restoredCustomer;
+  }
 }

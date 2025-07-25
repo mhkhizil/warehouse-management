@@ -220,6 +220,30 @@ export class CustomersController {
     );
   }
 
+  @Get('deleted')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all soft-deleted customers' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Soft-deleted customers retrieved successfully',
+    type: CustomerListResponseSchema,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized access',
+  })
+  async getDeletedCustomers(): Promise<ApiResponseDto<CustomerResponseDto[]>> {
+    const customers = await this.listCustomersUseCase.findDeleted();
+    const customerDtos = customers.map(
+      (customer) => new CustomerResponseDto(customer),
+    );
+    return ApiResponseDto.success(
+      customerDtos,
+      'Soft-deleted customers retrieved successfully',
+    );
+  }
+
   @Get(':id')
   @UseGuards(JwtGuard)
   @ApiBearerAuth()
@@ -371,5 +395,33 @@ export class CustomersController {
   ): Promise<ApiResponseDto<boolean>> {
     const deleted = await this.deleteCustomerUseCase.execute(id);
     return ApiResponseDto.success(deleted, 'Customer deleted successfully');
+  }
+
+  @Put(':id/restore')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Restore a soft-deleted customer' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Customer ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Customer restored successfully',
+    type: CustomerResponseSchema,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Customer not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized access',
+  })
+  async restoreCustomer(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<ApiResponseDto<CustomerResponseDto>> {
+    const customer = await this.updateCustomerUseCase.restore(id);
+    return ApiResponseDto.success(
+      new CustomerResponseDto(customer),
+      'Customer restored successfully',
+    );
   }
 }
