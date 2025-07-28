@@ -1,5 +1,16 @@
-import { IsOptional, IsString, IsBoolean, IsInt, Min } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsBoolean,
+  IsInt,
+  Min,
+  IsEnum,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
+import {
+  CustomerSortBy,
+  SortOrder,
+} from '../../domain/filters/customer.filter';
 
 export class CustomerFilterDto {
   @IsOptional()
@@ -31,6 +42,14 @@ export class CustomerFilterDto {
     return value;
   })
   isActive?: boolean;
+
+  @IsOptional()
+  @IsEnum(CustomerSortBy)
+  sortBy?: CustomerSortBy;
+
+  @IsOptional()
+  @IsEnum(SortOrder)
+  sortOrder?: SortOrder;
 
   @IsOptional()
   @IsInt()

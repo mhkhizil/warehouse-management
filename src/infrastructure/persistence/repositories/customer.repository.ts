@@ -133,6 +133,84 @@ export class CustomerRepository implements ICustomerRepository {
     });
   }
 
+a  async findDeletedWithFilters(
+    filter: CustomerFilter,
+  ): Promise<{ customers: Customer[]; total: number }> {
+    const {
+      name,
+      phone,
+      email,
+      address,
+      hasDebts,
+      skip = 0,
+      take = 10,
+      sortBy,
+      sortOrder,
+    } = filter;
+
+    const where: Prisma.CustomerWhereInput = {
+      isActive: false, // Always filter for deleted customers
+      ...(name && {
+        name: { contains: name, mode: Prisma.QueryMode.insensitive },
+      }),
+      ...(phone && {
+        phone: { contains: phone, mode: Prisma.QueryMode.insensitive },
+      }),
+      ...(email && {
+        email: { contains: email, mode: Prisma.QueryMode.insensitive },
+      }),
+      ...(address && {
+        address: { contains: address, mode: Prisma.QueryMode.insensitive },
+      }),
+      ...(hasDebts !== undefined && {
+        debt: hasDebts
+          ? {
+              some: {
+                isSettled: false,
+              },
+            }
+          : {
+              none: {
+                isSettled: false,
+              },
+            },
+      }),
+    };
+
+    // Build order by clause
+    const orderBy: any = {};
+    const sortField = sortBy || 'createdAt';
+    const sortDirection = sortOrder || 'desc';
+
+    // Map CustomerSortBy enum values to Prisma field names
+    const fieldMapping = {
+      name: 'name',
+      phone: 'phone',
+      email: 'email',
+      address: 'address',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+    };
+
+    const prismaFieldName = fieldMapping[sortField] || 'createdAt';
+    orderBy[prismaFieldName] = sortDirection;
+
+    const [customers, total] = await Promise.all([
+      this.prisma.customer.findMany({
+        where,
+        skip,
+        take,
+        orderBy: orderBy,
+        include: {
+          debt: true,
+        },
+      }),
+      this.prisma.customer.count({ where }),
+    ]);
+
+    return { customers, total };
+  }
+
   async findByIdForRestore(id: number): Promise<Customer | null> {
     return this.prisma.customer.findUnique({
       where: { id },
@@ -160,10 +238,12 @@ export class CustomerRepository implements ICustomerRepository {
       phone,
       email,
       address,
-      hasDebt,
+      hasDebts,
       skip = 0,
       take = 10,
       isActive,
+      sortBy,
+      sortOrder,
     } = filter;
 
     const where: Prisma.CustomerWhereInput = {
@@ -180,22 +260,45 @@ export class CustomerRepository implements ICustomerRepository {
       ...(address && {
         address: { contains: address, mode: Prisma.QueryMode.insensitive },
       }),
-      ...(hasDebt !== undefined &&
-        hasDebt && {
-          debt: {
-            some: {
-              isSettled: false,
+      ...(hasDebts !== undefined && {
+        debt: hasDebts
+          ? {
+              some: {
+                isSettled: false,
+              },
+            }
+          : {
+              none: {
+                isSettled: false,
+              },
             },
-          },
-        }),
+      }),
     };
+
+    // Build order by clause
+    const orderBy: any = {};
+    const sortField = sortBy || 'createdAt';
+    const sortDirection = sortOrder || 'desc';
+
+    // Map CustomerSortBy enum values to Prisma field names
+    const fieldMapping = {
+      name: 'name',
+      phone: 'phone',
+      email: 'email',
+      address: 'address',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+    };
+
+    const prismaFieldName = fieldMapping[sortField] || 'createdAt';
+    orderBy[prismaFieldName] = sortDirection;
 
     const [customers, total] = await Promise.all([
       this.prisma.customer.findMany({
         where,
         skip,
         take,
-        orderBy: { createdAt: 'desc' },
+        orderBy: orderBy,
         include: {
           debt: true,
         },
