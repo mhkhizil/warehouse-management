@@ -31,4 +31,13 @@ export class ListCustomersUseCase {
     this.logger.log('Fetching all soft-deleted customers');
     return await this.customerRepository.findDeleted();
   }
+
+  async findDeletedWithFilters(
+    filter: CustomerFilter,
+  ): Promise<{ customers: Customer[]; total: number }> {
+    this.logger.log(
+      `Fetching deleted customers with filter: ${JSON.stringify(filter)}`,
+    );
+    return await this.customerRepository.findDeletedWithFilters(filter);
+  }
 }

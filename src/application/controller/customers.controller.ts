@@ -120,6 +120,18 @@ export class CustomersController {
     enum: ['true', 'false'],
     description: 'Filter by whether customer is active (not deleted)',
   })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    enum: ['name', 'phone', 'email', 'address', 'createdAt', 'updatedAt'],
+    description: 'Field to sort by',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    enum: ['asc', 'desc'],
+    description: 'Sort direction (asc or desc)',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Customers retrieved successfully',
@@ -137,6 +149,8 @@ export class CustomersController {
     @Query('address') address?: string,
     @Query('hasDebt') hasDebt?: string,
     @Query('isActive') isActive?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
   ): Promise<ApiResponseDto<PaginatedResponseDto<CustomerResponseDto>>> {
     const filter = new CustomerFilter({
       skip: Number(paginationQuery.skip) || 0,
@@ -149,6 +163,8 @@ export class CustomersController {
         hasDebt === 'true' ? true : hasDebt === 'false' ? false : undefined,
       isActive:
         isActive === 'true' ? true : isActive === 'false' ? false : undefined,
+      sortBy: sortBy as any,
+      sortOrder: sortOrder as any,
     });
 
     const { customers, total } =
@@ -223,23 +239,95 @@ export class CustomersController {
   @Get('deleted')
   @UseGuards(JwtGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get all soft-deleted customers' })
+  @ApiOperation({
+    summary: 'Get soft-deleted customers with optional filtering and sorting',
+  })
+  @ApiQuery({ type: PaginationQueryDto, required: false })
+  @ApiQuery({
+    name: 'name',
+    required: false,
+    description: 'Filter by customer name',
+  })
+  @ApiQuery({
+    name: 'phone',
+    required: false,
+    description: 'Filter by phone number',
+  })
+  @ApiQuery({
+    name: 'email',
+    required: false,
+    description: 'Filter by email address',
+  })
+  @ApiQuery({
+    name: 'address',
+    required: false,
+    description: 'Filter by customer address',
+  })
+  @ApiQuery({
+    name: 'hasDebt',
+    required: false,
+    enum: ['true', 'false'],
+    description: 'Filter by whether customer has debt',
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    enum: ['name', 'phone', 'email', 'address', 'createdAt', 'updatedAt'],
+    description: 'Field to sort by',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    enum: ['asc', 'desc'],
+    description: 'Sort direction (asc or desc)',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Soft-deleted customers retrieved successfully',
-    type: CustomerListResponseSchema,
+    type: PaginatedCustomerResponseSchema,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
     description: 'Unauthorized access',
   })
-  async getDeletedCustomers(): Promise<ApiResponseDto<CustomerResponseDto[]>> {
-    const customers = await this.listCustomersUseCase.findDeleted();
+  async getDeletedCustomers(
+    @Query() paginationQuery: PaginationQueryDto,
+    @Query('name') name?: string,
+    @Query('phone') phone?: string,
+    @Query('email') email?: string,
+    @Query('address') address?: string,
+    @Query('hasDebt') hasDebt?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
+  ): Promise<ApiResponseDto<PaginatedResponseDto<CustomerResponseDto>>> {
+    const filter = new CustomerFilter({
+      skip: Number(paginationQuery.skip) || 0,
+      take: Number(paginationQuery.take) || 10,
+      name,
+      phone,
+      email,
+      address,
+      hasDebts:
+        hasDebt === 'true' ? true : hasDebt === 'false' ? false : undefined,
+      sortBy: sortBy as any,
+      sortOrder: sortOrder as any,
+    });
+
+    const { customers, total } =
+      await this.listCustomersUseCase.findDeletedWithFilters(filter);
+
     const customerDtos = customers.map(
       (customer) => new CustomerResponseDto(customer),
     );
-    return ApiResponseDto.success(
+    const paginatedResponse = new PaginatedResponseDto<CustomerResponseDto>(
       customerDtos,
+      total,
+      Number(paginationQuery.skip) || 0,
+      Number(paginationQuery.take) || 10,
+    );
+
+    return ApiResponseDto.success(
+      paginatedResponse,
       'Soft-deleted customers retrieved successfully',
     );
   }
