@@ -133,7 +133,7 @@ export class CustomerRepository implements ICustomerRepository {
     });
   }
 
-a  async findDeletedWithFilters(
+  async findDeletedWithFilters(
     filter: CustomerFilter,
   ): Promise<{ customers: Customer[]; total: number }> {
     const {
