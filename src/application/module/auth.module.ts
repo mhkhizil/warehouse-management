@@ -16,7 +16,9 @@ import { AdminGuard } from '../auth/guard/admin.guard';
   imports: [
     JwtModule.register({
       secret: env.JWT_SECRET_KEY,
-      signOptions: {},
+      signOptions: {
+        expiresIn: env.JWT_EXPIRES_IN || '24h', // Default to 24 hours if not set
+      },
     }),
     UsersModule,
     PassportModule,

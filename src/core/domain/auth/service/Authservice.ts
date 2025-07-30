@@ -30,12 +30,17 @@ export class AuthService {
 
       if (isValid) {
         Logger.log('User logged in', result.email);
-        return this.jwtService.sign({
-          id: result.id,
-          email: result.email,
-          role: result.role,
-          phone: result.phone,
-        });
+        return this.jwtService.sign(
+          {
+            id: result.id,
+            email: result.email,
+            role: result.role,
+            phone: result.phone,
+          },
+          {
+            expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+          },
+        );
       } else return null;
     }
     return null;
@@ -44,7 +49,9 @@ export class AuthService {
   async login(user: any) {
     const payload = { username: user.username, sub: user.userId };
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: this.jwtService.sign(payload, {
+        expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+      }),
     };
   }
 }
