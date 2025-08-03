@@ -8,12 +8,14 @@ import { Supplier } from '@prisma/client';
 import { ISupplierRepository } from '../../../domain/interfaces/repositories/supplier.repository.interface';
 import { SUPPLIER_REPOSITORY } from '../../../domain/constants/repository.tokens';
 import { UpdateSupplierDto } from '../../dtos/supplier/update-supplier.dto';
+import { PrismaService } from '../../../infrastructure/persistence/prisma/prisma.service';
 
 @Injectable()
 export class UpdateSupplierUseCase {
   constructor(
     @Inject(SUPPLIER_REPOSITORY)
     private supplierRepository: ISupplierRepository,
+    private prisma: PrismaService,
   ) {}
 
   async execute(id: number, data: UpdateSupplierDto): Promise<Supplier> {
@@ -48,5 +50,22 @@ export class UpdateSupplierUseCase {
     }
 
     return this.supplierRepository.update(id, data);
+  }
+
+  async restore(id: number): Promise<Supplier> {
+    // Check if supplier exists (including deleted ones)
+    const existingSupplier = await this.prisma.supplier.findUnique({
+      where: { id },
+    });
+    
+    if (!existingSupplier) {
+      throw new NotFoundException(`Supplier with ID ${id} not found`);
+    }
+
+    if (existingSupplier.isActive) {
+      throw new BadRequestException(`Supplier with ID ${id} is already active`);
+    }
+
+    return this.supplierRepository.restore(id);
   }
 }

@@ -17,4 +17,8 @@ export interface ISupplierRepository extends IBaseRepository<Supplier, number> {
     filter: SupplierFilter,
   ): Promise<{ suppliers: Supplier[]; total: number }>;
   findWithDebts(): Promise<Supplier[]>;
+  findDeletedWithFilters(
+    filter: SupplierFilter,
+  ): Promise<{ suppliers: Supplier[]; total: number }>;
+  restore(id: number): Promise<Supplier>;
 }

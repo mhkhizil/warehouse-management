@@ -32,4 +32,10 @@ export class ListSuppliersUseCase {
   async findAll(): Promise<Supplier[]> {
     return this.supplierRepository.findAll();
   }
+
+  async findDeletedWithFilters(
+    filter: SupplierFilter,
+  ): Promise<{ suppliers: Supplier[]; total: number }> {
+    return this.supplierRepository.findDeletedWithFilters(filter);
+  }
 }

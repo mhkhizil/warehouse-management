@@ -150,4 +150,51 @@ export class SupplierRepository implements ISupplierRepository {
       },
     });
   }
+
+  async findDeletedWithFilters(
+    filter: SupplierFilter,
+  ): Promise<{ suppliers: Supplier[]; total: number }> {
+    const where: Prisma.SupplierWhereInput = {
+      isActive: false, // Always filter for deleted suppliers
+    };
+
+    if (filter.name) {
+      where.name = { contains: filter.name, mode: 'insensitive' };
+    }
+
+    if (filter.email) {
+      where.email = { contains: filter.email, mode: 'insensitive' };
+    }
+
+    if (filter.phone) {
+      where.phone = { contains: filter.phone };
+    }
+
+    const [suppliers, total] = await Promise.all([
+      this.prisma.supplier.findMany({
+        where,
+        take: filter.take,
+        skip: filter.skip,
+        include: {
+          debt: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.supplier.count({ where }),
+    ]);
+
+    return { suppliers, total };
+  }
+
+  async restore(id: number): Promise<Supplier> {
+    return this.prisma.supplier.update({
+      where: { id },
+      data: { isActive: true },
+      include: {
+        debt: true,
+      },
+    });
+  }
 }

@@ -19,6 +19,7 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { JwtGuard } from '../auth/guard/jwt.guard';
 import { AdminGuard } from '../auth/guard/admin.guard';
@@ -34,6 +35,8 @@ import { CoreApiResonseSchema } from '../../core/common/schema/ApiResponseSchema
 import { SupplierResponseSchema } from './documentation/supplier/ResponseSchema/SupplierResponseSchema';
 import { PaginatedSupplierResponseSchema } from './documentation/supplier/ResponseSchema/PaginatedSupplierResponseSchema';
 import { SupplierListResponseSchema } from './documentation/supplier/ResponseSchema/SupplierListResponseSchema';
+import { PaginationQueryDto } from '../dtos/common/pagination.dto';
+import { SupplierFilter } from '../../domain/interfaces/repositories/supplier.repository.interface';
 
 @ApiTags('suppliers')
 @Controller('suppliers')
@@ -165,6 +168,53 @@ export class SuppliersController {
     return CoreApiResonseSchema.success(supplier);
   }
 
+  @Get('deleted')
+  @ApiOperation({
+    summary: 'Get soft-deleted suppliers with optional filtering',
+  })
+  @ApiQuery({ type: PaginationQueryDto, required: false })
+  @ApiQuery({
+    name: 'name',
+    required: false,
+    description: 'Filter by supplier name',
+  })
+  @ApiQuery({
+    name: 'phone',
+    required: false,
+    description: 'Filter by phone number',
+  })
+  @ApiQuery({
+    name: 'email',
+    required: false,
+    description: 'Filter by email address',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Soft-deleted suppliers retrieved successfully',
+    type: PaginatedSupplierResponseSchema,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'User not authenticated',
+  })
+  async getDeletedSuppliers(
+    @Query() paginationQuery: PaginationQueryDto,
+    @Query('name') name?: string,
+    @Query('phone') phone?: string,
+    @Query('email') email?: string,
+  ) {
+    const filter: SupplierFilter = {
+      skip: Number(paginationQuery.skip) || 0,
+      take: Number(paginationQuery.take) || 10,
+      name,
+      phone,
+      email,
+    };
+
+    const result = await this.listSuppliersUseCase.findDeletedWithFilters(filter);
+    return CoreApiResonseSchema.success(result);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a supplier by ID' })
   @ApiParam({ name: 'id', description: 'Supplier ID', type: 'number' })
@@ -220,6 +270,36 @@ export class SuppliersController {
       id,
       updateSupplierDto,
     );
+    return CoreApiResonseSchema.success(supplier);
+  }
+
+  @Put(':id/restore')
+  @UseGuards(AdminGuard)
+  @ApiOperation({ summary: 'Restore a soft-deleted supplier' })
+  @ApiParam({ name: 'id', description: 'Supplier ID', type: 'number' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Supplier restored successfully',
+    type: SupplierResponseSchema,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Supplier not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Supplier is already active',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'User not authenticated',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'User not authorized to restore suppliers',
+  })
+  async restore(@Param('id', ParseIntPipe) id: number) {
+    const supplier = await this.updateSupplierUseCase.restore(id);
     return CoreApiResonseSchema.success(supplier);
   }
 
