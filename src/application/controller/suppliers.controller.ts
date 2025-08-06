@@ -211,7 +211,8 @@ export class SuppliersController {
       email,
     };
 
-    const result = await this.listSuppliersUseCase.findDeletedWithFilters(filter);
+    const result =
+      await this.listSuppliersUseCase.findDeletedWithFilters(filter);
     return CoreApiResonseSchema.success(result);
   }
 

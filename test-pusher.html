@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Pusher Test</title>
+    <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
+  </head>
+  <body>
+    <h1>Pusher Debt Alerts Test</h1>
+    <div id="status">Connecting...</div>
+    <div id="alerts"></div>
+
+    <script>
+      const pusher = new Pusher('YOUR_PUSHER_KEY', {
+        cluster: 'YOUR_PUSHER_CLUSTER',
+      });
+
+      const channel = pusher.subscribe('debt-alerts');
+
+      channel.bind('debt-alert', function (data) {
+        console.log('Alert received:', data);
+        document.getElementById('alerts').innerHTML +=
+          '<p>Alert: ' + JSON.stringify(data) + '</p>';
+      });
+
+      pusher.connection.bind('connected', function () {
+        document.getElementById('status').textContent = 'Connected to Pusher';
+      });
+    </script>
+  </body>
+</html>

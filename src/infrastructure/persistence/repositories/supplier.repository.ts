@@ -97,27 +97,26 @@ export class SupplierRepository implements ISupplierRepository {
   async findWithFilters(
     filter: SupplierFilter,
   ): Promise<{ suppliers: Supplier[]; total: number }> {
+    const { name, email, phone, isActive, skip = 0, take = 10 } = filter;
+
     const where: Prisma.SupplierWhereInput = {
-      isActive: filter.isActive !== undefined ? filter.isActive : true,
+      isActive: isActive !== undefined ? isActive : true,
+      ...(name && {
+        name: { contains: name, mode: 'insensitive' },
+      }),
+      ...(email && {
+        email: { contains: email, mode: 'insensitive' },
+      }),
+      ...(phone && {
+        phone: { contains: phone },
+      }),
     };
-
-    if (filter.name) {
-      where.name = { contains: filter.name, mode: 'insensitive' };
-    }
-
-    if (filter.email) {
-      where.email = { contains: filter.email, mode: 'insensitive' };
-    }
-
-    if (filter.phone) {
-      where.phone = { contains: filter.phone };
-    }
 
     const [suppliers, total] = await Promise.all([
       this.prisma.supplier.findMany({
         where,
-        take: filter.take,
-        skip: filter.skip,
+        take: Number(take),
+        skip: Number(skip),
         include: {
           debt: true,
         },
@@ -154,27 +153,26 @@ export class SupplierRepository implements ISupplierRepository {
   async findDeletedWithFilters(
     filter: SupplierFilter,
   ): Promise<{ suppliers: Supplier[]; total: number }> {
+    const { name, email, phone, skip = 0, take = 10 } = filter;
+
     const where: Prisma.SupplierWhereInput = {
       isActive: false, // Always filter for deleted suppliers
+      ...(name && {
+        name: { contains: name, mode: 'insensitive' },
+      }),
+      ...(email && {
+        email: { contains: email, mode: 'insensitive' },
+      }),
+      ...(phone && {
+        phone: { contains: phone },
+      }),
     };
-
-    if (filter.name) {
-      where.name = { contains: filter.name, mode: 'insensitive' };
-    }
-
-    if (filter.email) {
-      where.email = { contains: filter.email, mode: 'insensitive' };
-    }
-
-    if (filter.phone) {
-      where.phone = { contains: filter.phone };
-    }
 
     const [suppliers, total] = await Promise.all([
       this.prisma.supplier.findMany({
         where,
-        take: filter.take,
-        skip: filter.skip,
+        take: Number(take),
+        skip: Number(skip),
         include: {
           debt: true,
         },

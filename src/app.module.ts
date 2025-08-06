@@ -15,6 +15,7 @@ import { SuppliersModule } from './application/module/suppliers.module';
 import { CsrfModule } from './core/common/module/csrf.module';
 import { CsrfMiddleware } from './core/common/middleware/csrf.middleware';
 import { CsrfGuard } from './core/common/guard/csrf.guard';
+import { DebtAlertModule } from './core/common/pusher/DebtAlertModule';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { CsrfGuard } from './core/common/guard/csrf.guard';
     DebtsModule,
     SuppliersModule,
     CsrfModule,
+    DebtAlertModule,
     ThrottlerModule.forRoot([
       {
         name: 'short',
