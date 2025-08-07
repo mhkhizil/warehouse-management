@@ -55,7 +55,8 @@ export class SupplierDebtsController {
   ) {}
 
   @Post()
-  @UseGuards(AdminGuard)
+  @UseGuards( JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new supplier debt record' })
   @ApiBody({ type: CreateSupplierDebtDto })
   @ApiResponse({
@@ -89,6 +90,8 @@ export class SupplierDebtsController {
   }
 
   @Get()
+  @UseGuards( JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'List all supplier debts with optional filtering' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -105,6 +108,8 @@ export class SupplierDebtsController {
   }
 
   @Get('all')
+  @UseGuards( JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all supplier debts without pagination' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -121,6 +126,8 @@ export class SupplierDebtsController {
   }
 
   @Get('overdue')
+  @UseGuards( JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get overdue supplier debts' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -137,6 +144,8 @@ export class SupplierDebtsController {
   }
 
   @Get('supplier/:supplierId')
+  @UseGuards( JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get debts by supplier ID' })
   @ApiParam({ name: 'supplierId', description: 'Supplier ID', type: 'number' })
   @ApiResponse({
@@ -155,6 +164,8 @@ export class SupplierDebtsController {
   }
 
   @Get('transaction/:transactionId')
+  @UseGuards( JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get debt by transaction ID' })
   @ApiParam({
     name: 'transactionId',
@@ -183,6 +194,8 @@ export class SupplierDebtsController {
   }
 
   @Get(':id')
+  @UseGuards( JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a supplier debt by ID' })
   @ApiParam({ name: 'id', description: 'Supplier Debt ID', type: 'number' })
   @ApiResponse({
@@ -204,7 +217,8 @@ export class SupplierDebtsController {
   }
 
   @Put(':id')
-  @UseGuards(AdminGuard)
+  @UseGuards( JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a supplier debt' })
   @ApiParam({ name: 'id', description: 'Supplier Debt ID', type: 'number' })
   @ApiBody({ type: UpdateSupplierDebtDto })
@@ -241,7 +255,8 @@ export class SupplierDebtsController {
   }
 
   @Put(':id/settle')
-  @UseGuards(AdminGuard)
+  @UseGuards( JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Mark a supplier debt as settled' })
   @ApiParam({ name: 'id', description: 'Supplier Debt ID', type: 'number' })
   @ApiResponse({
@@ -267,7 +282,8 @@ export class SupplierDebtsController {
   }
 
   @Put(':id/alert-sent')
-  @UseGuards(AdminGuard)
+  @UseGuards( JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Mark a supplier debt alert as sent' })
   @ApiParam({ name: 'id', description: 'Supplier Debt ID', type: 'number' })
   @ApiResponse({
@@ -293,7 +309,8 @@ export class SupplierDebtsController {
   }
 
   @Delete(':id')
-  @UseGuards(AdminGuard)
+  @UseGuards( JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a supplier debt' })
   @ApiParam({ name: 'id', description: 'Supplier Debt ID', type: 'number' })
   @ApiResponse({

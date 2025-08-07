@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { JwtGuard } from '../auth/guard/jwt.guard';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiOperation,
   ApiParam,
@@ -59,6 +60,8 @@ export class DebtsController {
   ) {}
 
   @Post()
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new debt' })
   @ApiBody({ type: CreateDebtDto, description: 'Debt data to create' })
@@ -90,6 +93,8 @@ export class DebtsController {
   }
 
   @Get()
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get debts with optional filtering' })
   @ApiQuery({ type: PaginationQueryDto, required: false })
@@ -161,6 +166,8 @@ export class DebtsController {
   }
 
   @Get('all')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all debts without pagination' })
   @ApiResponse({
@@ -181,6 +188,8 @@ export class DebtsController {
   }
 
   @Get('overdue')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get overdue debts' })
   @ApiResponse({
@@ -201,6 +210,8 @@ export class DebtsController {
   }
 
   @Get('customer/:customerId')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get debts by customer ID' })
   @ApiParam({ name: 'customerId', type: 'number', description: 'Customer ID' })
@@ -224,6 +235,8 @@ export class DebtsController {
   }
 
   @Get('transaction/:transactionId')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get debt by transaction ID' })
   @ApiParam({
@@ -255,6 +268,8 @@ export class DebtsController {
   }
 
   @Get(':id')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get debt by ID' })
   @ApiParam({ name: 'id', type: 'number', description: 'Debt ID' })
@@ -282,6 +297,8 @@ export class DebtsController {
   }
 
   @Put(':id')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update a debt' })
   @ApiParam({ name: 'id', type: 'number', description: 'Debt ID' })
@@ -315,6 +332,8 @@ export class DebtsController {
   }
 
   @Put(':id/settle')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Mark a debt as settled' })
   @ApiParam({ name: 'id', type: 'number', description: 'Debt ID' })
@@ -342,6 +361,8 @@ export class DebtsController {
   }
 
   @Put(':id/mark-alert-sent')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Mark alert as sent for a debt' })
   @ApiParam({ name: 'id', type: 'number', description: 'Debt ID' })
@@ -369,6 +390,8 @@ export class DebtsController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete a debt' })
   @ApiParam({ name: 'id', type: 'number', description: 'Debt ID' })

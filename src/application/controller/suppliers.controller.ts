@@ -52,7 +52,8 @@ export class SuppliersController {
   ) {}
 
   @Post()
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new supplier' })
   @ApiBody({ type: CreateSupplierDto })
   @ApiResponse({
@@ -79,6 +80,8 @@ export class SuppliersController {
   }
 
   @Get()
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'List all suppliers with optional filtering' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -95,6 +98,8 @@ export class SuppliersController {
   }
 
   @Get('all')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all suppliers without pagination' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -111,6 +116,8 @@ export class SuppliersController {
   }
 
   @Get('with-debts')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get suppliers with outstanding debts' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -127,6 +134,8 @@ export class SuppliersController {
   }
 
   @Get('email/:email')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a supplier by email' })
   @ApiParam({ name: 'email', description: 'Supplier email', type: 'string' })
   @ApiResponse({
@@ -148,6 +157,8 @@ export class SuppliersController {
   }
 
   @Get('phone/:phone')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a supplier by phone' })
   @ApiParam({ name: 'phone', description: 'Supplier phone', type: 'string' })
   @ApiResponse({
@@ -168,7 +179,9 @@ export class SuppliersController {
     return CoreApiResonseSchema.success(supplier);
   }
 
-  @Get('deleted')
+  @Get('deleted') 
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get soft-deleted suppliers with optional filtering',
   })
@@ -216,7 +229,9 @@ export class SuppliersController {
     return CoreApiResonseSchema.success(result);
   }
 
-  @Get(':id')
+  @Get(':id') 
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a supplier by ID' })
   @ApiParam({ name: 'id', description: 'Supplier ID', type: 'number' })
   @ApiResponse({
@@ -238,7 +253,8 @@ export class SuppliersController {
   }
 
   @Put(':id')
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a supplier' })
   @ApiParam({ name: 'id', description: 'Supplier ID', type: 'number' })
   @ApiBody({ type: UpdateSupplierDto })
@@ -275,7 +291,8 @@ export class SuppliersController {
   }
 
   @Put(':id/restore')
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Restore a soft-deleted supplier' })
   @ApiParam({ name: 'id', description: 'Supplier ID', type: 'number' })
   @ApiResponse({
@@ -305,7 +322,8 @@ export class SuppliersController {
   }
 
   @Delete(':id')
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a supplier (soft delete)' })
   @ApiParam({ name: 'id', description: 'Supplier ID', type: 'number' })
   @ApiResponse({
