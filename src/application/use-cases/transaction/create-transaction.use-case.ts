@@ -159,6 +159,11 @@ export class CreateTransactionUseCase {
             ...itemDto,
             stockId: stock.id,
             totalAmount,
+            hasWarranty: itemDto.hasWarranty || false,
+            warrantyDurationMonths: itemDto.warrantyDurationMonths,
+            warrantyStartDate: itemDto.warrantyStartDate,
+            warrantyEndDate: itemDto.warrantyEndDate,
+            warrantyDescription: itemDto.warrantyDescription,
           });
 
           // Prepare stock update
@@ -186,12 +191,22 @@ export class CreateTransactionUseCase {
               ...itemDto,
               stockId: null, // Will be set after stock creation
               totalAmount,
+              hasWarranty: itemDto.hasWarranty || false,
+              warrantyDurationMonths: itemDto.warrantyDurationMonths,
+              warrantyStartDate: itemDto.warrantyStartDate,
+              warrantyEndDate: itemDto.warrantyEndDate,
+              warrantyDescription: itemDto.warrantyDescription,
             });
           } else {
             validatedItems.push({
               ...itemDto,
               stockId: stock.id,
               totalAmount,
+              hasWarranty: itemDto.hasWarranty || false,
+              warrantyDurationMonths: itemDto.warrantyDurationMonths,
+              warrantyStartDate: itemDto.warrantyStartDate,
+              warrantyEndDate: itemDto.warrantyEndDate,
+              warrantyDescription: itemDto.warrantyDescription,
             });
 
             // Prepare stock update
@@ -248,14 +263,51 @@ export class CreateTransactionUseCase {
       }
 
       // Batch create transaction items
-      const transactionItemsData = validatedItems.map((item) => ({
-        transactionId: transaction.id,
-        itemId: item.itemId,
-        stockId: item.stockId,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        totalAmount: item.totalAmount,
-      }));
+      const transactionItemsData = validatedItems.map((item) => {
+        const baseData = {
+          transactionId: transaction.id,
+          itemId: item.itemId,
+          stockId: item.stockId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          totalAmount: item.totalAmount,
+        };
+
+        // Add warranty fields if provided
+        if (item.hasWarranty) {
+          const warrantyStartDate = item.warrantyStartDate
+            ? new Date(item.warrantyStartDate)
+            : transactionDate;
+
+          let warrantyEndDate = null;
+          if (item.warrantyEndDate) {
+            warrantyEndDate = new Date(item.warrantyEndDate);
+          } else if (item.warrantyDurationMonths) {
+            warrantyEndDate = new Date(warrantyStartDate);
+            warrantyEndDate.setMonth(
+              warrantyEndDate.getMonth() + item.warrantyDurationMonths,
+            );
+          }
+
+          return {
+            ...baseData,
+            hasWarranty: true,
+            warrantyDurationMonths: item.warrantyDurationMonths,
+            warrantyStartDate,
+            warrantyEndDate,
+            warrantyDescription: item.warrantyDescription || null,
+          };
+        }
+
+        return {
+          ...baseData,
+          hasWarranty: false,
+          warrantyDurationMonths: null,
+          warrantyStartDate: null,
+          warrantyEndDate: null,
+          warrantyDescription: null,
+        };
+      });
 
       await tx.transactionItem.createMany({
         data: transactionItemsData,

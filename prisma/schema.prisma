@@ -180,6 +180,12 @@ model TransactionItem {
   quantity      Int
   unitPrice     Float
   totalAmount   Float     // quantity * unitPrice
+  // Warranty fields (optional)
+  hasWarranty   Boolean   @default(false) // Whether this item has warranty
+  warrantyDurationMonths Int? // Warranty duration in months (if applicable)
+  warrantyStartDate      DateTime? // When warranty starts (usually transaction date)
+  warrantyEndDate        DateTime? // When warranty expires
+  warrantyDescription    String? // Additional warranty details/terms
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
