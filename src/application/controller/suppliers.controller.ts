@@ -36,7 +36,7 @@ import { SupplierResponseSchema } from './documentation/supplier/ResponseSchema/
 import { PaginatedSupplierResponseSchema } from './documentation/supplier/ResponseSchema/PaginatedSupplierResponseSchema';
 import { SupplierListResponseSchema } from './documentation/supplier/ResponseSchema/SupplierListResponseSchema';
 import { PaginationQueryDto } from '../dtos/common/pagination.dto';
-import { SupplierFilter } from '../../domain/interfaces/repositories/supplier.repository.interface';
+import { SupplierFilter } from '../../domain/filters/supplier.filter';
 
 @ApiTags('suppliers')
 @Controller('suppliers')
@@ -179,7 +179,7 @@ export class SuppliersController {
     return CoreApiResonseSchema.success(supplier);
   }
 
-  @Get('deleted') 
+  @Get('deleted')
   @UseGuards(JwtGuard)
   @ApiBearerAuth()
   @ApiOperation({
@@ -229,7 +229,7 @@ export class SuppliersController {
     return CoreApiResonseSchema.success(result);
   }
 
-  @Get(':id') 
+  @Get(':id')
   @UseGuards(JwtGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a supplier by ID' })

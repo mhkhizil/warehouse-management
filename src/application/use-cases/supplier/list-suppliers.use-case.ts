@@ -1,12 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Supplier } from '@prisma/client';
-import {
-  ISupplierRepository,
-  SupplierFilter,
-} from '../../../domain/interfaces/repositories/supplier.repository.interface';
+import { ISupplierRepository } from '../../../domain/interfaces/repositories/supplier.repository.interface';
 import { SUPPLIER_REPOSITORY } from '../../../domain/constants/repository.tokens';
 import { SupplierFilterDto } from '../../dtos/supplier-filter.dto';
-
+import { SupplierFilter } from '../../../domain/filters/supplier.filter';
+  
 @Injectable()
 export class ListSuppliersUseCase {
   constructor(
@@ -21,9 +19,13 @@ export class ListSuppliersUseCase {
       name: filter.name,
       email: filter.email,
       phone: filter.phone,
+      address: filter.address,
+      contactPerson: filter.contactPerson,
       isActive: filter.isActive,
       take: filter.take,
       skip: filter.skip,
+      sortBy: filter.sortBy,
+      sortOrder: filter.sortOrder,
     };
 
     return this.supplierRepository.findWithFilters(supplierFilter);

@@ -1,14 +1,6 @@
 import { Supplier } from '@prisma/client';
 import { IBaseRepository } from './base.repository.interface';
-
-export interface SupplierFilter {
-  name?: string;
-  email?: string;
-  phone?: string;
-  isActive?: boolean;
-  take?: number;
-  skip?: number;
-}
+import { SupplierFilter } from '../../filters/supplier.filter';
 
 export interface ISupplierRepository extends IBaseRepository<Supplier, number> {
   findByEmail(email: string): Promise<Supplier | null>;

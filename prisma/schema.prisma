@@ -73,6 +73,9 @@ model SupplierDebt {
   amount        Float
   dueDate       DateTime
   isSettled     Boolean   @default(false)
+  // Flags to control one-time alerts per type
+  approachingAlertSent Boolean   @default(false)
+  dueAlertSent         Boolean   @default(false)
   alertSent     Boolean   @default(false)
   remarks       String?
   transactionId Int?
@@ -137,6 +140,9 @@ model Debt {
   amount        Float
   dueDate       DateTime
   isSettled     Boolean   @default(false)
+  // Flags to control one-time alerts per type
+  approachingAlertSent Boolean   @default(false)
+  dueAlertSent         Boolean   @default(false)
   alertSent     Boolean   @default(false) // For debt due alerts
   remarks       String?
   transactionId Int?

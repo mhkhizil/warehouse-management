@@ -81,7 +81,6 @@ export class DebtAlertsController {
   }
 
   @Get('status')
-  
   @ApiOperation({ summary: 'Get debt alert system status' })
   @ApiResponse({
     status: HttpStatus.OK,

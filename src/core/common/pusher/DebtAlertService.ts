@@ -71,7 +71,8 @@ export class DebtAlertService {
         dueDate: {
           lte: threeDaysFromNow,
         },
-        alertSent: false,
+        // We need records where either approaching or due alert hasn't been sent yet
+        OR: [{ approachingAlertSent: false }, { dueAlertSent: false }],
       },
       include: {
         customer: {
@@ -100,11 +101,12 @@ export class DebtAlertService {
         alertType = 'approaching';
       }
 
+      const customerRel = (debt as any).customer;
       const alert: DebtAlert = {
         id: debt.id,
         type: 'customer',
-        entityId: debt.customer.id,
-        entityName: debt.customer.name,
+        entityId: customerRel.id,
+        entityName: customerRel.name,
         amount: debt.amount,
         dueDate: debt.dueDate,
         daysUntilDue,
@@ -112,8 +114,18 @@ export class DebtAlertService {
         alertType,
       };
 
-      await this.sendDebtAlert(alert);
-      await this.markAlertAsSent(debt.id, 'customer');
+      // Only send the alert if it hasn't been sent for this type yet
+      const approachingSent = (debt as any).approachingAlertSent as boolean;
+      const dueSent = (debt as any).dueAlertSent as boolean;
+      if (alertType === 'approaching' && !approachingSent) {
+        await this.sendDebtAlert(alert);
+        await this.markSpecificAlertAsSent(debt.id, 'customer', 'approaching');
+      } else if (alertType === 'due' && !dueSent) {
+        await this.sendDebtAlert(alert);
+        await this.markSpecificAlertAsSent(debt.id, 'customer', 'due');
+      } else if (alertType === 'overdue') {
+        // Do not gate overdue here; daily job handles reminders
+      }
     }
   }
 
@@ -129,7 +141,7 @@ export class DebtAlertService {
         dueDate: {
           lte: threeDaysFromNow,
         },
-        alertSent: false,
+        OR: [{ approachingAlertSent: false }, { dueAlertSent: false }],
       },
       include: {
         supplier: {
@@ -158,11 +170,12 @@ export class DebtAlertService {
         alertType = 'approaching';
       }
 
+      const supplierRel = (debt as any).supplier;
       const alert: DebtAlert = {
         id: debt.id,
         type: 'supplier',
-        entityId: debt.supplier.id,
-        entityName: debt.supplier.name,
+        entityId: supplierRel.id,
+        entityName: supplierRel.name,
         amount: debt.amount,
         dueDate: debt.dueDate,
         daysUntilDue,
@@ -170,8 +183,17 @@ export class DebtAlertService {
         alertType,
       };
 
-      await this.sendDebtAlert(alert);
-      await this.markAlertAsSent(debt.id, 'supplier');
+      const sApproachingSent = (debt as any).approachingAlertSent as boolean;
+      const sDueSent = (debt as any).dueAlertSent as boolean;
+      if (alertType === 'approaching' && !sApproachingSent) {
+        await this.sendDebtAlert(alert);
+        await this.markSpecificAlertAsSent(debt.id, 'supplier', 'approaching');
+      } else if (alertType === 'due' && !sDueSent) {
+        await this.sendDebtAlert(alert);
+        await this.markSpecificAlertAsSent(debt.id, 'supplier', 'due');
+      } else if (alertType === 'overdue') {
+        // No-op here
+      }
     }
   }
 
@@ -300,6 +322,35 @@ export class DebtAlertService {
     }
   }
 
+  private async markSpecificAlertAsSent(
+    debtId: number,
+    type: 'customer' | 'supplier',
+    alertType: 'approaching' | 'due',
+  ) {
+    try {
+      const updateData =
+        alertType === 'approaching'
+          ? { approachingAlertSent: true }
+          : { dueAlertSent: true, alertSent: true };
+      if (type === 'customer') {
+        await this.prisma.debt.update({
+          where: { id: debtId },
+          data: updateData as any,
+        });
+      } else {
+        await this.prisma.supplierDebt.update({
+          where: { id: debtId },
+          data: updateData as any,
+        });
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error marking ${type} ${alertType} alert as sent:`,
+        error,
+      );
+    }
+  }
+
   /**
    * Manually trigger debt alerts for testing
    */
@@ -314,12 +365,20 @@ export class DebtAlertService {
   async resetAlertFlags() {
     await Promise.all([
       this.prisma.debt.updateMany({
-        where: { alertSent: true },
-        data: { alertSent: false },
+        where: {},
+        data: {
+          alertSent: false,
+          approachingAlertSent: false,
+          dueAlertSent: false,
+        } as any,
       }),
       this.prisma.supplierDebt.updateMany({
-        where: { alertSent: true },
-        data: { alertSent: false },
+        where: {},
+        data: {
+          alertSent: false,
+          approachingAlertSent: false,
+          dueAlertSent: false,
+        } as any,
       }),
     ]);
     this.logger.log('Alert flags reset successfully');

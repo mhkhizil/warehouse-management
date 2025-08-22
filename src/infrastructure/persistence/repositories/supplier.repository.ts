@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Supplier, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  ISupplierRepository,
-  SupplierFilter,
-} from '../../../domain/interfaces/repositories/supplier.repository.interface';
+import { ISupplierRepository } from '../../../domain/interfaces/repositories/supplier.repository.interface';
+import { SupplierFilter } from '../../../domain/filters/supplier.filter';
 
 @Injectable()
 export class SupplierRepository implements ISupplierRepository {
@@ -97,7 +95,18 @@ export class SupplierRepository implements ISupplierRepository {
   async findWithFilters(
     filter: SupplierFilter,
   ): Promise<{ suppliers: Supplier[]; total: number }> {
-    const { name, email, phone, isActive, skip = 0, take = 10 } = filter;
+    const {
+      name,
+      email,
+      phone,
+      address,
+      contactPerson,
+      isActive,
+      skip = 0,
+      take = 10,
+      sortBy,
+      sortOrder,
+    } = filter;
 
     const where: Prisma.SupplierWhereInput = {
       isActive: isActive !== undefined ? isActive : true,
@@ -110,7 +119,32 @@ export class SupplierRepository implements ISupplierRepository {
       ...(phone && {
         phone: { contains: phone },
       }),
+      ...(address && {
+        address: { contains: address, mode: 'insensitive' },
+      }),
+      ...(contactPerson && {
+        contactPerson: { contains: contactPerson, mode: 'insensitive' },
+      }),
     };
+
+    // Build order by clause
+    const orderBy: any = {};
+    const sortField = sortBy || 'createdAt';
+    const sortDirection = sortOrder || 'desc';
+
+    // Map SupplierSortBy enum values to Prisma field names
+    const fieldMapping = {
+      name: 'name',
+      phone: 'phone',
+      email: 'email',
+      address: 'address',
+      contactPerson: 'contactPerson',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+    };
+
+    const prismaFieldName = fieldMapping[sortField] || 'createdAt';
+    orderBy[prismaFieldName] = sortDirection;
 
     const [suppliers, total] = await Promise.all([
       this.prisma.supplier.findMany({
@@ -120,9 +154,7 @@ export class SupplierRepository implements ISupplierRepository {
         include: {
           debt: true,
         },
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: orderBy,
       }),
       this.prisma.supplier.count({ where }),
     ]);
@@ -153,7 +185,17 @@ export class SupplierRepository implements ISupplierRepository {
   async findDeletedWithFilters(
     filter: SupplierFilter,
   ): Promise<{ suppliers: Supplier[]; total: number }> {
-    const { name, email, phone, skip = 0, take = 10 } = filter;
+    const {
+      name,
+      email,
+      phone,
+      address,
+      contactPerson,
+      skip = 0,
+      take = 10,
+      sortBy,
+      sortOrder,
+    } = filter;
 
     const where: Prisma.SupplierWhereInput = {
       isActive: false, // Always filter for deleted suppliers
@@ -166,7 +208,32 @@ export class SupplierRepository implements ISupplierRepository {
       ...(phone && {
         phone: { contains: phone },
       }),
+      ...(address && {
+        address: { contains: address, mode: 'insensitive' },
+      }),
+      ...(contactPerson && {
+        contactPerson: { contains: contactPerson, mode: 'insensitive' },
+      }),
     };
+
+    // Build order by clause
+    const orderBy: any = {};
+    const sortField = sortBy || 'createdAt';
+    const sortDirection = sortOrder || 'desc';
+
+    // Map SupplierSortBy enum values to Prisma field names
+    const fieldMapping = {
+      name: 'name',
+      phone: 'phone',
+      email: 'email',
+      address: 'address',
+      contactPerson: 'contactPerson',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+    };
+
+    const prismaFieldName = fieldMapping[sortField] || 'createdAt';
+    orderBy[prismaFieldName] = sortDirection;
 
     const [suppliers, total] = await Promise.all([
       this.prisma.supplier.findMany({
@@ -176,9 +243,7 @@ export class SupplierRepository implements ISupplierRepository {
         include: {
           debt: true,
         },
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: orderBy,
       }),
       this.prisma.supplier.count({ where }),
     ]);
