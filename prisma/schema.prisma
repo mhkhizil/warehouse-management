@@ -112,6 +112,7 @@ model Item {
   stock         Stock[]
   transactionItems TransactionItem[]
   reportsAsMostSold Report[] // Add this relation field for reports
+  exchangeItems ExchangeItem[]
   isDeleted     Boolean   @default(false) // Flag for soft delete
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -127,6 +128,7 @@ model Customer {
   debt          Debt[]
   transactions  Transaction[]
   reportsAsTopCustomer Report[] // Add this relation field for reports
+  refunds       Refund[]
   isActive      Boolean   @default(true) // Flag for soft delete
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -160,9 +162,18 @@ model Transaction {
   supplierId    Int?
   supplier      Supplier? @relation(fields: [supplierId], references: [id])
   totalAmount   Float
+  // Payment information
+  paymentMethod PaymentMethod @default(CASH) // CASH, ONLINE, or HYBRID
+  paymentAccountId Int? // For ONLINE payments, reference to PaymentAccount
+  paymentAccount PaymentAccount? @relation(fields: [paymentAccountId], references: [id])
+  cashAmount    Float?    @default(0) // Amount paid in cash (for HYBRID payments)
+  onlineAmount  Float?    @default(0) // Amount paid online (for HYBRID payments)
   debt          Debt[]
   supplierDebt  SupplierDebt[]
   transactionItems TransactionItem[] // Line items for this transaction
+  // Refund relations
+  originalRefunds Refund[] @relation("OriginalTransaction")
+  refundTransactions Refund[] @relation("RefundTransaction")
   date          DateTime  @default(now())
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -186,14 +197,114 @@ model TransactionItem {
   warrantyStartDate      DateTime? // When warranty starts (usually transaction date)
   warrantyEndDate        DateTime? // When warranty expires
   warrantyDescription    String? // Additional warranty details/terms
+  // Refund relations
+  refundItems   RefundItem[] // Refund items that reference this transaction item
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+// Refund model for tracking refund transactions
+model Refund {
+  id                    Int       @id @default(autoincrement())
+  refundType            RefundType // MONEY_REFUND or ITEM_EXCHANGE
+  originalTransactionId Int
+  originalTransaction   Transaction @relation("OriginalTransaction", fields: [originalTransactionId], references: [id])
+  refundTransactionId   Int?
+  refundTransaction     Transaction? @relation("RefundTransaction", fields: [refundTransactionId], references: [id])
+  customerId            Int
+  customer              Customer  @relation(fields: [customerId], references: [id])
+  totalRefundAmount     Float     // Total amount being refunded
+  reason                String?   // Reason for refund
+  status                RefundStatus @default(PENDING)
+  refundItems           RefundItem[] // Items being refunded
+  // For item exchange
+  exchangeItems         ExchangeItem[] // New items in exchange (only for ITEM_EXCHANGE)
+  exchangeAmountDue     Float?    // Additional amount customer needs to pay for exchange
+  processedAt           DateTime? // When refund was processed
+  processedBy           Int?      // User who processed the refund
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+// RefundItem model for individual items being refunded
+model RefundItem {
+  id                    Int       @id @default(autoincrement())
+  refundId              Int
+  refund                Refund    @relation(fields: [refundId], references: [id], onDelete: Cascade)
+  originalTransactionItemId Int
+  originalTransactionItem   TransactionItem @relation(fields: [originalTransactionItemId], references: [id])
+  quantityToRefund      Int       // How many units to refund
+  refundAmount          Float     // Amount for this item refund
+  isWarrantyValid       Boolean   // Whether warranty was valid at refund time
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+// ExchangeItem model for new items in item exchange
+model ExchangeItem {
+  id            Int       @id @default(autoincrement())
+  refundId      Int
+  refund        Refund    @relation(fields: [refundId], references: [id], onDelete: Cascade)
+  itemId        Int
+  item          Item      @relation(fields: [itemId], references: [id])
+  quantity      Int
+  unitPrice     Float
+  totalAmount   Float     // quantity * unitPrice
+  // Warranty for new exchanged items
+  hasWarranty   Boolean   @default(false)
+  warrantyDurationMonths Int?
+  warrantyStartDate      DateTime?
+  warrantyEndDate        DateTime?
+  warrantyDescription    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Enum for refund type
+enum RefundType {
+  MONEY_REFUND
+  ITEM_EXCHANGE
+}
+
+// Enum for refund status
+enum RefundStatus {
+  PENDING
+  APPROVED
+  PROCESSED
+  REJECTED
+  CANCELLED
 }
 
 // Enum for transaction type
 enum TransactionType {
   BUY
   SELL
+  REFUND
+}
+
+// Enum for payment method
+enum PaymentMethod {
+  CASH
+  ONLINE
+  HYBRID
+}
+
+// PaymentAccount model for managing online payment accounts
+model PaymentAccount {
+  id            Int       @id @default(autoincrement())
+  accountName   String    // e.g., "Main Business Account", "Backup Account"
+  accountType   String    // e.g., "Bank Account", "Digital Wallet", "Credit Card"
+  accountNumber String?   // Account number or identifier
+  bankName      String?   // Bank or financial institution name
+  accountHolder String?   // Account holder name
+  description   String?   // Additional description
+  isActive      Boolean   @default(true) // Whether account is active for transactions
+  balance       Float?    @default(0) // Optional balance tracking
+  transactions  Transaction[] // Transactions using this payment account
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("payment_accounts")
 }
 
 // Report model (optional) for precomputed reports - could be virtual/generated in app

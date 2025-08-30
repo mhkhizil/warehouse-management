@@ -11,6 +11,7 @@ export class UserRepository implements IUserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: Partial<User>): Promise<User> {
+    
     return this.prisma.user.create({
       data: data as any,
     });

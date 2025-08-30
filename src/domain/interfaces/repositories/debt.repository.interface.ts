@@ -9,6 +9,11 @@ export type DebtFilter = {
   dueAfter?: Date;
   skip?: number;
   take?: number;
+  // NEW FILTERS FOR DEBT CATEGORIZATION
+  minAmount?: number; // For filtering positive debts
+  maxAmount?: number; // For filtering negative debts (credits)
+  includeRemarks?: string[]; // For filtering by remarks content
+  excludeRemarks?: string[]; // For excluding certain remarks
 };
 
 export interface IDebtRepository extends IBaseRepository<Debt, number> {
