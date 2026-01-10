@@ -19,6 +19,7 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { JwtGuard } from '../auth/guard/jwt.guard';
 import { AdminGuard } from '../auth/guard/admin.guard';
@@ -37,6 +38,7 @@ import { CoreApiResonseSchema } from '../../core/common/schema/ApiResponseSchema
 import { SupplierDebtResponseSchema } from './documentation/supplier-debt/ResponseSchema/SupplierDebtResponseSchema';
 import { PaginatedSupplierDebtResponseSchema } from './documentation/supplier-debt/ResponseSchema/PaginatedSupplierDebtResponseSchema';
 import { SupplierDebtListResponseSchema } from './documentation/supplier-debt/ResponseSchema/SupplierDebtListResponseSchema';
+import { ParseOptionalBoolPipe } from '../pipes/parse-optional-bool.pipe';
 
 @ApiTags('supplier-debts')
 @Controller('supplier-debts')
@@ -55,7 +57,7 @@ export class SupplierDebtsController {
   ) {}
 
   @Post()
-  @UseGuards( JwtGuard)
+  @UseGuards(JwtGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new supplier debt record' })
   @ApiBody({ type: CreateSupplierDebtDto })
@@ -90,9 +92,57 @@ export class SupplierDebtsController {
   }
 
   @Get()
-  @UseGuards( JwtGuard)
+  @UseGuards(JwtGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'List all supplier debts with optional filtering' })
+  @ApiOperation({ summary: 'List all supplier debts with optional filtering and sorting' })
+  @ApiQuery({
+    name: 'supplierName',
+    required: false,
+    type: String,
+    description: 'Filter by supplier name (partial match, case-insensitive)',
+  })
+  @ApiQuery({
+    name: 'isSettled',
+    required: false,
+    type: Boolean,
+    description: 'Filter by settlement status (true/false)',
+  })
+  @ApiQuery({
+    name: 'createdAtFrom',
+    required: false,
+    type: String,
+    description: 'Filter debts created from this date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'createdAtTo',
+    required: false,
+    type: String,
+    description: 'Filter debts created until this date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'updatedAtFrom',
+    required: false,
+    type: String,
+    description: 'Filter debts updated from this date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'updatedAtTo',
+    required: false,
+    type: String,
+    description: 'Filter debts updated until this date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    enum: ['supplier', 'amount', 'dueDate', 'isSettled', 'settledDate', 'createdAt', 'updatedAt'],
+    description: 'Field to sort by (default: dueDate)',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    enum: ['asc', 'desc'],
+    description: 'Sort order (default: asc)',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Supplier debts retrieved successfully',
@@ -102,13 +152,20 @@ export class SupplierDebtsController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'User not authenticated',
   })
-  async findAll(@Query(ValidationPipe) filter: SupplierDebtFilterDto) {
+  async findAll(
+    @Query(ValidationPipe) filter: SupplierDebtFilterDto,
+    @Query('isSettled', ParseOptionalBoolPipe) isSettled?: boolean,
+  ) {
+    // Override isSettled from the pipe to ensure proper boolean handling
+    if (isSettled !== undefined) {
+      filter.isSettled = isSettled;
+    }
     const result = await this.listSupplierDebtsUseCase.execute(filter);
     return CoreApiResonseSchema.success(result);
   }
 
   @Get('all')
-  @UseGuards( JwtGuard)
+  @UseGuards(JwtGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all supplier debts without pagination' })
   @ApiResponse({
@@ -126,7 +183,7 @@ export class SupplierDebtsController {
   }
 
   @Get('overdue')
-  @UseGuards( JwtGuard)
+  @UseGuards(JwtGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get overdue supplier debts' })
   @ApiResponse({
@@ -143,11 +200,11 @@ export class SupplierDebtsController {
     return CoreApiResonseSchema.success(debts);
   }
 
-  @Get('supplier/:supplierId')
-  @UseGuards( JwtGuard)
+  @Get('supplier/:supplierName')
+  @UseGuards(JwtGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get debts by supplier ID' })
-  @ApiParam({ name: 'supplierId', description: 'Supplier ID', type: 'number' })
+  @ApiOperation({ summary: 'Get debts by supplier name' })
+  @ApiParam({ name: 'supplierName', description: 'Supplier Name', type: 'string' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Supplier debts retrieved successfully',
@@ -157,14 +214,14 @@ export class SupplierDebtsController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'User not authenticated',
   })
-  async findBySupplier(@Param('supplierId', ParseIntPipe) supplierId: number) {
+  async findBySupplier(@Param('supplierName') supplierName: string) {
     const debts =
-      await this.getSupplierDebtUseCase.findBySupplierId(supplierId);
+      await this.getSupplierDebtUseCase.findBySupplierName(supplierName);
     return CoreApiResonseSchema.success(debts);
   }
 
   @Get('transaction/:transactionId')
-  @UseGuards( JwtGuard)
+  @UseGuards(JwtGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get debt by transaction ID' })
   @ApiParam({
@@ -194,7 +251,7 @@ export class SupplierDebtsController {
   }
 
   @Get(':id')
-  @UseGuards( JwtGuard)
+  @UseGuards(JwtGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a supplier debt by ID' })
   @ApiParam({ name: 'id', description: 'Supplier Debt ID', type: 'number' })
@@ -217,7 +274,7 @@ export class SupplierDebtsController {
   }
 
   @Put(':id')
-  @UseGuards( JwtGuard)
+  @UseGuards(JwtGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a supplier debt' })
   @ApiParam({ name: 'id', description: 'Supplier Debt ID', type: 'number' })
@@ -255,7 +312,7 @@ export class SupplierDebtsController {
   }
 
   @Put(':id/settle')
-  @UseGuards( JwtGuard)
+  @UseGuards(JwtGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Mark a supplier debt as settled' })
   @ApiParam({ name: 'id', description: 'Supplier Debt ID', type: 'number' })
@@ -282,7 +339,7 @@ export class SupplierDebtsController {
   }
 
   @Put(':id/alert-sent')
-  @UseGuards( JwtGuard)
+  @UseGuards(JwtGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Mark a supplier debt alert as sent' })
   @ApiParam({ name: 'id', description: 'Supplier Debt ID', type: 'number' })
@@ -309,7 +366,7 @@ export class SupplierDebtsController {
   }
 
   @Delete(':id')
-  @UseGuards( JwtGuard)
+  @UseGuards(JwtGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a supplier debt' })
   @ApiParam({ name: 'id', description: 'Supplier Debt ID', type: 'number' })

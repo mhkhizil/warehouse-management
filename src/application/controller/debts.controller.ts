@@ -43,6 +43,7 @@ import { DebtResponseSchema } from './documentation/debt/ResponseSchema/DebtResp
 import { PaginatedDebtResponseSchema } from './documentation/debt/ResponseSchema/PaginatedDebtResponseSchema';
 import { DebtListResponseSchema } from './documentation/debt/ResponseSchema/DebtListResponseSchema';
 import { CoreApiResonseSchema } from '../../core/common/schema/ApiResponseSchema';
+import { ParseOptionalBoolPipe } from '../pipes/parse-optional-bool.pipe';
 
 @ApiTags('Debts')
 @UseGuards(JwtGuard)
@@ -106,12 +107,14 @@ export class DebtsController {
   @ApiQuery({
     name: 'isSettled',
     required: false,
-    description: 'Filter by settlement status',
+    type: Boolean,
+    description: 'Filter by settlement status (true/false)',
   })
   @ApiQuery({
     name: 'alertSent',
     required: false,
-    description: 'Filter by alert status',
+    type: Boolean,
+    description: 'Filter by alert status (true/false)',
   })
   @ApiQuery({
     name: 'dueBefore',
@@ -135,8 +138,8 @@ export class DebtsController {
   async getDebts(
     @Query() paginationQuery: PaginationQueryDto,
     @Query('customerId') customerId?: string,
-    @Query('isSettled') isSettled?: string,
-    @Query('alertSent') alertSent?: string,
+    @Query('isSettled', ParseOptionalBoolPipe) isSettled?: boolean,
+    @Query('alertSent', ParseOptionalBoolPipe) alertSent?: boolean,
     @Query('dueBefore') dueBefore?: string,
     @Query('dueAfter') dueAfter?: string,
   ): Promise<ApiResponseDto<PaginatedResponseDto<DebtResponseDto>>> {
@@ -144,8 +147,8 @@ export class DebtsController {
       skip: paginationQuery.skip,
       take: paginationQuery.take,
       customerId: customerId ? parseInt(customerId, 10) : undefined,
-      isSettled: isSettled ? isSettled === 'true' : undefined,
-      alertSent: alertSent ? alertSent === 'true' : undefined,
+      isSettled: isSettled,
+      alertSent: alertSent,
       dueBefore: dueBefore ? new Date(dueBefore) : undefined,
       dueAfter: dueAfter ? new Date(dueAfter) : undefined,
     });

@@ -37,6 +37,7 @@ import { PaginatedSupplierResponseSchema } from './documentation/supplier/Respon
 import { SupplierListResponseSchema } from './documentation/supplier/ResponseSchema/SupplierListResponseSchema';
 import { PaginationQueryDto } from '../dtos/common/pagination.dto';
 import { SupplierFilter } from '../../domain/filters/supplier.filter';
+import { ParseOptionalBoolPipe } from '../pipes/parse-optional-bool.pipe';
 
 @ApiTags('suppliers')
 @Controller('suppliers')
@@ -83,6 +84,12 @@ export class SuppliersController {
   @UseGuards(JwtGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'List all suppliers with optional filtering' })
+  @ApiQuery({
+    name: 'isActive',
+    required: false,
+    type: Boolean,
+    description: 'Filter by active status (true/false)',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Suppliers retrieved successfully',
@@ -92,7 +99,14 @@ export class SuppliersController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'User not authenticated',
   })
-  async findAll(@Query(ValidationPipe) filter: SupplierFilterDto) {
+  async findAll(
+    @Query(ValidationPipe) filter: SupplierFilterDto,
+    @Query('isActive', ParseOptionalBoolPipe) isActive?: boolean,
+  ) {
+    // Override isActive from the pipe to ensure proper boolean handling
+    if (isActive !== undefined) {
+      filter.isActive = isActive;
+    }
     const result = await this.listSuppliersUseCase.execute(filter);
     return CoreApiResonseSchema.success(result);
   }

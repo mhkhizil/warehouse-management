@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { SupplierDebt, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  ISupplierDebtRepository,
-  SupplierDebtFilter,
-} from '../../../domain/interfaces/repositories/supplier-debt.repository.interface';
+import { ISupplierDebtRepository } from '../../../domain/interfaces/repositories/supplier-debt.repository.interface';
+import { SupplierDebtFilter } from '../../../domain/filters/supplier-debt.filter';
 
 @Injectable()
 export class SupplierDebtRepository implements ISupplierDebtRepository {
@@ -64,6 +62,26 @@ export class SupplierDebtRepository implements ISupplierDebtRepository {
     });
   }
 
+  async findBySupplierName(supplierName: string): Promise<SupplierDebt[]> {
+    return this.prisma.supplierDebt.findMany({
+      where: {
+        supplier: {
+          name: {
+            contains: supplierName,
+            mode: 'insensitive',
+          },
+        },
+      },
+      include: {
+        supplier: true,
+        transaction: true,
+      },
+      orderBy: {
+        dueDate: 'asc',
+      },
+    });
+  }
+
   async findByTransactionId(
     transactionId: number,
   ): Promise<SupplierDebt | null> {
@@ -114,22 +132,65 @@ export class SupplierDebtRepository implements ISupplierDebtRepository {
       where.supplierId = filter.supplierId;
     }
 
+    if (filter.supplierName) {
+      where.supplier = {
+        name: {
+          contains: filter.supplierName,
+          mode: 'insensitive',
+        },
+      };
+    }
+
     if (filter.isSettled !== undefined) {
       where.isSettled = filter.isSettled;
     }
 
-    if (filter.dueBefore) {
+    if (filter.dueBefore || filter.dueAfter) {
       where.dueDate = {
-        ...((where.dueDate as any) || {}),
-        lte: filter.dueBefore,
+        ...(filter.dueBefore && { lte: filter.dueBefore }),
+        ...(filter.dueAfter && { gte: filter.dueAfter }),
       };
     }
 
-    if (filter.dueAfter) {
-      where.dueDate = {
-        ...((where.dueDate as any) || {}),
-        gte: filter.dueAfter,
+    if (filter.createdAtFrom || filter.createdAtTo) {
+      where.createdAt = {
+        ...(filter.createdAtFrom && { gte: filter.createdAtFrom }),
+        ...(filter.createdAtTo && { lte: filter.createdAtTo }),
       };
+    }
+
+    if (filter.updatedAtFrom || filter.updatedAtTo) {
+      where.updatedAt = {
+        ...(filter.updatedAtFrom && { gte: filter.updatedAtFrom }),
+        ...(filter.updatedAtTo && { lte: filter.updatedAtTo }),
+      };
+    }
+
+    // Build order by clause
+    const sortField = filter.sortBy || 'dueDate';
+    const sortDirection = filter.sortOrder || 'asc';
+
+    // Handle sorting by supplier name (requires nested orderBy)
+    let orderBy: any;
+    if (sortField === 'supplier') {
+      orderBy = {
+        supplier: {
+          name: sortDirection,
+        },
+      };
+    } else {
+      // Map SupplierDebtSortBy enum values to Prisma field names
+      const fieldMapping = {
+        amount: 'amount',
+        dueDate: 'dueDate',
+        isSettled: 'isSettled',
+        settledDate: 'settledDate',
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt',
+      };
+
+      const prismaFieldName = fieldMapping[sortField] || 'dueDate';
+      orderBy = { [prismaFieldName]: sortDirection };
     }
 
     const [debts, total] = await Promise.all([
@@ -141,9 +202,7 @@ export class SupplierDebtRepository implements ISupplierDebtRepository {
           supplier: true,
           transaction: true,
         },
-        orderBy: {
-          dueDate: 'asc',
-        },
+        orderBy: orderBy,
       }),
       this.prisma.supplierDebt.count({ where }),
     ]);

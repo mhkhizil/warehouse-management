@@ -36,4 +36,8 @@ export class GetSupplierDebtUseCase {
   async findBySupplierId(supplierId: number): Promise<SupplierDebt[]> {
     return this.supplierDebtRepository.findBySupplierId(supplierId);
   }
+
+  async findBySupplierName(supplierName: string): Promise<SupplierDebt[]> {
+    return this.supplierDebtRepository.findBySupplierName(supplierName);
+  }
 }

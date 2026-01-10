@@ -1,5 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 import { hash } from 'argon2';
+import {
+  TransactionType,
+  PaymentMethod,
+  RefundType,
+  RefundStatus,
+} from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -928,6 +934,3237 @@ async function main() {
     console.log(`✅ Stock created for sub-item: ${subItem.name}`);
   }
 
+  // Create payment accounts
+  console.log('💳 Creating payment accounts...');
+
+  const paymentAccounts = [
+    {
+      accountName: 'Main Business Bank Account',
+      accountType: 'Bank Account',
+      accountNumber: '1234567890',
+      bankName: 'First National Bank',
+      accountHolder: 'Car Auto Parts WMS',
+      description: 'Primary business account for all transactions',
+      isActive: true,
+      balance: 25000.0,
+    },
+    {
+      accountName: 'Backup Business Account',
+      accountType: 'Bank Account',
+      accountNumber: '0987654321',
+      bankName: 'City Commerce Bank',
+      accountHolder: 'Car Auto Parts WMS',
+      description: 'Secondary account for backup transactions',
+      isActive: true,
+      balance: 15000.0,
+    },
+    {
+      accountName: 'Digital Wallet - PayPal',
+      accountType: 'Digital Wallet',
+      accountNumber: 'paypal@autoparts.com',
+      bankName: 'PayPal',
+      accountHolder: 'Car Auto Parts WMS',
+      description: 'PayPal business account for online transactions',
+      isActive: true,
+      balance: 5000.0,
+    },
+    {
+      accountName: 'Credit Card Account',
+      accountType: 'Credit Card',
+      accountNumber: '****-****-****-1234',
+      bankName: 'Chase Bank',
+      accountHolder: 'Car Auto Parts WMS',
+      description: 'Business credit card for emergency purchases',
+      isActive: true,
+      balance: 10000.0,
+    },
+    {
+      accountName: 'Cash Management Account',
+      accountType: 'Bank Account',
+      accountNumber: '555566667777',
+      bankName: 'Wells Fargo',
+      accountHolder: 'Car Auto Parts WMS',
+      description: 'Account for managing cash flow and daily operations',
+      isActive: true,
+      balance: 8000.0,
+    },
+    {
+      accountName: 'KBZ Pay Digital Wallet',
+      accountType: 'Digital Wallet',
+      accountNumber: '09-123456789',
+      bankName: 'KBZ Bank',
+      accountHolder: 'Car Auto Parts WMS',
+      description: 'KBZ Pay digital wallet for mobile payments',
+      isActive: true,
+      balance: 12000.0,
+    },
+    {
+      accountName: 'KBZ Mobile Banking',
+      accountType: 'Bank Account',
+      accountNumber: '123-456-789-012',
+      bankName: 'KBZ Bank',
+      accountHolder: 'Car Auto Parts WMS',
+      description: 'KBZ mobile banking account for online transactions',
+      isActive: true,
+      balance: 18000.0,
+    },
+    {
+      accountName: 'Wave Pay Digital Wallet',
+      accountType: 'Digital Wallet',
+      accountNumber: '09-987654321',
+      bankName: 'Wave Money',
+      accountHolder: 'Car Auto Parts WMS',
+      description: 'Wave Pay digital wallet for mobile payments',
+      isActive: true,
+      balance: 8000.0,
+    },
+    {
+      accountName: 'AYA Pay Digital Wallet',
+      accountType: 'Digital Wallet',
+      accountNumber: '09-555666777',
+      bankName: 'AYA Bank',
+      accountHolder: 'Car Auto Parts WMS',
+      description: 'AYA Pay digital wallet for mobile payments',
+      isActive: true,
+      balance: 6000.0,
+    },
+    {
+      accountName: 'KBZ Credit Card',
+      accountType: 'Credit Card',
+      accountNumber: '****-****-****-5678',
+      bankName: 'KBZ Bank',
+      accountHolder: 'Car Auto Parts WMS',
+      description: 'KBZ Bank business credit card',
+      isActive: true,
+      balance: 15000.0,
+    },
+  ];
+
+  const createdPaymentAccounts: any[] = [];
+  for (const accountData of paymentAccounts) {
+    const paymentAccount = await prisma.paymentAccount.create({
+      data: accountData,
+    });
+    createdPaymentAccounts.push(paymentAccount);
+    console.log(`✅ Payment account created: ${paymentAccount.accountName}`);
+  }
+
+  // Create transaction buy seed data
+  console.log('🛒 Creating transaction buy seed data...');
+
+  const buyTransactions = [
+    {
+      type: TransactionType.BUY,
+      supplierId: 1, // AutoZone Parts Co.
+      items: [
+        { itemId: 11, quantity: 20, unitPrice: 45.99 }, // Piston Rings
+        { itemId: 12, quantity: 15, unitPrice: 89.99 }, // Crankshaft Bearings
+        { itemId: 13, quantity: 8, unitPrice: 299.99 }, // Camshaft
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[0].id, // Main Business Bank Account
+      createSupplierDebt: false,
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 2, // CarParts Express
+      items: [
+        { itemId: 16, quantity: 25, unitPrice: 79.99 }, // Brake Pads (Front)
+        { itemId: 17, quantity: 20, unitPrice: 69.99 }, // Brake Pads (Rear)
+        { itemId: 18, quantity: 12, unitPrice: 149.99 }, // Brake Rotors (Front)
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[1].id, // Backup Business Account
+      cashAmount: 1000.0,
+      onlineAmount: 2499.75,
+      createSupplierDebt: true,
+      supplierDebt: {
+        amount: 500.0,
+        dueDate: new Date('2025-02-15'),
+        remarks: 'Partial payment on credit terms',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 3, // Motor Masters Supply
+      items: [
+        { itemId: 21, quantity: 10, unitPrice: 399.99 }, // Clutch Kit
+        { itemId: 22, quantity: 8, unitPrice: 299.99 }, // Flywheel
+        { itemId: 23, quantity: 5, unitPrice: 899.99 }, // Gear Set
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createSupplierDebt: false,
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 4, // Quick Parts Solutions
+      items: [
+        { itemId: 26, quantity: 30, unitPrice: 249.99 }, // Coil Springs
+        { itemId: 27, quantity: 15, unitPrice: 399.99 }, // Shock Absorbers
+        { itemId: 28, quantity: 20, unitPrice: 189.99 }, // Sway Bar
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[5].id, // KBZ Pay Digital Wallet
+      createSupplierDebt: true,
+      supplierDebt: {
+        amount: 2000.0,
+        dueDate: new Date('2025-03-20'),
+        remarks: 'Bulk order on extended payment terms',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 5, // Premium Auto Components
+      items: [
+        { itemId: 31, quantity: 50, unitPrice: 12.99 }, // Spark Plugs
+        { itemId: 32, quantity: 25, unitPrice: 89.99 }, // Ignition Coils
+        { itemId: 33, quantity: 10, unitPrice: 199.99 }, // Battery
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[9].id, // KBZ Credit Card
+      cashAmount: 500.0,
+      onlineAmount: 1749.5,
+      createSupplierDebt: false,
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 6, // Budget Parts Warehouse
+      items: [
+        { itemId: 36, quantity: 15, unitPrice: 299.99 }, // Front Bumper
+        { itemId: 37, quantity: 12, unitPrice: 279.99 }, // Rear Bumper
+        { itemId: 38, quantity: 8, unitPrice: 899.99 }, // Hood
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[6].id, // KBZ Mobile Banking
+      createSupplierDebt: true,
+      supplierDebt: {
+        amount: 1500.0,
+        dueDate: new Date('2025-04-10'),
+        remarks: 'Body parts order with payment plan',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 7, // European Parts Specialists
+      items: [
+        { itemId: 41, quantity: 20, unitPrice: 199.99 }, // Seat Covers
+        { itemId: 42, quantity: 10, unitPrice: 299.99 }, // Steering Wheel
+        { itemId: 43, quantity: 30, unitPrice: 49.99 }, // Shift Knob
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createSupplierDebt: false,
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 8, // Truck Parts Unlimited
+      items: [
+        { itemId: 46, quantity: 12, unitPrice: 399.99 }, // Headers
+        { itemId: 47, quantity: 8, unitPrice: 299.99 }, // Catalytic Converter
+        { itemId: 48, quantity: 15, unitPrice: 189.99 }, // Muffler
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[0].id, // Main Business Bank Account
+      createSupplierDebt: false,
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 1, // AutoZone Parts Co.
+      items: [
+        { itemId: 51, quantity: 25, unitPrice: 399.99 }, // Radiator
+        { itemId: 52, quantity: 20, unitPrice: 89.99 }, // Water Pump
+        { itemId: 53, quantity: 40, unitPrice: 24.99 }, // Thermostat
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[1].id, // Backup Business Account
+      cashAmount: 2000.0,
+      onlineAmount: 10499.6,
+      createSupplierDebt: true,
+      supplierDebt: {
+        amount: 3000.0,
+        dueDate: new Date('2025-05-15'),
+        remarks: 'Cooling system parts with extended payment',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 2, // CarParts Express
+      items: [
+        { itemId: 56, quantity: 15, unitPrice: 199.99 }, // Fuel Pump
+        { itemId: 57, quantity: 10, unitPrice: 399.99 }, // Fuel Injectors
+        { itemId: 58, quantity: 50, unitPrice: 19.99 }, // Fuel Filter
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[7].id, // Wave Pay Digital Wallet
+      createSupplierDebt: false,
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 3, // Motor Masters Supply
+      items: [
+        { itemId: 14, quantity: 30, unitPrice: 129.99 }, // Valve Springs
+        { itemId: 15, quantity: 12, unitPrice: 189.99 }, // Oil Pump
+        { itemId: 19, quantity: 18, unitPrice: 129.99 }, // Brake Rotors (Rear)
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createSupplierDebt: true,
+      supplierDebt: {
+        amount: 800.0,
+        dueDate: new Date('2025-06-01'),
+        remarks: 'Engine and brake components on credit',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 4, // Quick Parts Solutions
+      items: [
+        { itemId: 20, quantity: 25, unitPrice: 89.99 }, // Brake Lines
+        { itemId: 24, quantity: 20, unitPrice: 45.99 }, // Shift Fork
+        { itemId: 25, quantity: 30, unitPrice: 29.99 }, // Transmission Mount
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[8].id, // AYA Pay Digital Wallet
+      createSupplierDebt: false,
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 5, // Premium Auto Components
+      items: [
+        { itemId: 29, quantity: 15, unitPrice: 159.99 }, // Control Arms
+        { itemId: 30, quantity: 40, unitPrice: 39.99 }, // Bushings
+        { itemId: 34, quantity: 8, unitPrice: 299.99 }, // Alternator
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[5].id, // KBZ Pay Digital Wallet
+      cashAmount: 1500.0,
+      onlineAmount: 5199.65,
+      createSupplierDebt: true,
+      supplierDebt: {
+        amount: 1000.0,
+        dueDate: new Date('2025-07-20'),
+        remarks: 'Suspension and electrical components',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 6, // Budget Parts Warehouse
+      items: [
+        { itemId: 35, quantity: 10, unitPrice: 189.99 }, // Starter Motor
+        { itemId: 39, quantity: 15, unitPrice: 189.99 }, // Fenders
+        { itemId: 40, quantity: 12, unitPrice: 149.99 }, // Side Mirrors
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createSupplierDebt: false,
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 7, // European Parts Specialists
+      items: [
+        { itemId: 44, quantity: 25, unitPrice: 89.99 }, // Floor Mats
+        { itemId: 45, quantity: 20, unitPrice: 79.99 }, // Dashboard Cover
+        { itemId: 49, quantity: 15, unitPrice: 89.99 }, // Exhaust Tips
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[0].id, // Main Business Bank Account
+      createSupplierDebt: true,
+      supplierDebt: {
+        amount: 1200.0,
+        dueDate: new Date('2025-08-30'),
+        remarks: 'Interior and exhaust accessories',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 8, // Truck Parts Unlimited
+      items: [
+        { itemId: 50, quantity: 10, unitPrice: 19.99 }, // Exhaust Gaskets
+        { itemId: 54, quantity: 15, unitPrice: 199.99 }, // Cooling Fan
+        { itemId: 55, quantity: 30, unitPrice: 39.99 }, // Hoses
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[1].id, // Backup Business Account
+      cashAmount: 800.0,
+      onlineAmount: 3999.7,
+      createSupplierDebt: false,
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 1, // AutoZone Parts Co.
+      items: [
+        { itemId: 59, quantity: 20, unitPrice: 89.99 }, // Fuel Pressure Regulator
+        { itemId: 60, quantity: 25, unitPrice: 69.99 }, // Fuel Lines
+        { itemId: 11, quantity: 15, unitPrice: 45.99 }, // Piston Rings (reorder)
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[7].id, // Wave Pay Digital Wallet
+      createSupplierDebt: true,
+      supplierDebt: {
+        amount: 2500.0,
+        dueDate: new Date('2025-09-15'),
+        remarks: 'Fuel system components and engine parts',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 2, // CarParts Express
+      items: [
+        { itemId: 16, quantity: 30, unitPrice: 79.99 }, // Brake Pads (Front) - reorder
+        { itemId: 17, quantity: 25, unitPrice: 69.99 }, // Brake Pads (Rear) - reorder
+        { itemId: 18, quantity: 15, unitPrice: 149.99 }, // Brake Rotors (Front) - reorder
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createSupplierDebt: false,
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 3, // Motor Masters Supply
+      items: [
+        { itemId: 21, quantity: 12, unitPrice: 399.99 }, // Clutch Kit - reorder
+        { itemId: 22, quantity: 10, unitPrice: 299.99 }, // Flywheel - reorder
+        { itemId: 23, quantity: 6, unitPrice: 899.99 }, // Gear Set - reorder
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[9].id, // KBZ Credit Card
+      createSupplierDebt: true,
+      supplierDebt: {
+        amount: 4000.0,
+        dueDate: new Date('2025-10-20'),
+        remarks: 'Transmission components with extended terms',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+  ];
+
+  // Create buy transactions
+  for (const transactionData of buyTransactions) {
+    // Calculate total amount
+    const totalAmount = transactionData.items.reduce(
+      (sum, item) => sum + item.quantity * item.unitPrice,
+      0,
+    );
+
+    // Create transaction
+    const transaction = await prisma.transaction.create({
+      data: {
+        type: transactionData.type,
+        supplierId: transactionData.supplierId,
+        totalAmount: totalAmount,
+        paymentMethod: transactionData.paymentMethod,
+        paymentAccountId: transactionData.paymentAccountId,
+        cashAmount: transactionData.cashAmount,
+        onlineAmount: transactionData.onlineAmount,
+        date: new Date(),
+      },
+    });
+
+    // Create transaction items
+    for (const itemData of transactionData.items) {
+      await prisma.transactionItem.create({
+        data: {
+          transactionId: transaction.id,
+          itemId: itemData.itemId,
+          quantity: itemData.quantity,
+          unitPrice: itemData.unitPrice,
+          totalAmount: itemData.quantity * itemData.unitPrice,
+        },
+      });
+    }
+
+    // Create supplier debt if required
+    if (transactionData.createSupplierDebt && transactionData.supplierDebt) {
+      await prisma.supplierDebt.create({
+        data: {
+          supplierId: transactionData.supplierId,
+          amount: transactionData.supplierDebt.amount,
+          dueDate: transactionData.supplierDebt.dueDate,
+          remarks: transactionData.supplierDebt.remarks,
+          isSettled: transactionData.supplierDebt.isSettled,
+          alertSent: transactionData.supplierDebt.alertSent,
+          transactionId: transaction.id,
+        },
+      });
+    }
+
+    // Update stock quantities (increase for BUY transactions)
+    for (const itemData of transactionData.items) {
+      await prisma.stock.updateMany({
+        where: { itemId: itemData.itemId },
+        data: {
+          quantity: {
+            increment: itemData.quantity,
+          },
+        },
+      });
+    }
+
+    console.log(
+      `✅ Buy transaction created: ${transaction.id} - Total: $${totalAmount.toFixed(2)}`,
+    );
+  }
+
+  // Create transaction sell seed data
+  console.log('🛍️ Creating transaction sell seed data...');
+
+  const sellTransactions = [
+    {
+      type: TransactionType.SELL,
+      customerId: 1, // Mike's Auto Repair
+      items: [
+        {
+          itemId: 11,
+          quantity: 5,
+          unitPrice: 45.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year manufacturer warranty',
+        },
+        {
+          itemId: 12,
+          quantity: 3,
+          unitPrice: 89.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months engine parts warranty',
+        },
+        {
+          itemId: 13,
+          quantity: 1,
+          unitPrice: 299.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 24,
+          warrantyDescription: '2 years performance warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 2, // Sarah's Car Care
+      items: [
+        {
+          itemId: 16,
+          quantity: 8,
+          unitPrice: 79.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year brake system warranty',
+        },
+        {
+          itemId: 17,
+          quantity: 6,
+          unitPrice: 69.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year brake system warranty',
+        },
+        {
+          itemId: 18,
+          quantity: 4,
+          unitPrice: 149.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 18,
+          warrantyDescription: '18 months brake rotor warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[5].id, // KBZ Pay Digital Wallet
+      createDebt: true,
+      debt: {
+        amount: 500.0,
+        dueDate: new Date('2025-02-15'),
+        remarks: 'Partial payment on brake system upgrade',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 3, // Quick Fix Garage
+      items: [
+        {
+          itemId: 21,
+          quantity: 2,
+          unitPrice: 399.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year clutch warranty',
+        },
+        {
+          itemId: 22,
+          quantity: 1,
+          unitPrice: 299.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year flywheel warranty',
+        },
+        {
+          itemId: 23,
+          quantity: 1,
+          unitPrice: 899.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 24,
+          warrantyDescription: '2 years gear set warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[6].id, // KBZ Mobile Banking
+      cashAmount: 1000.0,
+      onlineAmount: 999.96,
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 4, // Family Auto Service
+      items: [
+        {
+          itemId: 26,
+          quantity: 4,
+          unitPrice: 249.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year suspension warranty',
+        },
+        {
+          itemId: 27,
+          quantity: 2,
+          unitPrice: 399.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 18,
+          warrantyDescription: '18 months shock absorber warranty',
+        },
+        {
+          itemId: 28,
+          quantity: 2,
+          unitPrice: 189.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year sway bar warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createDebt: true,
+      debt: {
+        amount: 300.0,
+        dueDate: new Date('2025-03-20'),
+        remarks: 'Family discount payment plan',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 5, // Professional Motors
+      items: [
+        {
+          itemId: 31,
+          quantity: 20,
+          unitPrice: 12.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months spark plug warranty',
+        },
+        {
+          itemId: 32,
+          quantity: 8,
+          unitPrice: 89.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year ignition coil warranty',
+        },
+        {
+          itemId: 33,
+          quantity: 3,
+          unitPrice: 199.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 24,
+          warrantyDescription: '2 years battery warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[7].id, // Wave Pay Digital Wallet
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 6, // Budget Auto Solutions
+      items: [
+        {
+          itemId: 36,
+          quantity: 2,
+          unitPrice: 299.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year bumper warranty',
+        },
+        {
+          itemId: 37,
+          quantity: 2,
+          unitPrice: 279.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year bumper warranty',
+        },
+        {
+          itemId: 38,
+          quantity: 1,
+          unitPrice: 899.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 24,
+          warrantyDescription: '2 years carbon fiber hood warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[8].id, // AYA Pay Digital Wallet
+      cashAmount: 800.0,
+      onlineAmount: 1759.96,
+      createDebt: true,
+      debt: {
+        amount: 1000.0,
+        dueDate: new Date('2025-04-10'),
+        remarks: 'Budget-friendly payment plan',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 7, // Classic Car Restoration
+      items: [
+        {
+          itemId: 41,
+          quantity: 2,
+          unitPrice: 199.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year seat cover warranty',
+        },
+        {
+          itemId: 42,
+          quantity: 1,
+          unitPrice: 299.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 18,
+          warrantyDescription: '18 months steering wheel warranty',
+        },
+        {
+          itemId: 43,
+          quantity: 3,
+          unitPrice: 49.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months shift knob warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 8, // Truck & Fleet Service
+      items: [
+        {
+          itemId: 46,
+          quantity: 3,
+          unitPrice: 399.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year header warranty',
+        },
+        {
+          itemId: 47,
+          quantity: 2,
+          unitPrice: 299.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 18,
+          warrantyDescription: '18 months catalytic converter warranty',
+        },
+        {
+          itemId: 48,
+          quantity: 4,
+          unitPrice: 189.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year muffler warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[9].id, // KBZ Credit Card
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 9, // Import Auto Specialists
+      items: [
+        {
+          itemId: 51,
+          quantity: 2,
+          unitPrice: 399.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year radiator warranty',
+        },
+        {
+          itemId: 52,
+          quantity: 1,
+          unitPrice: 89.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year water pump warranty',
+        },
+        {
+          itemId: 53,
+          quantity: 5,
+          unitPrice: 24.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months thermostat warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[0].id, // Main Business Bank Account
+      cashAmount: 500.0,
+      onlineAmount: 524.94,
+      createDebt: true,
+      debt: {
+        amount: 200.0,
+        dueDate: new Date('2025-05-15'),
+        remarks: 'Import specialist discount',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 10, // Mobile Auto Repair
+      items: [
+        {
+          itemId: 56,
+          quantity: 1,
+          unitPrice: 199.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year fuel pump warranty',
+        },
+        {
+          itemId: 57,
+          quantity: 1,
+          unitPrice: 399.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 18,
+          warrantyDescription: '18 months fuel injector warranty',
+        },
+        {
+          itemId: 58,
+          quantity: 3,
+          unitPrice: 19.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months fuel filter warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 11, // Performance Tuning Shop
+      items: [
+        {
+          itemId: 14,
+          quantity: 4,
+          unitPrice: 129.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year valve spring warranty',
+        },
+        {
+          itemId: 15,
+          quantity: 1,
+          unitPrice: 189.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 18,
+          warrantyDescription: '18 months oil pump warranty',
+        },
+        {
+          itemId: 19,
+          quantity: 2,
+          unitPrice: 129.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year brake rotor warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[1].id, // Backup Business Account
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 12, // Emergency Roadside Service
+      items: [
+        {
+          itemId: 20,
+          quantity: 5,
+          unitPrice: 89.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year brake line warranty',
+        },
+        {
+          itemId: 24,
+          quantity: 3,
+          unitPrice: 45.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months shift fork warranty',
+        },
+        {
+          itemId: 25,
+          quantity: 4,
+          unitPrice: 29.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months transmission mount warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createDebt: true,
+      debt: {
+        amount: 150.0,
+        dueDate: new Date('2025-06-01'),
+        remarks: 'Emergency service payment plan',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 1, // Mike's Auto Repair (reorder)
+      items: [
+        {
+          itemId: 29,
+          quantity: 2,
+          unitPrice: 159.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year control arm warranty',
+        },
+        {
+          itemId: 30,
+          quantity: 6,
+          unitPrice: 39.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months bushing warranty',
+        },
+        {
+          itemId: 34,
+          quantity: 1,
+          unitPrice: 299.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 24,
+          warrantyDescription: '2 years alternator warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[5].id, // KBZ Pay Digital Wallet
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 2, // Sarah's Car Care (reorder)
+      items: [
+        {
+          itemId: 35,
+          quantity: 1,
+          unitPrice: 189.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year starter motor warranty',
+        },
+        {
+          itemId: 39,
+          quantity: 2,
+          unitPrice: 189.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year fender warranty',
+        },
+        {
+          itemId: 40,
+          quantity: 2,
+          unitPrice: 149.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year side mirror warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[6].id, // KBZ Mobile Banking
+      cashAmount: 300.0,
+      onlineAmount: 709.96,
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 3, // Quick Fix Garage (reorder)
+      items: [
+        {
+          itemId: 44,
+          quantity: 3,
+          unitPrice: 89.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year floor mat warranty',
+        },
+        {
+          itemId: 45,
+          quantity: 2,
+          unitPrice: 79.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year dashboard cover warranty',
+        },
+        {
+          itemId: 49,
+          quantity: 2,
+          unitPrice: 89.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months exhaust tip warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createDebt: true,
+      debt: {
+        amount: 100.0,
+        dueDate: new Date('2025-07-20'),
+        remarks: 'Interior upgrade payment plan',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 4, // Family Auto Service (reorder)
+      items: [
+        {
+          itemId: 50,
+          quantity: 4,
+          unitPrice: 19.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months exhaust gasket warranty',
+        },
+        {
+          itemId: 54,
+          quantity: 1,
+          unitPrice: 199.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year cooling fan warranty',
+        },
+        {
+          itemId: 55,
+          quantity: 3,
+          unitPrice: 39.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months hose warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[7].id, // Wave Pay Digital Wallet
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 5, // Professional Motors (reorder)
+      items: [
+        {
+          itemId: 59,
+          quantity: 2,
+          unitPrice: 89.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year fuel pressure regulator warranty',
+        },
+        {
+          itemId: 60,
+          quantity: 3,
+          unitPrice: 69.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year fuel line warranty',
+        },
+        {
+          itemId: 11,
+          quantity: 4,
+          unitPrice: 45.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year piston ring warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[8].id, // AYA Pay Digital Wallet
+      cashAmount: 200.0,
+      onlineAmount: 509.94,
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 6, // Budget Auto Solutions (reorder)
+      items: [
+        {
+          itemId: 16,
+          quantity: 6,
+          unitPrice: 79.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year brake pad warranty',
+        },
+        {
+          itemId: 17,
+          quantity: 4,
+          unitPrice: 69.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year brake pad warranty',
+        },
+        {
+          itemId: 18,
+          quantity: 2,
+          unitPrice: 149.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 18,
+          warrantyDescription: '18 months brake rotor warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createDebt: true,
+      debt: {
+        amount: 400.0,
+        dueDate: new Date('2025-08-30'),
+        remarks: 'Budget brake system upgrade',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 7, // Classic Car Restoration (reorder)
+      items: [
+        {
+          itemId: 21,
+          quantity: 1,
+          unitPrice: 399.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year clutch warranty',
+        },
+        {
+          itemId: 22,
+          quantity: 1,
+          unitPrice: 299.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year flywheel warranty',
+        },
+        {
+          itemId: 23,
+          quantity: 1,
+          unitPrice: 899.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 24,
+          warrantyDescription: '2 years gear set warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[9].id, // KBZ Credit Card
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 8, // Truck & Fleet Service (reorder)
+      items: [
+        {
+          itemId: 26,
+          quantity: 3,
+          unitPrice: 249.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year coil spring warranty',
+        },
+        {
+          itemId: 27,
+          quantity: 2,
+          unitPrice: 399.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 18,
+          warrantyDescription: '18 months shock absorber warranty',
+        },
+        {
+          itemId: 28,
+          quantity: 2,
+          unitPrice: 189.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year sway bar warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[0].id, // Main Business Bank Account
+      cashAmount: 600.0,
+      onlineAmount: 1689.95,
+      createDebt: true,
+      debt: {
+        amount: 500.0,
+        dueDate: new Date('2025-09-15'),
+        remarks: 'Fleet service payment plan',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 9, // Import Auto Specialists (reorder)
+      items: [
+        {
+          itemId: 31,
+          quantity: 15,
+          unitPrice: 12.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months spark plug warranty',
+        },
+        {
+          itemId: 32,
+          quantity: 6,
+          unitPrice: 89.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year ignition coil warranty',
+        },
+        {
+          itemId: 33,
+          quantity: 2,
+          unitPrice: 199.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 24,
+          warrantyDescription: '2 years battery warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 10, // Mobile Auto Repair (reorder)
+      items: [
+        {
+          itemId: 36,
+          quantity: 1,
+          unitPrice: 299.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year front bumper warranty',
+        },
+        {
+          itemId: 37,
+          quantity: 1,
+          unitPrice: 279.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year rear bumper warranty',
+        },
+        {
+          itemId: 38,
+          quantity: 1,
+          unitPrice: 899.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 24,
+          warrantyDescription: '2 years carbon fiber hood warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[1].id, // Backup Business Account
+      createDebt: true,
+      debt: {
+        amount: 800.0,
+        dueDate: new Date('2025-10-20'),
+        remarks: 'Mobile repair service payment plan',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 11, // Performance Tuning Shop (reorder)
+      items: [
+        {
+          itemId: 41,
+          quantity: 3,
+          unitPrice: 199.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year seat cover warranty',
+        },
+        {
+          itemId: 42,
+          quantity: 2,
+          unitPrice: 299.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 18,
+          warrantyDescription: '18 months steering wheel warranty',
+        },
+        {
+          itemId: 43,
+          quantity: 5,
+          unitPrice: 49.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months shift knob warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 12, // Emergency Roadside Service (reorder)
+      items: [
+        {
+          itemId: 46,
+          quantity: 2,
+          unitPrice: 399.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year header warranty',
+        },
+        {
+          itemId: 47,
+          quantity: 1,
+          unitPrice: 299.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 18,
+          warrantyDescription: '18 months catalytic converter warranty',
+        },
+        {
+          itemId: 48,
+          quantity: 3,
+          unitPrice: 189.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year muffler warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[5].id, // KBZ Pay Digital Wallet
+      cashAmount: 400.0,
+      onlineAmount: 1289.96,
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 1, // Mike's Auto Repair (third order)
+      items: [
+        {
+          itemId: 51,
+          quantity: 1,
+          unitPrice: 399.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year radiator warranty',
+        },
+        {
+          itemId: 52,
+          quantity: 1,
+          unitPrice: 89.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year water pump warranty',
+        },
+        {
+          itemId: 53,
+          quantity: 3,
+          unitPrice: 24.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months thermostat warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[6].id, // KBZ Mobile Banking
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 2, // Sarah's Car Care (third order)
+      items: [
+        {
+          itemId: 56,
+          quantity: 1,
+          unitPrice: 199.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year fuel pump warranty',
+        },
+        {
+          itemId: 57,
+          quantity: 1,
+          unitPrice: 399.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 18,
+          warrantyDescription: '18 months fuel injector warranty',
+        },
+        {
+          itemId: 58,
+          quantity: 2,
+          unitPrice: 19.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months fuel filter warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createDebt: true,
+      debt: {
+        amount: 300.0,
+        dueDate: new Date('2025-11-15'),
+        remarks: 'Fuel system upgrade payment plan',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 3, // Quick Fix Garage (third order)
+      items: [
+        {
+          itemId: 14,
+          quantity: 3,
+          unitPrice: 129.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year valve spring warranty',
+        },
+        {
+          itemId: 15,
+          quantity: 1,
+          unitPrice: 189.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 18,
+          warrantyDescription: '18 months oil pump warranty',
+        },
+        {
+          itemId: 19,
+          quantity: 2,
+          unitPrice: 129.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year brake rotor warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[7].id, // Wave Pay Digital Wallet
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 4, // Family Auto Service (third order)
+      items: [
+        {
+          itemId: 20,
+          quantity: 4,
+          unitPrice: 89.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year brake line warranty',
+        },
+        {
+          itemId: 24,
+          quantity: 2,
+          unitPrice: 45.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months shift fork warranty',
+        },
+        {
+          itemId: 25,
+          quantity: 3,
+          unitPrice: 29.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months transmission mount warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[8].id, // AYA Pay Digital Wallet
+      cashAmount: 250.0,
+      onlineAmount: 509.94,
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 5, // Professional Motors (third order)
+      items: [
+        {
+          itemId: 29,
+          quantity: 3,
+          unitPrice: 159.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year control arm warranty',
+        },
+        {
+          itemId: 30,
+          quantity: 8,
+          unitPrice: 39.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months bushing warranty',
+        },
+        {
+          itemId: 34,
+          quantity: 2,
+          unitPrice: 299.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 24,
+          warrantyDescription: '2 years alternator warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 6, // Budget Auto Solutions (third order)
+      items: [
+        {
+          itemId: 35,
+          quantity: 2,
+          unitPrice: 189.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year starter motor warranty',
+        },
+        {
+          itemId: 39,
+          quantity: 3,
+          unitPrice: 189.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year fender warranty',
+        },
+        {
+          itemId: 40,
+          quantity: 3,
+          unitPrice: 149.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year side mirror warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[9].id, // KBZ Credit Card
+      createDebt: true,
+      debt: {
+        amount: 600.0,
+        dueDate: new Date('2025-12-20'),
+        remarks: 'Budget body parts payment plan',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 7, // Classic Car Restoration (third order)
+      items: [
+        {
+          itemId: 44,
+          quantity: 4,
+          unitPrice: 89.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year floor mat warranty',
+        },
+        {
+          itemId: 45,
+          quantity: 3,
+          unitPrice: 79.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year dashboard cover warranty',
+        },
+        {
+          itemId: 49,
+          quantity: 3,
+          unitPrice: 89.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months exhaust tip warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 8, // Truck & Fleet Service (third order)
+      items: [
+        {
+          itemId: 50,
+          quantity: 6,
+          unitPrice: 19.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months exhaust gasket warranty',
+        },
+        {
+          itemId: 54,
+          quantity: 2,
+          unitPrice: 199.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year cooling fan warranty',
+        },
+        {
+          itemId: 55,
+          quantity: 5,
+          unitPrice: 39.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months hose warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[0].id, // Main Business Bank Account
+      cashAmount: 350.0,
+      onlineAmount: 649.92,
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 9, // Import Auto Specialists (third order)
+      items: [
+        {
+          itemId: 59,
+          quantity: 3,
+          unitPrice: 89.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year fuel pressure regulator warranty',
+        },
+        {
+          itemId: 60,
+          quantity: 4,
+          unitPrice: 69.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year fuel line warranty',
+        },
+        {
+          itemId: 11,
+          quantity: 6,
+          unitPrice: 45.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year piston ring warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[1].id, // Backup Business Account
+      createDebt: true,
+      debt: {
+        amount: 400.0,
+        dueDate: new Date('2026-01-15'),
+        remarks: 'Import specialist fuel system upgrade',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 10, // Mobile Auto Repair (third order)
+      items: [
+        {
+          itemId: 16,
+          quantity: 5,
+          unitPrice: 79.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year brake pad warranty',
+        },
+        {
+          itemId: 17,
+          quantity: 3,
+          unitPrice: 69.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year brake pad warranty',
+        },
+        {
+          itemId: 18,
+          quantity: 2,
+          unitPrice: 149.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 18,
+          warrantyDescription: '18 months brake rotor warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 11, // Performance Tuning Shop (third order)
+      items: [
+        {
+          itemId: 21,
+          quantity: 2,
+          unitPrice: 399.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year clutch warranty',
+        },
+        {
+          itemId: 22,
+          quantity: 1,
+          unitPrice: 299.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year flywheel warranty',
+        },
+        {
+          itemId: 23,
+          quantity: 1,
+          unitPrice: 899.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 24,
+          warrantyDescription: '2 years gear set warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[5].id, // KBZ Pay Digital Wallet
+      cashAmount: 800.0,
+      onlineAmount: 1799.97,
+      createDebt: false,
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 12, // Emergency Roadside Service (third order)
+      items: [
+        {
+          itemId: 26,
+          quantity: 2,
+          unitPrice: 249.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year coil spring warranty',
+        },
+        {
+          itemId: 27,
+          quantity: 1,
+          unitPrice: 399.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 18,
+          warrantyDescription: '18 months shock absorber warranty',
+        },
+        {
+          itemId: 28,
+          quantity: 1,
+          unitPrice: 189.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year sway bar warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[6].id, // KBZ Mobile Banking
+      createDebt: true,
+      debt: {
+        amount: 250.0,
+        dueDate: new Date('2026-02-15'),
+        remarks: 'Emergency suspension repair payment plan',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+  ];
+
+  // Create sell transactions
+  for (const transactionData of sellTransactions) {
+    // Calculate total amount
+    const totalAmount = transactionData.items.reduce(
+      (sum, item) => sum + item.quantity * item.unitPrice,
+      0,
+    );
+
+    // Create transaction
+    const transaction = await prisma.transaction.create({
+      data: {
+        type: transactionData.type,
+        customerId: transactionData.customerId,
+        totalAmount: totalAmount,
+        paymentMethod: transactionData.paymentMethod,
+        paymentAccountId: transactionData.paymentAccountId,
+        cashAmount: transactionData.cashAmount,
+        onlineAmount: transactionData.onlineAmount,
+        date: new Date(),
+      },
+    });
+
+    // Create transaction items with warranty information
+    for (const itemData of transactionData.items) {
+      const warrantyStartDate = new Date();
+      const warrantyEndDate = new Date();
+      warrantyEndDate.setMonth(
+        warrantyEndDate.getMonth() + (itemData.warrantyDurationMonths || 0),
+      );
+
+      await prisma.transactionItem.create({
+        data: {
+          transactionId: transaction.id,
+          itemId: itemData.itemId,
+          quantity: itemData.quantity,
+          unitPrice: itemData.unitPrice,
+          totalAmount: itemData.quantity * itemData.unitPrice,
+          hasWarranty: itemData.hasWarranty,
+          warrantyDurationMonths: itemData.warrantyDurationMonths,
+          warrantyStartDate: itemData.hasWarranty ? warrantyStartDate : null,
+          warrantyEndDate: itemData.hasWarranty ? warrantyEndDate : null,
+          warrantyDescription: itemData.warrantyDescription,
+        },
+      });
+    }
+
+    // Create customer debt if required
+    if (transactionData.createDebt && transactionData.debt) {
+      await prisma.debt.create({
+        data: {
+          customerId: transactionData.customerId,
+          amount: transactionData.debt.amount,
+          dueDate: transactionData.debt.dueDate,
+          remarks: transactionData.debt.remarks,
+          isSettled: transactionData.debt.isSettled,
+          alertSent: transactionData.debt.alertSent,
+          transactionId: transaction.id,
+        },
+      });
+    }
+
+    // Update stock quantities (decrease for SELL transactions)
+    for (const itemData of transactionData.items) {
+      await prisma.stock.updateMany({
+        where: { itemId: itemData.itemId },
+        data: {
+          quantity: {
+            decrement: itemData.quantity,
+          },
+        },
+      });
+    }
+
+    console.log(
+      `✅ Sell transaction created: ${transaction.id} - Total: $${totalAmount.toFixed(2)}`,
+    );
+  }
+
+  // Create additional transactions with approaching and due debts for testing
+  console.log(
+    '🚨 Creating test transactions with approaching and due debts...',
+  );
+
+  const now = new Date();
+
+  // Create approaching debts (due in 2-3 days)
+  const approachingDebtTransactions = [
+    {
+      type: TransactionType.SELL,
+      customerId: 1, // Mike's Auto Repair
+      items: [
+        {
+          itemId: 11,
+          quantity: 3,
+          unitPrice: 45.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year manufacturer warranty',
+        },
+        {
+          itemId: 12,
+          quantity: 2,
+          unitPrice: 89.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months engine parts warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createDebt: true,
+      debt: {
+        amount: 300.0,
+        dueDate: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
+        remarks: 'Approaching debt test - due in 2 days',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 2, // Sarah's Car Care
+      items: [
+        {
+          itemId: 16,
+          quantity: 4,
+          unitPrice: 79.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year brake system warranty',
+        },
+        {
+          itemId: 17,
+          quantity: 3,
+          unitPrice: 69.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year brake system warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[5].id, // KBZ Pay Digital Wallet
+      createDebt: true,
+      debt: {
+        amount: 450.0,
+        dueDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+        remarks: 'Approaching debt test - due in 3 days',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 3, // Quick Fix Garage
+      items: [
+        {
+          itemId: 21,
+          quantity: 1,
+          unitPrice: 399.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year clutch warranty',
+        },
+        {
+          itemId: 22,
+          quantity: 1,
+          unitPrice: 299.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year flywheel warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[6].id, // KBZ Mobile Banking
+      cashAmount: 500.0,
+      onlineAmount: 199.98,
+      createDebt: true,
+      debt: {
+        amount: 600.0,
+        dueDate: new Date(now.getTime() + 2.5 * 24 * 60 * 60 * 1000), // 2.5 days from now
+        remarks: 'Approaching debt test - due in 2.5 days',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+  ];
+
+  // Create due debts (due within 24 hours)
+  const dueDebtTransactions = [
+    {
+      type: TransactionType.SELL,
+      customerId: 4, // Family Auto Service
+      items: [
+        {
+          itemId: 26,
+          quantity: 2,
+          unitPrice: 249.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year suspension warranty',
+        },
+        {
+          itemId: 27,
+          quantity: 1,
+          unitPrice: 399.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 18,
+          warrantyDescription: '18 months shock absorber warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createDebt: true,
+      debt: {
+        amount: 900.0,
+        dueDate: new Date(now.getTime() + 12 * 60 * 60 * 1000), // 12 hours from now
+        remarks: 'Due debt test - due in 12 hours',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 5, // Professional Motors
+      items: [
+        {
+          itemId: 31,
+          quantity: 10,
+          unitPrice: 12.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 6,
+          warrantyDescription: '6 months spark plug warranty',
+        },
+        {
+          itemId: 32,
+          quantity: 4,
+          unitPrice: 89.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year ignition coil warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[7].id, // Wave Pay Digital Wallet
+      createDebt: true,
+      debt: {
+        amount: 750.0,
+        dueDate: new Date(now.getTime() + 6 * 60 * 60 * 1000), // 6 hours from now
+        remarks: 'Due debt test - due in 6 hours',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.SELL,
+      customerId: 6, // Budget Auto Solutions
+      items: [
+        {
+          itemId: 36,
+          quantity: 1,
+          unitPrice: 299.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year bumper warranty',
+        },
+        {
+          itemId: 37,
+          quantity: 1,
+          unitPrice: 279.99,
+          hasWarranty: true,
+          warrantyDurationMonths: 12,
+          warrantyDescription: '1 year bumper warranty',
+        },
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[8].id, // AYA Pay Digital Wallet
+      cashAmount: 300.0,
+      onlineAmount: 279.98,
+      createDebt: true,
+      debt: {
+        amount: 800.0,
+        dueDate: new Date(now.getTime() + 18 * 60 * 60 * 1000), // 18 hours from now
+        remarks: 'Due debt test - due in 18 hours',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+  ];
+
+  // Create supplier debts with approaching and due dates
+  const supplierApproachingDebtTransactions = [
+    {
+      type: TransactionType.BUY,
+      supplierId: 1, // AutoZone Parts Co.
+      items: [
+        { itemId: 11, quantity: 20, unitPrice: 35.0 },
+        { itemId: 12, quantity: 15, unitPrice: 65.0 },
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[0].id, // Main Business Bank Account
+      cashAmount: 1000.0,
+      onlineAmount: 1000.0,
+      createSupplierDebt: true,
+      supplierDebt: {
+        amount: 1200.0,
+        dueDate: new Date(now.getTime() + 2.5 * 24 * 60 * 60 * 1000), // 2.5 days from now
+        remarks: 'Supplier approaching debt test - due in 2.5 days',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 2, // Motor Masters Supply
+      items: [
+        { itemId: 21, quantity: 5, unitPrice: 350.0 },
+        { itemId: 22, quantity: 3, unitPrice: 250.0 },
+      ],
+      paymentMethod: PaymentMethod.ONLINE,
+      paymentAccountId: createdPaymentAccounts[1].id, // Backup Business Account
+      createSupplierDebt: true,
+      supplierDebt: {
+        amount: 2500.0,
+        dueDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+        remarks: 'Supplier approaching debt test - due in 3 days',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+  ];
+
+  const supplierDueDebtTransactions = [
+    {
+      type: TransactionType.BUY,
+      supplierId: 3, // Premium Auto Components
+      items: [
+        { itemId: 31, quantity: 50, unitPrice: 8.0 },
+        { itemId: 32, quantity: 20, unitPrice: 70.0 },
+      ],
+      paymentMethod: PaymentMethod.CASH,
+      createSupplierDebt: true,
+      supplierDebt: {
+        amount: 1800.0,
+        dueDate: new Date(now.getTime() + 8 * 60 * 60 * 1000), // 8 hours from now
+        remarks: 'Supplier due debt test - due in 8 hours',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+    {
+      type: TransactionType.BUY,
+      supplierId: 4, // dfgdgdfg
+      items: [
+        { itemId: 41, quantity: 8, unitPrice: 180.0 },
+        { itemId: 42, quantity: 6, unitPrice: 250.0 },
+      ],
+      paymentMethod: PaymentMethod.HYBRID,
+      paymentAccountId: createdPaymentAccounts[2].id, // Digital Wallet - PayPal
+      cashAmount: 1500.0,
+      onlineAmount: 1500.0,
+      createSupplierDebt: true,
+      supplierDebt: {
+        amount: 3000.0,
+        dueDate: new Date(now.getTime() + 15 * 60 * 60 * 1000), // 15 hours from now
+        remarks: 'Supplier due debt test - due in 15 hours',
+        isSettled: false,
+        alertSent: false,
+      },
+    },
+  ];
+
+  // Process approaching debt transactions
+  for (const transactionData of approachingDebtTransactions) {
+    const totalAmount = transactionData.items.reduce(
+      (sum, item) => sum + item.quantity * item.unitPrice,
+      0,
+    );
+
+    const transaction = await prisma.transaction.create({
+      data: {
+        type: transactionData.type,
+        customerId: transactionData.customerId,
+        totalAmount: totalAmount,
+        paymentMethod: transactionData.paymentMethod,
+        paymentAccountId: transactionData.paymentAccountId,
+        cashAmount: transactionData.cashAmount,
+        onlineAmount: transactionData.onlineAmount,
+        date: new Date(),
+      },
+    });
+
+    // Create transaction items
+    for (const itemData of transactionData.items) {
+      await prisma.transactionItem.create({
+        data: {
+          transactionId: transaction.id,
+          itemId: itemData.itemId,
+          quantity: itemData.quantity,
+          unitPrice: itemData.unitPrice,
+          totalAmount: itemData.quantity * itemData.unitPrice,
+          hasWarranty: itemData.hasWarranty,
+          warrantyDurationMonths: itemData.warrantyDurationMonths,
+          warrantyStartDate: itemData.hasWarranty ? new Date() : null,
+          warrantyEndDate: itemData.hasWarranty
+            ? new Date(
+                Date.now() +
+                  (itemData.warrantyDurationMonths || 0) *
+                    30 *
+                    24 *
+                    60 *
+                    60 *
+                    1000,
+              )
+            : null,
+          warrantyDescription: itemData.warrantyDescription,
+        },
+      });
+    }
+
+    // Create customer debt
+    if (transactionData.createDebt && transactionData.debt) {
+      await prisma.debt.create({
+        data: {
+          customerId: transactionData.customerId,
+          amount: transactionData.debt.amount,
+          dueDate: transactionData.debt.dueDate,
+          remarks: transactionData.debt.remarks,
+          isSettled: transactionData.debt.isSettled,
+          alertSent: transactionData.debt.alertSent,
+          transactionId: transaction.id,
+        },
+      });
+    }
+
+    // Update stock quantities
+    for (const itemData of transactionData.items) {
+      await prisma.stock.updateMany({
+        where: { itemId: itemData.itemId },
+        data: {
+          quantity: {
+            decrement: itemData.quantity,
+          },
+        },
+      });
+    }
+
+    console.log(
+      `✅ Approaching debt transaction created: ${transaction.id} - Total: $${totalAmount.toFixed(2)}`,
+    );
+  }
+
+  // Process due debt transactions
+  for (const transactionData of dueDebtTransactions) {
+    const totalAmount = transactionData.items.reduce(
+      (sum, item) => sum + item.quantity * item.unitPrice,
+      0,
+    );
+
+    const transaction = await prisma.transaction.create({
+      data: {
+        type: transactionData.type,
+        customerId: transactionData.customerId,
+        totalAmount: totalAmount,
+        paymentMethod: transactionData.paymentMethod,
+        paymentAccountId: transactionData.paymentAccountId,
+        cashAmount: transactionData.cashAmount,
+        onlineAmount: transactionData.onlineAmount,
+        date: new Date(),
+      },
+    });
+
+    // Create transaction items
+    for (const itemData of transactionData.items) {
+      await prisma.transactionItem.create({
+        data: {
+          transactionId: transaction.id,
+          itemId: itemData.itemId,
+          quantity: itemData.quantity,
+          unitPrice: itemData.unitPrice,
+          totalAmount: itemData.quantity * itemData.unitPrice,
+          hasWarranty: itemData.hasWarranty,
+          warrantyDurationMonths: itemData.warrantyDurationMonths,
+          warrantyStartDate: itemData.hasWarranty ? new Date() : null,
+          warrantyEndDate: itemData.hasWarranty
+            ? new Date(
+                Date.now() +
+                  (itemData.warrantyDurationMonths || 0) *
+                    30 *
+                    24 *
+                    60 *
+                    60 *
+                    1000,
+              )
+            : null,
+          warrantyDescription: itemData.warrantyDescription,
+        },
+      });
+    }
+
+    // Create customer debt
+    if (transactionData.createDebt && transactionData.debt) {
+      await prisma.debt.create({
+        data: {
+          customerId: transactionData.customerId,
+          amount: transactionData.debt.amount,
+          dueDate: transactionData.debt.dueDate,
+          remarks: transactionData.debt.remarks,
+          isSettled: transactionData.debt.isSettled,
+          alertSent: transactionData.debt.alertSent,
+          transactionId: transaction.id,
+        },
+      });
+    }
+
+    // Update stock quantities
+    for (const itemData of transactionData.items) {
+      await prisma.stock.updateMany({
+        where: { itemId: itemData.itemId },
+        data: {
+          quantity: {
+            decrement: itemData.quantity,
+          },
+        },
+      });
+    }
+
+    console.log(
+      `✅ Due debt transaction created: ${transaction.id} - Total: $${totalAmount.toFixed(2)}`,
+    );
+  }
+
+  // Process supplier approaching debt transactions
+  for (const transactionData of supplierApproachingDebtTransactions) {
+    const totalAmount = transactionData.items.reduce(
+      (sum, item) => sum + item.quantity * item.unitPrice,
+      0,
+    );
+
+    const transaction = await prisma.transaction.create({
+      data: {
+        type: transactionData.type,
+        supplierId: transactionData.supplierId,
+        totalAmount: totalAmount,
+        paymentMethod: transactionData.paymentMethod,
+        paymentAccountId: transactionData.paymentAccountId,
+        cashAmount: transactionData.cashAmount,
+        onlineAmount: transactionData.onlineAmount,
+        date: new Date(),
+      },
+    });
+
+    // Create transaction items
+    for (const itemData of transactionData.items) {
+      await prisma.transactionItem.create({
+        data: {
+          transactionId: transaction.id,
+          itemId: itemData.itemId,
+          quantity: itemData.quantity,
+          unitPrice: itemData.unitPrice,
+          totalAmount: itemData.quantity * itemData.unitPrice,
+        },
+      });
+    }
+
+    // Create supplier debt
+    if (transactionData.createSupplierDebt && transactionData.supplierDebt) {
+      await prisma.supplierDebt.create({
+        data: {
+          supplierId: transactionData.supplierId,
+          amount: transactionData.supplierDebt.amount,
+          dueDate: transactionData.supplierDebt.dueDate,
+          remarks: transactionData.supplierDebt.remarks,
+          isSettled: transactionData.supplierDebt.isSettled,
+          alertSent: transactionData.supplierDebt.alertSent,
+          transactionId: transaction.id,
+        },
+      });
+    }
+
+    // Update stock quantities
+    for (const itemData of transactionData.items) {
+      await prisma.stock.updateMany({
+        where: { itemId: itemData.itemId },
+        data: {
+          quantity: {
+            increment: itemData.quantity,
+          },
+        },
+      });
+    }
+
+    console.log(
+      `✅ Supplier approaching debt transaction created: ${transaction.id} - Total: $${totalAmount.toFixed(2)}`,
+    );
+  }
+
+  // Process supplier due debt transactions
+  for (const transactionData of supplierDueDebtTransactions) {
+    const totalAmount = transactionData.items.reduce(
+      (sum, item) => sum + item.quantity * item.unitPrice,
+      0,
+    );
+
+    const transaction = await prisma.transaction.create({
+      data: {
+        type: transactionData.type,
+        supplierId: transactionData.supplierId,
+        totalAmount: totalAmount,
+        paymentMethod: transactionData.paymentMethod,
+        paymentAccountId: transactionData.paymentAccountId,
+        cashAmount: transactionData.cashAmount,
+        onlineAmount: transactionData.onlineAmount,
+        date: new Date(),
+      },
+    });
+
+    // Create transaction items
+    for (const itemData of transactionData.items) {
+      await prisma.transactionItem.create({
+        data: {
+          transactionId: transaction.id,
+          itemId: itemData.itemId,
+          quantity: itemData.quantity,
+          unitPrice: itemData.unitPrice,
+          totalAmount: itemData.quantity * itemData.unitPrice,
+        },
+      });
+    }
+
+    // Create supplier debt
+    if (transactionData.createSupplierDebt && transactionData.supplierDebt) {
+      await prisma.supplierDebt.create({
+        data: {
+          supplierId: transactionData.supplierId,
+          amount: transactionData.supplierDebt.amount,
+          dueDate: transactionData.supplierDebt.dueDate,
+          remarks: transactionData.supplierDebt.remarks,
+          isSettled: transactionData.supplierDebt.isSettled,
+          alertSent: transactionData.supplierDebt.alertSent,
+          transactionId: transaction.id,
+        },
+      });
+    }
+
+    // Update stock quantities
+    for (const itemData of transactionData.items) {
+      await prisma.stock.updateMany({
+        where: { itemId: itemData.itemId },
+        data: {
+          quantity: {
+            increment: itemData.quantity,
+          },
+        },
+      });
+    }
+
+    console.log(
+      `✅ Supplier due debt transaction created: ${transaction.id} - Total: $${totalAmount.toFixed(2)}`,
+    );
+  }
+
+  // Create refund transactions for various scenarios
+  console.log('🔄 Creating refund transaction seed data...');
+
+  // First, get all SELL transaction items to use for refunds
+  const sellTransactionItems = await prisma.transactionItem.findMany({
+    where: {
+      transaction: {
+        type: TransactionType.SELL,
+      },
+    },
+    include: {
+      transaction: {
+        include: {
+          customer: true,
+        },
+      },
+    },
+    orderBy: {
+      id: 'asc',
+    },
+  });
+
+  console.log(
+    `📊 Found ${sellTransactionItems.length} SELL transaction items for refunds`,
+  );
+
+  // Create refund data using actual transaction item IDs
+  const refundTransactions = [
+    // Money refunds for defective products
+    {
+      refundType: RefundType.MONEY_REFUND,
+      reason: 'Defective brake pads - customer safety concern',
+      totalRefundAmount: 319.96,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[0]?.id,
+          quantityToRefund: 4,
+          refundAmount: 319.96,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.MONEY_REFUND,
+      reason: 'Wrong part ordered - incompatible with vehicle model',
+      totalRefundAmount: 269.97,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[1]?.id,
+          quantityToRefund: 3,
+          refundAmount: 269.97,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.MONEY_REFUND,
+      reason: 'Quality issues - premature wear detected',
+      totalRefundAmount: 299.99,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[2]?.id,
+          quantityToRefund: 1,
+          refundAmount: 299.99,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.MONEY_REFUND,
+      reason: 'Customer dissatisfaction - performance below expectations',
+      totalRefundAmount: 1279.84,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[3]?.id,
+          quantityToRefund: 4,
+          refundAmount: 639.92,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[4]?.id,
+          quantityToRefund: 3,
+          refundAmount: 419.94,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[5]?.id,
+          quantityToRefund: 1,
+          refundAmount: 219.98,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.MONEY_REFUND,
+      reason: 'Damaged during shipping - packaging insufficient',
+      totalRefundAmount: 259.9,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[9]?.id, // From third sell transaction
+          quantityToRefund: 10,
+          refundAmount: 259.9,
+        },
+      ],
+    },
+    // Store credit refunds
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Customer changed mind - within return policy',
+      totalRefundAmount: 1799.96,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[6]?.id, // From third sell transaction
+          quantityToRefund: 2,
+          refundAmount: 799.98,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[7]?.id, // From third sell transaction
+          quantityToRefund: 1,
+          refundAmount: 299.99,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[8]?.id, // From third sell transaction
+          quantityToRefund: 1,
+          refundAmount: 899.99,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Duplicate order - customer error',
+      totalRefundAmount: 1379.94,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[10]?.id, // From fourth sell transaction
+          quantityToRefund: 2,
+          refundAmount: 999.96,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[11]?.id, // From fourth sell transaction
+          quantityToRefund: 1,
+          refundAmount: 379.98,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Overstock return - bulk purchase adjustment',
+      totalRefundAmount: 1559.85,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[12]?.id, // From fifth sell transaction
+          quantityToRefund: 10,
+          refundAmount: 259.8,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[13]?.id, // From fifth sell transaction
+          quantityToRefund: 4,
+          refundAmount: 719.92,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[14]?.id, // From fifth sell transaction
+          quantityToRefund: 2,
+          refundAmount: 599.98,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Color mismatch - not as described online',
+      totalRefundAmount: 1759.96,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[15]?.id, // From sixth sell transaction
+          quantityToRefund: 2,
+          refundAmount: 599.98,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[16]?.id, // From sixth sell transaction
+          quantityToRefund: 2,
+          refundAmount: 559.98,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[17]?.id, // From sixth sell transaction
+          quantityToRefund: 1,
+          refundAmount: 899.99,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Size incorrect - measurement error',
+      totalRefundAmount: 749.95,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[18]?.id, // From seventh sell transaction
+          quantityToRefund: 2,
+          refundAmount: 399.98,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[19]?.id, // From seventh sell transaction
+          quantityToRefund: 1,
+          refundAmount: 299.99,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[20]?.id, // From seventh sell transaction
+          quantityToRefund: 1,
+          refundAmount: 49.99,
+        },
+      ],
+    },
+    // Exchange refunds
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Warranty claim - defective within warranty period',
+      totalRefundAmount: 2159.94,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[21]?.id, // From eighth sell transaction
+          quantityToRefund: 2,
+          refundAmount: 1199.97,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[22]?.id, // From eighth sell transaction
+          quantityToRefund: 1,
+          refundAmount: 599.98,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[23]?.id, // From eighth sell transaction
+          quantityToRefund: 2,
+          refundAmount: 759.96,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Upgrade request - customer wants better model',
+      totalRefundAmount: 1024.94,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[24]?.id, // From ninth sell transaction
+          quantityToRefund: 1,
+          refundAmount: 799.98,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[25]?.id, // From ninth sell transaction
+          quantityToRefund: 1,
+          refundAmount: 89.99,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[26]?.id, // From ninth sell transaction
+          quantityToRefund: 3,
+          refundAmount: 124.95,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Compatibility issue - not suitable for vehicle type',
+      totalRefundAmount: 659.95,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[27]?.id, // From tenth sell transaction
+          quantityToRefund: 1,
+          refundAmount: 199.99,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[28]?.id, // From tenth sell transaction
+          quantityToRefund: 1,
+          refundAmount: 399.99,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[29]?.id, // From tenth sell transaction
+          quantityToRefund: 2,
+          refundAmount: 59.97,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Installation problem - mechanic recommendation',
+      totalRefundAmount: 1009.94,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[30]?.id, // From eleventh sell transaction
+          quantityToRefund: 2,
+          refundAmount: 519.96,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[31]?.id, // From eleventh sell transaction
+          quantityToRefund: 1,
+          refundAmount: 189.99,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[32]?.id, // From eleventh sell transaction
+          quantityToRefund: 1,
+          refundAmount: 299.99,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Performance upgrade - racing requirements',
+      totalRefundAmount: 687.93,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[33]?.id, // From twelfth sell transaction
+          quantityToRefund: 3,
+          refundAmount: 449.95,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[34]?.id, // From twelfth sell transaction
+          quantityToRefund: 2,
+          refundAmount: 137.98,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[35]?.id, // From twelfth sell transaction
+          quantityToRefund: 1,
+          refundAmount: 99.99,
+        },
+      ],
+    },
+    // Mixed scenario refunds with multiple items from reorders
+    {
+      refundType: RefundType.MONEY_REFUND,
+      reason: 'Bulk return - fleet policy change',
+      totalRefundAmount: 959.91,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[36]?.id, // From Mike's Auto Repair reorder
+          quantityToRefund: 2,
+          refundAmount: 319.98,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[37]?.id, // From Mike's Auto Repair reorder
+          quantityToRefund: 4,
+          refundAmount: 239.96,
+        },
+        {
+          originalTransactionItemId: sellTransactionItems[38]?.id, // From Mike's Auto Repair reorder
+          quantityToRefund: 1,
+          refundAmount: 299.99,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Seasonal return - winter to summer parts',
+      totalRefundAmount: 1009.95,
+      refundItems: [
+        {
+          originalTransactionItemId: sellTransactionItems[39]?.id, // From Sarah's Car Care reorder
+          quantityToRefund: 1,
+          refundAmount: 189.99,
+        },
+        {
+          originalTransactionItemId: 41, // From Sarah's Car Care reorder
+          quantityToRefund: 2,
+          refundAmount: 379.98,
+        },
+        {
+          originalTransactionItemId: 42, // From Sarah's Car Care reorder
+          quantityToRefund: 2,
+          refundAmount: 299.98,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Technology upgrade - newer model available',
+      totalRefundAmount: 629.95,
+      refundItems: [
+        {
+          originalTransactionItemId: 43, // From Quick Fix Garage reorder
+          quantityToRefund: 2,
+          refundAmount: 269.97,
+        },
+        {
+          originalTransactionItemId: 44, // From Quick Fix Garage reorder
+          quantityToRefund: 1,
+          refundAmount: 159.98,
+        },
+        {
+          originalTransactionItemId: 45, // From Quick Fix Garage reorder
+          quantityToRefund: 1,
+          refundAmount: 179.98,
+        },
+      ],
+    },
+    // Warranty and recall scenarios
+    {
+      refundType: RefundType.MONEY_REFUND,
+      reason: 'Manufacturer recall - safety issue identified',
+      totalRefundAmount: 439.93,
+      refundItems: [
+        {
+          originalTransactionItemId: 46, // From Family Auto Service reorder
+          quantityToRefund: 2,
+          refundAmount: 79.96,
+        },
+        {
+          originalTransactionItemId: 47, // From Family Auto Service reorder
+          quantityToRefund: 1,
+          refundAmount: 199.99,
+        },
+        {
+          originalTransactionItemId: 48, // From Family Auto Service reorder
+          quantityToRefund: 2,
+          refundAmount: 119.97,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Extended warranty claim - premature failure',
+      totalRefundAmount: 669.94,
+      refundItems: [
+        {
+          originalTransactionItemId: 49, // From Professional Motors reorder
+          quantityToRefund: 1,
+          refundAmount: 179.98,
+        },
+        {
+          originalTransactionItemId: 50, // From Professional Motors reorder
+          quantityToRefund: 2,
+          refundAmount: 209.97,
+        },
+        {
+          originalTransactionItemId: 51, // From Professional Motors reorder
+          quantityToRefund: 2,
+          refundAmount: 183.96,
+        },
+      ],
+    },
+    // Customer service scenarios
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Goodwill gesture - customer loyalty program',
+      totalRefundAmount: 1179.92,
+      refundItems: [
+        {
+          originalTransactionItemId: 52, // From Budget Auto Solutions reorder
+          quantityToRefund: 3,
+          refundAmount: 479.94,
+        },
+        {
+          originalTransactionItemId: 53, // From Budget Auto Solutions reorder
+          quantityToRefund: 2,
+          refundAmount: 279.96,
+        },
+        {
+          originalTransactionItemId: 54, // From Budget Auto Solutions reorder
+          quantityToRefund: 1,
+          refundAmount: 299.98,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.MONEY_REFUND,
+      reason: 'Service error - incorrect part installed by our technician',
+      totalRefundAmount: 1599.97,
+      refundItems: [
+        {
+          originalTransactionItemId: 55, // From Classic Car Restoration reorder
+          quantityToRefund: 1,
+          refundAmount: 399.99,
+        },
+        {
+          originalTransactionItemId: 56, // From Classic Car Restoration reorder
+          quantityToRefund: 1,
+          refundAmount: 299.99,
+        },
+        {
+          originalTransactionItemId: 57, // From Classic Car Restoration reorder
+          quantityToRefund: 1,
+          refundAmount: 899.99,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Professional recommendation - mechanic suggested alternative',
+      totalRefundAmount: 2289.95,
+      refundItems: [
+        {
+          originalTransactionItemId: 58, // From Truck & Fleet Service reorder
+          quantityToRefund: 2,
+          refundAmount: 749.97,
+        },
+        {
+          originalTransactionItemId: 59, // From Truck & Fleet Service reorder
+          quantityToRefund: 1,
+          refundAmount: 799.98,
+        },
+        {
+          originalTransactionItemId: 60, // From Truck & Fleet Service reorder
+          quantityToRefund: 1,
+          refundAmount: 379.98,
+        },
+      ],
+    },
+    // Special cases with approaching debt transactions
+    {
+      refundType: RefundType.MONEY_REFUND,
+      reason: 'Import restriction - customs regulation change',
+      totalRefundAmount: 417.95,
+      refundItems: [
+        {
+          originalTransactionItemId: 81, // From approaching debt transaction 1
+          quantityToRefund: 2,
+          refundAmount: 137.97,
+        },
+        {
+          originalTransactionItemId: 82, // From approaching debt transaction 1
+          quantityToRefund: 1,
+          refundAmount: 179.98,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Business closure - customer relocating',
+      totalRefundAmount: 529.93,
+      refundItems: [
+        {
+          originalTransactionItemId: 83, // From approaching debt transaction 2
+          quantityToRefund: 2,
+          refundAmount: 319.96,
+        },
+        {
+          originalTransactionItemId: 84, // From approaching debt transaction 2
+          quantityToRefund: 1,
+          refundAmount: 209.97,
+        },
+      ],
+    },
+    // Emergency and fleet scenarios with due debt transactions
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Emergency service change - different vehicle requirements',
+      totalRefundAmount: 1099.97,
+      refundItems: [
+        {
+          originalTransactionItemId: 85, // From approaching debt transaction 3
+          quantityToRefund: 1,
+          refundAmount: 399.99,
+        },
+        {
+          originalTransactionItemId: 86, // From approaching debt transaction 3
+          quantityToRefund: 1,
+          refundAmount: 299.99,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.MONEY_REFUND,
+      reason: 'Fleet maintenance policy update - standardization required',
+      totalRefundAmount: 1299.96,
+      refundItems: [
+        {
+          originalTransactionItemId: 87, // From due debt transaction 1
+          quantityToRefund: 2,
+          refundAmount: 499.98,
+        },
+        {
+          originalTransactionItemId: 88, // From due debt transaction 1
+          quantityToRefund: 1,
+          refundAmount: 399.99,
+        },
+      ],
+    },
+    // Performance and racing scenarios with due debt transactions
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Racing regulation change - parts no longer allowed',
+      totalRefundAmount: 489.86,
+      refundItems: [
+        {
+          originalTransactionItemId: 89, // From due debt transaction 2
+          quantityToRefund: 5,
+          refundAmount: 129.9,
+        },
+        {
+          originalTransactionItemId: 90, // From due debt transaction 2
+          quantityToRefund: 2,
+          refundAmount: 359.96,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Performance downgrade - customer preference change',
+      totalRefundAmount: 579.98,
+      refundItems: [
+        {
+          originalTransactionItemId: 91, // From due debt transaction 3
+          quantityToRefund: 1,
+          refundAmount: 299.99,
+        },
+        {
+          originalTransactionItemId: 92, // From due debt transaction 3
+          quantityToRefund: 1,
+          refundAmount: 279.99,
+        },
+      ],
+    },
+    // Additional comprehensive scenarios
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Vehicle modification requirements changed',
+      totalRefundAmount: 1949.85,
+      refundItems: [
+        {
+          originalTransactionItemId: 61, // From Import Auto Specialists reorder
+          quantityToRefund: 8,
+          refundAmount: 194.85,
+        },
+        {
+          originalTransactionItemId: 62, // From Import Auto Specialists reorder
+          quantityToRefund: 3,
+          refundAmount: 539.94,
+        },
+        {
+          originalTransactionItemId: 63, // From Import Auto Specialists reorder
+          quantityToRefund: 1,
+          refundAmount: 399.98,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.MONEY_REFUND,
+      reason: 'Installation compatibility issue discovered',
+      totalRefundAmount: 2279.96,
+      refundItems: [
+        {
+          originalTransactionItemId: 64, // From Mobile Auto Repair reorder
+          quantityToRefund: 1,
+          refundAmount: 299.99,
+        },
+        {
+          originalTransactionItemId: 65, // From Mobile Auto Repair reorder
+          quantityToRefund: 1,
+          refundAmount: 279.99,
+        },
+        {
+          originalTransactionItemId: 66, // From Mobile Auto Repair reorder
+          quantityToRefund: 1,
+          refundAmount: 899.99,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Customer preference change - different brand requested',
+      totalRefundAmount: 1549.95,
+      refundItems: [
+        {
+          originalTransactionItemId: 67, // From Performance Tuning Shop reorder
+          quantityToRefund: 2,
+          refundAmount: 599.98,
+        },
+        {
+          originalTransactionItemId: 68, // From Performance Tuning Shop reorder
+          quantityToRefund: 1,
+          refundAmount: 599.98,
+        },
+        {
+          originalTransactionItemId: 69, // From Performance Tuning Shop reorder
+          quantityToRefund: 3,
+          refundAmount: 249.95,
+        },
+      ],
+    },
+    // Final comprehensive scenarios covering all transaction types
+    {
+      refundType: RefundType.MONEY_REFUND,
+      reason: 'End of season clearance - customer return policy',
+      totalRefundAmount: 1799.94,
+      refundItems: [
+        {
+          originalTransactionItemId: 70, // From Emergency Roadside Service reorder
+          quantityToRefund: 2,
+          refundAmount: 799.98,
+        },
+        {
+          originalTransactionItemId: 71, // From Emergency Roadside Service reorder
+          quantityToRefund: 1,
+          refundAmount: 299.99,
+        },
+        {
+          originalTransactionItemId: 72, // From Emergency Roadside Service reorder
+          quantityToRefund: 2,
+          refundAmount: 569.97,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Warranty extension expired - customer goodwill',
+      totalRefundAmount: 1689.96,
+      refundItems: [
+        {
+          originalTransactionItemId: 73, // From third order transactions
+          quantityToRefund: 1,
+          refundAmount: 399.99,
+        },
+        {
+          originalTransactionItemId: 74, // From third order transactions
+          quantityToRefund: 1,
+          refundAmount: 89.99,
+        },
+        {
+          originalTransactionItemId: 75, // From third order transactions
+          quantityToRefund: 2,
+          refundAmount: 149.98,
+        },
+      ],
+    },
+    {
+      refundType: RefundType.ITEM_EXCHANGE,
+      reason: 'Loyalty program reward - customer appreciation',
+      totalRefundAmount: 2399.92,
+      refundItems: [
+        {
+          originalTransactionItemId: 76, // From third order transactions
+          quantityToRefund: 1,
+          refundAmount: 199.99,
+        },
+        {
+          originalTransactionItemId: 77, // From third order transactions
+          quantityToRefund: 1,
+          refundAmount: 399.99,
+        },
+        {
+          originalTransactionItemId: 78, // From third order transactions
+          quantityToRefund: 1,
+          refundAmount: 39.98,
+        },
+      ],
+    },
+  ];
+
+  // Process refund transactions
+  for (const refundData of refundTransactions) {
+    try {
+      // Get the original transaction item to find the transaction and customer
+      const originalTransactionItem = await prisma.transactionItem.findUnique({
+        where: { id: refundData.refundItems[0].originalTransactionItemId },
+        include: { transaction: { include: { customer: true } } },
+      });
+
+      if (!originalTransactionItem) {
+        console.log(
+          `❌ Original transaction item ${refundData.refundItems[0].originalTransactionItemId} not found, skipping refund`,
+        );
+        continue;
+      }
+
+      if (!originalTransactionItem.transaction.customerId) {
+        console.log(
+          `❌ Transaction ${originalTransactionItem.transactionId} has no customer, skipping refund`,
+        );
+        continue;
+      }
+
+      // Create refund transaction
+      const refund = await prisma.refund.create({
+        data: {
+          refundType: refundData.refundType,
+          originalTransactionId: originalTransactionItem.transactionId,
+          customerId: originalTransactionItem.transaction.customerId!,
+          reason: refundData.reason,
+          totalRefundAmount: refundData.totalRefundAmount,
+          status: RefundStatus.PROCESSED,
+          processedAt: new Date(),
+          processedBy: 1, // Root admin user
+        },
+      });
+
+      // Create refund items
+      for (const itemData of refundData.refundItems) {
+        await prisma.refundItem.create({
+          data: {
+            refundId: refund.id,
+            originalTransactionItemId: itemData.originalTransactionItemId,
+            quantityToRefund: itemData.quantityToRefund,
+            refundAmount: itemData.refundAmount,
+            isWarrantyValid: true, // Assume warranty was valid for seed data
+          },
+        });
+      }
+
+      console.log(
+        `✅ Refund created: ${refund.id} - Type: ${refundData.refundType} - Amount: $${refundData.totalRefundAmount.toFixed(2)}`,
+      );
+    } catch (error) {
+      console.log(
+        `⚠️ Skipping refund (${refundData.refundType}): Original transaction item may not exist - ${error.message}`,
+      );
+    }
+  }
+
   console.log('🎉 Database seeding completed successfully!');
   console.log(
     `📊 Processed ${staffUsers.length + 1} users (including root admin)`,
@@ -943,6 +4180,20 @@ async function main() {
   console.log(
     `📦 Stock records created for all ${parentItems.length + subItems.length} items`,
   );
+  console.log(`💳 Created ${paymentAccounts.length} payment accounts`);
+  console.log(`🛒 Created ${buyTransactions.length} buy transactions`);
+  console.log(`🛍️ Created ${sellTransactions.length} sell transactions`);
+  console.log(
+    `🚨 Created ${approachingDebtTransactions.length} approaching debt transactions`,
+  );
+  console.log(`🚨 Created ${dueDebtTransactions.length} due debt transactions`);
+  console.log(
+    `🚨 Created ${supplierApproachingDebtTransactions.length} supplier approaching debt transactions`,
+  );
+  console.log(
+    `🚨 Created ${supplierDueDebtTransactions.length} supplier due debt transactions`,
+  );
+  console.log(`🔄 Created ${refundTransactions.length} refund transactions`);
 }
 
 main()
