@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { JwtGuard } from '../auth/guard/jwt.guard';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiOperation,
   ApiParam,
@@ -37,11 +38,16 @@ import { FindOverdueDebtsUseCase } from '../use-cases/debt/find-overdue-debts.us
 import { CreateDebtDto } from '../dtos/debt/create-debt.dto';
 import { UpdateDebtDto } from '../dtos/debt/update-debt.dto';
 import { DebtResponseDto } from '../dtos/debt/debt-response.dto';
-import { DebtFilter } from '../../domain/filters/debt.filter';
+import {
+  DebtFilter,
+  DebtSortBy,
+  SortOrder,
+} from '../../domain/filters/debt.filter';
 import { DebtResponseSchema } from './documentation/debt/ResponseSchema/DebtResponseSchema';
 import { PaginatedDebtResponseSchema } from './documentation/debt/ResponseSchema/PaginatedDebtResponseSchema';
 import { DebtListResponseSchema } from './documentation/debt/ResponseSchema/DebtListResponseSchema';
 import { CoreApiResonseSchema } from '../../core/common/schema/ApiResponseSchema';
+import { ParseOptionalBoolPipe } from '../pipes/parse-optional-bool.pipe';
 
 @ApiTags('Debts')
 @UseGuards(JwtGuard)
@@ -59,6 +65,8 @@ export class DebtsController {
   ) {}
 
   @Post()
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new debt' })
   @ApiBody({ type: CreateDebtDto, description: 'Debt data to create' })
@@ -90,6 +98,8 @@ export class DebtsController {
   }
 
   @Get()
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get debts with optional filtering' })
   @ApiQuery({ type: PaginationQueryDto, required: false })
@@ -101,12 +111,14 @@ export class DebtsController {
   @ApiQuery({
     name: 'isSettled',
     required: false,
-    description: 'Filter by settlement status',
+    type: Boolean,
+    description: 'Filter by settlement status (true/false)',
   })
   @ApiQuery({
     name: 'alertSent',
     required: false,
-    description: 'Filter by alert status',
+    type: Boolean,
+    description: 'Filter by alert status (true/false)',
   })
   @ApiQuery({
     name: 'dueBefore',
@@ -117,6 +129,25 @@ export class DebtsController {
     name: 'dueAfter',
     required: false,
     description: 'Filter by due date after',
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    enum: [
+      'customer',
+      'amount',
+      'dueDate',
+      'isSettled',
+      'createdAt',
+      'updatedAt',
+    ],
+    description: 'Field to sort by (default: dueDate)',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    enum: ['asc', 'desc'],
+    description: 'Sort order (default: asc)',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -130,19 +161,23 @@ export class DebtsController {
   async getDebts(
     @Query() paginationQuery: PaginationQueryDto,
     @Query('customerId') customerId?: string,
-    @Query('isSettled') isSettled?: string,
-    @Query('alertSent') alertSent?: string,
+    @Query('isSettled', ParseOptionalBoolPipe) isSettled?: boolean,
+    @Query('alertSent', ParseOptionalBoolPipe) alertSent?: boolean,
     @Query('dueBefore') dueBefore?: string,
     @Query('dueAfter') dueAfter?: string,
+    @Query('sortBy') sortBy?: DebtSortBy,
+    @Query('sortOrder') sortOrder?: SortOrder,
   ): Promise<ApiResponseDto<PaginatedResponseDto<DebtResponseDto>>> {
     const filter = new DebtFilter({
       skip: paginationQuery.skip,
       take: paginationQuery.take,
       customerId: customerId ? parseInt(customerId, 10) : undefined,
-      isSettled: isSettled ? isSettled === 'true' : undefined,
-      alertSent: alertSent ? alertSent === 'true' : undefined,
+      isSettled: isSettled,
+      alertSent: alertSent,
       dueBefore: dueBefore ? new Date(dueBefore) : undefined,
       dueAfter: dueAfter ? new Date(dueAfter) : undefined,
+      sortBy,
+      sortOrder,
     });
 
     const { debts, total } = await this.listDebtsUseCase.execute(filter);
@@ -161,6 +196,8 @@ export class DebtsController {
   }
 
   @Get('all')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all debts without pagination' })
   @ApiResponse({
@@ -181,6 +218,8 @@ export class DebtsController {
   }
 
   @Get('overdue')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get overdue debts' })
   @ApiResponse({
@@ -201,6 +240,8 @@ export class DebtsController {
   }
 
   @Get('customer/:customerId')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get debts by customer ID' })
   @ApiParam({ name: 'customerId', type: 'number', description: 'Customer ID' })
@@ -223,7 +264,38 @@ export class DebtsController {
     );
   }
 
+  @Get('customer-name/:customerName')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get debts by customer name' })
+  @ApiParam({
+    name: 'customerName',
+    type: 'string',
+    description: 'Customer Name',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Debts retrieved successfully',
+    type: DebtListResponseSchema,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized access',
+  })
+  async getDebtsByCustomerName(
+    @Param('customerName') customerName: string,
+  ): Promise<ApiResponseDto<DebtResponseDto[]>> {
+    const debts = await this.getDebtUseCase.findByCustomerName(customerName);
+    return ApiResponseDto.success(
+      debts.map((debt) => new DebtResponseDto(debt)),
+      'Debts retrieved successfully',
+    );
+  }
+
   @Get('transaction/:transactionId')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get debt by transaction ID' })
   @ApiParam({
@@ -255,6 +327,8 @@ export class DebtsController {
   }
 
   @Get(':id')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get debt by ID' })
   @ApiParam({ name: 'id', type: 'number', description: 'Debt ID' })
@@ -282,6 +356,8 @@ export class DebtsController {
   }
 
   @Put(':id')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update a debt' })
   @ApiParam({ name: 'id', type: 'number', description: 'Debt ID' })
@@ -315,6 +391,8 @@ export class DebtsController {
   }
 
   @Put(':id/settle')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Mark a debt as settled' })
   @ApiParam({ name: 'id', type: 'number', description: 'Debt ID' })
@@ -342,6 +420,8 @@ export class DebtsController {
   }
 
   @Put(':id/mark-alert-sent')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Mark alert as sent for a debt' })
   @ApiParam({ name: 'id', type: 'number', description: 'Debt ID' })
@@ -368,7 +448,291 @@ export class DebtsController {
     );
   }
 
+  // NEW ENDPOINTS FOR DEBT CATEGORIZATION
+
+  @Get('by-type/purchase-debts')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get debts from original purchases (positive amounts only)',
+  })
+  @ApiQuery({ type: PaginationQueryDto, required: false })
+  @ApiQuery({
+    name: 'customerId',
+    required: false,
+    description: 'Filter by customer ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Purchase debts retrieved successfully',
+    type: PaginatedDebtResponseSchema,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized access',
+  })
+  async getPurchaseDebts(
+    @Query() paginationQuery: PaginationQueryDto,
+    @Query('customerId') customerId?: string,
+  ): Promise<ApiResponseDto<PaginatedResponseDto<DebtResponseDto>>> {
+    const filter = new DebtFilter({
+      skip: paginationQuery.skip,
+      take: paginationQuery.take,
+      customerId: customerId ? parseInt(customerId, 10) : undefined,
+      // Only positive amounts (customer owes money)
+      minAmount: 0.01,
+      // Exclude refund-related remarks
+      excludeRemarks: ['Credit from', 'refund #'],
+    });
+
+    const { debts, total } = await this.listDebtsUseCase.execute(filter);
+
+    const paginatedResponse = new PaginatedResponseDto<DebtResponseDto>(
+      debts.map((debt) => new DebtResponseDto(debt)),
+      total,
+      filter.skip,
+      filter.take,
+    );
+
+    return ApiResponseDto.success(
+      paginatedResponse,
+      'Purchase debts retrieved successfully',
+    );
+  }
+
+  @Get('by-type/credit-balances')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get customer credit balances (negative amounts)' })
+  @ApiQuery({ type: PaginationQueryDto, required: false })
+  @ApiQuery({
+    name: 'customerId',
+    required: false,
+    description: 'Filter by customer ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Credit balances retrieved successfully',
+    type: PaginatedDebtResponseSchema,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized access',
+  })
+  async getCreditBalances(
+    @Query() paginationQuery: PaginationQueryDto,
+    @Query('customerId') customerId?: string,
+  ): Promise<ApiResponseDto<PaginatedResponseDto<DebtResponseDto>>> {
+    const filter = new DebtFilter({
+      skip: paginationQuery.skip,
+      take: paginationQuery.take,
+      customerId: customerId ? parseInt(customerId, 10) : undefined,
+      // Only negative amounts (customer has credit)
+      maxAmount: -0.01,
+    });
+
+    const { debts, total } = await this.listDebtsUseCase.execute(filter);
+
+    const paginatedResponse = new PaginatedResponseDto<DebtResponseDto>(
+      debts.map((debt) => new DebtResponseDto(debt)),
+      total,
+      filter.skip,
+      filter.take,
+    );
+
+    return ApiResponseDto.success(
+      paginatedResponse,
+      'Credit balances retrieved successfully',
+    );
+  }
+
+  @Get('by-type/exchange-debts')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get debts from item exchanges (additional payments)',
+  })
+  @ApiQuery({ type: PaginationQueryDto, required: false })
+  @ApiQuery({
+    name: 'customerId',
+    required: false,
+    description: 'Filter by customer ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Exchange debts retrieved successfully',
+    type: PaginatedDebtResponseSchema,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized access',
+  })
+  async getExchangeDebts(
+    @Query() paginationQuery: PaginationQueryDto,
+    @Query('customerId') customerId?: string,
+  ): Promise<ApiResponseDto<PaginatedResponseDto<DebtResponseDto>>> {
+    const filter = new DebtFilter({
+      skip: paginationQuery.skip,
+      take: paginationQuery.take,
+      customerId: customerId ? parseInt(customerId, 10) : undefined,
+      // Only positive amounts from exchanges
+      minAmount: 0.01,
+      // Include exchange-related remarks
+      includeRemarks: ['exchange payment', 'additional payment'],
+    });
+
+    const { debts, total } = await this.listDebtsUseCase.execute(filter);
+
+    const paginatedResponse = new PaginatedResponseDto<DebtResponseDto>(
+      debts.map((debt) => new DebtResponseDto(debt)),
+      total,
+      filter.skip,
+      filter.take,
+    );
+
+    return ApiResponseDto.success(
+      paginatedResponse,
+      'Exchange debts retrieved successfully',
+    );
+  }
+
+  @Get('by-type/refund-adjustments')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get debt adjustments from refunds (both positive and negative)',
+  })
+  @ApiQuery({ type: PaginationQueryDto, required: false })
+  @ApiQuery({
+    name: 'customerId',
+    required: false,
+    description: 'Filter by customer ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Refund adjustments retrieved successfully',
+    type: PaginatedDebtResponseSchema,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized access',
+  })
+  async getRefundAdjustments(
+    @Query() paginationQuery: PaginationQueryDto,
+    @Query('customerId') customerId?: string,
+  ): Promise<ApiResponseDto<PaginatedResponseDto<DebtResponseDto>>> {
+    const filter = new DebtFilter({
+      skip: paginationQuery.skip,
+      take: paginationQuery.take,
+      customerId: customerId ? parseInt(customerId, 10) : undefined,
+      // Include refund-related remarks
+      includeRemarks: ['Credit from', 'refund #', 'exchange refund'],
+    });
+
+    const { debts, total } = await this.listDebtsUseCase.execute(filter);
+
+    const paginatedResponse = new PaginatedResponseDto<DebtResponseDto>(
+      debts.map((debt) => new DebtResponseDto(debt)),
+      total,
+      filter.skip,
+      filter.take,
+    );
+
+    return ApiResponseDto.success(
+      paginatedResponse,
+      'Refund adjustments retrieved successfully',
+    );
+  }
+
+  @Get('summary/by-customer/:customerId')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get debt summary by customer with categorization' })
+  @ApiParam({ name: 'customerId', type: 'number', description: 'Customer ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Customer debt summary retrieved successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized access',
+  })
+  async getCustomerDebtSummary(
+    @Param('customerId', ParseIntPipe) customerId: number,
+  ): Promise<ApiResponseDto<any>> {
+    // Get all debts for this customer
+    const allDebts = await this.getDebtUseCase.findByCustomerId(customerId);
+
+    // Categorize debts
+    const purchaseDebts = allDebts.filter(
+      (debt) =>
+        debt.amount > 0 &&
+        (!debt.remarks ||
+          (!debt.remarks.includes('Credit from') &&
+            !debt.remarks.includes('refund #'))),
+    );
+
+    const creditBalances = allDebts.filter((debt) => debt.amount < 0);
+
+    const exchangeDebts = allDebts.filter(
+      (debt) =>
+        debt.amount > 0 &&
+        debt.remarks &&
+        (debt.remarks.includes('exchange payment') ||
+          debt.remarks.includes('additional payment')),
+    );
+
+    const refundAdjustments = allDebts.filter(
+      (debt) =>
+        debt.remarks &&
+        (debt.remarks.includes('Credit from') ||
+          debt.remarks.includes('refund #')),
+    );
+
+    const summary = {
+      customerId,
+      totalPurchaseDebt: purchaseDebts.reduce(
+        (sum, debt) => sum + debt.amount,
+        0,
+      ),
+      totalCreditBalance: Math.abs(
+        creditBalances.reduce((sum, debt) => sum + debt.amount, 0),
+      ),
+      totalExchangeDebt: exchangeDebts.reduce(
+        (sum, debt) => sum + debt.amount,
+        0,
+      ),
+      netBalance: allDebts.reduce((sum, debt) => sum + debt.amount, 0),
+      breakdown: {
+        purchaseDebts: purchaseDebts.length,
+        creditBalances: creditBalances.length,
+        exchangeDebts: exchangeDebts.length,
+        refundAdjustments: refundAdjustments.length,
+      },
+      details: {
+        purchaseDebts: purchaseDebts.map((debt) => new DebtResponseDto(debt)),
+        creditBalances: creditBalances.map((debt) => new DebtResponseDto(debt)),
+        exchangeDebts: exchangeDebts.map((debt) => new DebtResponseDto(debt)),
+        refundAdjustments: refundAdjustments.map(
+          (debt) => new DebtResponseDto(debt),
+        ),
+      },
+    };
+
+    return ApiResponseDto.success(
+      summary,
+      'Customer debt summary retrieved successfully',
+    );
+  }
+
   @Delete(':id')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete a debt' })
   @ApiParam({ name: 'id', type: 'number', description: 'Debt ID' })

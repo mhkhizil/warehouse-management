@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { TransactionType } from '@prisma/client';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { TransactionType, PaymentMethod } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsEnum,
@@ -134,4 +134,54 @@ export class CreateTransactionDto {
   @ValidateNested()
   @Type(() => CreateSupplierDebtDto)
   supplierDebt?: CreateSupplierDebtDto;
+
+  // Payment Method Fields
+  @ApiPropertyOptional({
+    description: 'Payment method for the transaction',
+    enum: PaymentMethod,
+    example: PaymentMethod.CASH,
+    default: PaymentMethod.CASH,
+  })
+  @IsOptional()
+  @IsEnum(PaymentMethod)
+  paymentMethod?: PaymentMethod = PaymentMethod.CASH;
+
+  @ApiPropertyOptional({
+    description: 'Payment account ID for ONLINE payments',
+    example: 1,
+    required: false,
+  })
+  @ValidateIf(
+    (o) =>
+      o.paymentMethod === PaymentMethod.ONLINE ||
+      o.paymentMethod === PaymentMethod.HYBRID,
+  )
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  paymentAccountId?: number;
+
+  @ApiPropertyOptional({
+    description: 'Cash amount for HYBRID payments',
+    example: 500.0,
+    minimum: 0,
+    required: false,
+  })
+  @ValidateIf((o) => o.paymentMethod === PaymentMethod.HYBRID)
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  cashAmount?: number;
+
+  @ApiPropertyOptional({
+    description: 'Online amount for HYBRID payments',
+    example: 500.0,
+    minimum: 0,
+    required: false,
+  })
+  @ValidateIf((o) => o.paymentMethod === PaymentMethod.HYBRID)
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  onlineAmount?: number;
 }

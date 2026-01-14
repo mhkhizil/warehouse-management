@@ -1,44 +1,37 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ApiResponseDto<T> {
-  @ApiProperty({ description: 'Response status', example: true })
+  @ApiProperty()
   success: boolean;
 
-  @ApiProperty({
-    description: 'Response message',
-    example: 'Operation successful',
-  })
+  @ApiProperty()
   message: string;
 
-  @ApiProperty({ description: 'Response data', example: null })
-  data: T | null;
+  @ApiProperty()
+  data?: T;
 
-  @ApiProperty({ description: 'Error details if any', example: null })
-  error: string | null;
+  @ApiProperty({ required: false })
+  error?: string;
 
-  constructor(
-    success: boolean,
-    message: string,
-    data: T | null = null,
-    error: string | null = null,
-  ) {
+  @ApiProperty()
+  timestamp: string;
+
+  constructor(success: boolean, message: string, data?: T, error?: string) {
     this.success = success;
     this.message = message;
     this.data = data;
     this.error = error;
+    this.timestamp = new Date().toISOString();
   }
 
   static success<T>(
     data: T,
     message = 'Operation successful',
   ): ApiResponseDto<T> {
-    return new ApiResponseDto<T>(true, message, data, null);
+    return new ApiResponseDto(true, message, data);
   }
 
-  static error<T>(
-    message: string,
-    error: string | null = null,
-  ): ApiResponseDto<T> {
-    return new ApiResponseDto<T>(false, message, null, error);
+  static error<T>(message: string, error?: string): ApiResponseDto<T> {
+    return new ApiResponseDto(false, message, undefined, error);
   }
 }

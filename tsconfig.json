@@ -23,6 +23,6 @@
     // "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "service-worker.js"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts"]
 }

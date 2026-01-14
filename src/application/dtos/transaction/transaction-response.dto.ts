@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   Customer,
   Debt,
@@ -7,6 +7,8 @@ import {
   Transaction,
   TransactionType,
   TransactionItem,
+  PaymentMethod,
+  PaymentAccount,
 } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { CustomerResponseDto } from '../customer/customer-response.dto';
@@ -22,6 +24,7 @@ interface TransactionWithRelations extends Transaction {
   debt?: Debt[];
   supplierDebt?: SupplierDebt[];
   transactionItems?: TransactionItem[];
+  paymentAccount?: PaymentAccount;
 }
 
 export class TransactionResponseDto implements Partial<Transaction> {
@@ -66,6 +69,43 @@ export class TransactionResponseDto implements Partial<Transaction> {
 
   @ApiProperty({ description: 'Total amount', example: 999.95 })
   totalAmount: number;
+
+  // Payment Information
+  @ApiProperty({
+    description: 'Payment method used',
+    enum: PaymentMethod,
+    example: PaymentMethod.CASH,
+  })
+  paymentMethod: PaymentMethod;
+
+  @ApiPropertyOptional({
+    description: 'Payment account ID (for online payments)',
+    example: 1,
+  })
+  paymentAccountId?: number;
+
+  @ApiPropertyOptional({
+    description: 'Payment account details',
+    type: Object,
+  })
+  paymentAccount?: {
+    id: number;
+    accountName: string;
+    accountType: string;
+    bankName?: string;
+  };
+
+  @ApiPropertyOptional({
+    description: 'Cash amount (for hybrid payments)',
+    example: 500.0,
+  })
+  cashAmount?: number;
+
+  @ApiPropertyOptional({
+    description: 'Online amount (for hybrid payments)',
+    example: 500.0,
+  })
+  onlineAmount?: number;
 
   @ApiProperty({
     description: 'Transaction date',
@@ -126,6 +166,15 @@ export class TransactionResponseDto implements Partial<Transaction> {
       this.transactionItems = partial.transactionItems.map(
         (item) => new TransactionItemResponseDto(item),
       );
+    }
+
+    if (partial.paymentAccount) {
+      this.paymentAccount = {
+        id: partial.paymentAccount.id,
+        accountName: partial.paymentAccount.accountName,
+        accountType: partial.paymentAccount.accountType,
+        bankName: partial.paymentAccount.bankName,
+      };
     }
   }
 }

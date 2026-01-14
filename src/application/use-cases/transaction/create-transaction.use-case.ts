@@ -5,7 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Transaction, TransactionType } from '@prisma/client';
+import { Transaction, TransactionType, PaymentMethod } from '@prisma/client';
 import {
   TRANSACTION_REPOSITORY,
   TRANSACTION_ITEM_REPOSITORY,
@@ -159,6 +159,11 @@ export class CreateTransactionUseCase {
             ...itemDto,
             stockId: stock.id,
             totalAmount,
+            hasWarranty: itemDto.hasWarranty || false,
+            warrantyDurationMonths: itemDto.warrantyDurationMonths,
+            warrantyStartDate: itemDto.warrantyStartDate,
+            warrantyEndDate: itemDto.warrantyEndDate,
+            warrantyDescription: itemDto.warrantyDescription,
           });
 
           // Prepare stock update
@@ -186,12 +191,22 @@ export class CreateTransactionUseCase {
               ...itemDto,
               stockId: null, // Will be set after stock creation
               totalAmount,
+              hasWarranty: itemDto.hasWarranty || false,
+              warrantyDurationMonths: itemDto.warrantyDurationMonths,
+              warrantyStartDate: itemDto.warrantyStartDate,
+              warrantyEndDate: itemDto.warrantyEndDate,
+              warrantyDescription: itemDto.warrantyDescription,
             });
           } else {
             validatedItems.push({
               ...itemDto,
               stockId: stock.id,
               totalAmount,
+              hasWarranty: itemDto.hasWarranty || false,
+              warrantyDurationMonths: itemDto.warrantyDurationMonths,
+              warrantyStartDate: itemDto.warrantyStartDate,
+              warrantyEndDate: itemDto.warrantyEndDate,
+              warrantyDescription: itemDto.warrantyDescription,
             });
 
             // Prepare stock update
@@ -214,6 +229,9 @@ export class CreateTransactionUseCase {
       // Set transaction date if not provided
       const transactionDate = createTransactionDto.date || new Date();
 
+      // Validate payment method and account
+      await this.validatePaymentMethod(createTransactionDto, tx);
+
       // Create the main transaction
       const transactionData = {
         type: createTransactionDto.type,
@@ -221,6 +239,11 @@ export class CreateTransactionUseCase {
         supplierId: createTransactionDto.supplierId,
         totalAmount,
         date: transactionDate,
+        // Payment method fields
+        paymentMethod: createTransactionDto.paymentMethod || 'CASH',
+        paymentAccountId: createTransactionDto.paymentAccountId,
+        cashAmount: createTransactionDto.cashAmount,
+        onlineAmount: createTransactionDto.onlineAmount,
       };
 
       const transaction = await tx.transaction.create({
@@ -248,14 +271,51 @@ export class CreateTransactionUseCase {
       }
 
       // Batch create transaction items
-      const transactionItemsData = validatedItems.map((item) => ({
-        transactionId: transaction.id,
-        itemId: item.itemId,
-        stockId: item.stockId,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        totalAmount: item.totalAmount,
-      }));
+      const transactionItemsData = validatedItems.map((item) => {
+        const baseData = {
+          transactionId: transaction.id,
+          itemId: item.itemId,
+          stockId: item.stockId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          totalAmount: item.totalAmount,
+        };
+
+        // Add warranty fields if provided
+        if (item.hasWarranty) {
+          const warrantyStartDate = item.warrantyStartDate
+            ? new Date(item.warrantyStartDate)
+            : transactionDate;
+
+          let warrantyEndDate = null;
+          if (item.warrantyEndDate) {
+            warrantyEndDate = new Date(item.warrantyEndDate);
+          } else if (item.warrantyDurationMonths) {
+            warrantyEndDate = new Date(warrantyStartDate);
+            warrantyEndDate.setMonth(
+              warrantyEndDate.getMonth() + item.warrantyDurationMonths,
+            );
+          }
+
+          return {
+            ...baseData,
+            hasWarranty: true,
+            warrantyDurationMonths: item.warrantyDurationMonths,
+            warrantyStartDate,
+            warrantyEndDate,
+            warrantyDescription: item.warrantyDescription || null,
+          };
+        }
+
+        return {
+          ...baseData,
+          hasWarranty: false,
+          warrantyDurationMonths: null,
+          warrantyStartDate: null,
+          warrantyEndDate: null,
+          warrantyDescription: null,
+        };
+      });
 
       await tx.transactionItem.createMany({
         data: transactionItemsData,
@@ -342,5 +402,107 @@ export class CreateTransactionUseCase {
         transactionItems,
       } as Transaction;
     });
+  }
+
+  /**
+   * Validate payment method and associated payment account
+   */
+  private async validatePaymentMethod(
+    createTransactionDto: CreateTransactionDto,
+    tx: any,
+  ): Promise<void> {
+    const {
+      paymentMethod,
+      paymentAccountId,
+      cashAmount,
+      onlineAmount,
+      totalAmount,
+    } = createTransactionDto;
+
+    // If no payment method specified, default to CASH (no validation needed)
+    if (!paymentMethod || paymentMethod === PaymentMethod.CASH) {
+      return;
+    }
+
+    // ONLINE Payment Validation
+    if (paymentMethod === PaymentMethod.ONLINE) {
+      if (!paymentAccountId) {
+        throw new BadRequestException(
+          'Payment account ID is required for ONLINE payments',
+        );
+      }
+
+      // Validate payment account exists and is active
+      const paymentAccount = await tx.paymentAccount.findUnique({
+        where: { id: paymentAccountId },
+      });
+
+      if (!paymentAccount) {
+        throw new BadRequestException(
+          `Payment account with ID ${paymentAccountId} not found`,
+        );
+      }
+
+      if (!paymentAccount.isActive) {
+        throw new BadRequestException(
+          `Payment account "${paymentAccount.accountName}" is inactive`,
+        );
+      }
+    }
+
+    // HYBRID Payment Validation
+    if (paymentMethod === PaymentMethod.HYBRID) {
+      if (!paymentAccountId) {
+        throw new BadRequestException(
+          'Payment account ID is required for HYBRID payments',
+        );
+      }
+
+      if (cashAmount === undefined || onlineAmount === undefined) {
+        throw new BadRequestException(
+          'Both cash amount and online amount are required for HYBRID payments',
+        );
+      }
+
+      if (cashAmount < 0 || onlineAmount < 0) {
+        throw new BadRequestException(
+          'Cash amount and online amount must be non-negative for HYBRID payments',
+        );
+      }
+
+      if (cashAmount === 0 && onlineAmount === 0) {
+        throw new BadRequestException(
+          'At least one payment amount must be greater than zero for HYBRID payments',
+        );
+      }
+
+      // Validate that cash + online amounts equal total transaction amount
+      const calculatedTotal = Number(cashAmount) + Number(onlineAmount);
+      const transactionTotal = Number(totalAmount || 0);
+
+      if (Math.abs(calculatedTotal - transactionTotal) > 0.01) {
+        // Allow small floating point differences
+        throw new BadRequestException(
+          `HYBRID payment amounts (cash: ${cashAmount}, online: ${onlineAmount}) must equal transaction total: ${transactionTotal}`,
+        );
+      }
+
+      // Validate payment account exists and is active
+      const paymentAccount = await tx.paymentAccount.findUnique({
+        where: { id: paymentAccountId },
+      });
+
+      if (!paymentAccount) {
+        throw new BadRequestException(
+          `Payment account with ID ${paymentAccountId} not found`,
+        );
+      }
+
+      if (!paymentAccount.isActive) {
+        throw new BadRequestException(
+          `Payment account "${paymentAccount.accountName}" is inactive`,
+        );
+      }
+    }
   }
 }

@@ -160,8 +160,8 @@ export class UsersController {
         params.phone,
         params.sortBy,
         params.sortOrder,
-        parseInt(params?.take.toString()),
-        parseInt(params?.skip.toString()),
+        params.take,
+        params.skip,
       );
 
       return CoreApiResonseSchema.success(

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsEmail, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsEmail, IsBoolean, IsPhoneNumber } from 'class-validator';
 
 export class CreateSupplierDto {
   @ApiProperty({
@@ -11,11 +11,11 @@ export class CreateSupplierDto {
 
   @ApiProperty({
     description: 'Supplier phone number',
-    example: '+1 123-456-7890',
+    example: '+1234567890',
     required: false,
   })
-  @IsString()
   @IsOptional()
+  @IsPhoneNumber(null, { message: 'Please provide a valid phone number' })
   phone?: string;
 
   @ApiProperty({

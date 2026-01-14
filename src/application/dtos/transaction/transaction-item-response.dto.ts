@@ -47,6 +47,41 @@ export class TransactionItemResponseDto implements Partial<TransactionItem> {
   @ApiProperty({ description: 'Total amount', example: 999.95 })
   totalAmount: number;
 
+  // Warranty fields
+  @ApiProperty({
+    description: 'Whether this item has warranty',
+    example: true,
+  })
+  hasWarranty: boolean;
+
+  @ApiProperty({
+    description: 'Warranty duration in months',
+    example: 12,
+    required: false,
+  })
+  warrantyDurationMonths: number | null;
+
+  @ApiProperty({
+    description: 'Warranty start date',
+    example: '2024-08-22T00:00:00Z',
+    required: false,
+  })
+  warrantyStartDate: Date | null;
+
+  @ApiProperty({
+    description: 'Warranty end date',
+    example: '2025-08-22T00:00:00Z',
+    required: false,
+  })
+  warrantyEndDate: Date | null;
+
+  @ApiProperty({
+    description: 'Additional warranty details or terms',
+    example: 'Manufacturer warranty covering parts and labor',
+    required: false,
+  })
+  warrantyDescription: string | null;
+
   @ApiProperty({
     description: 'Creation timestamp',
     example: '2023-01-01T00:00:00Z',

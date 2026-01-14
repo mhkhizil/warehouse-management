@@ -40,6 +40,7 @@ import { CustomerResponseSchema } from './documentation/customer/ResponseSchema/
 import { PaginatedCustomerResponseSchema } from './documentation/customer/ResponseSchema/PaginatedCustomerResponseSchema';
 import { CustomerListResponseSchema } from './documentation/customer/ResponseSchema/CustomerListResponseSchema';
 import { CoreApiResonseSchema } from '../../core/common/schema/ApiResponseSchema';
+import { ParseOptionalBoolPipe } from '../pipes/parse-optional-bool.pipe';
 
 @Controller('customers')
 @ApiTags('customers')
@@ -111,14 +112,14 @@ export class CustomersController {
   @ApiQuery({
     name: 'hasDebt',
     required: false,
-    enum: ['true', 'false'],
-    description: 'Filter by whether customer has debt',
+    type: Boolean,
+    description: 'Filter by whether customer has debt (true/false)',
   })
   @ApiQuery({
     name: 'isActive',
     required: false,
-    enum: ['true', 'false'],
-    description: 'Filter by whether customer is active (not deleted)',
+    type: Boolean,
+    description: 'Filter by whether customer is active (true/false)',
   })
   @ApiQuery({
     name: 'sortBy',
@@ -147,8 +148,8 @@ export class CustomersController {
     @Query('phone') phone?: string,
     @Query('email') email?: string,
     @Query('address') address?: string,
-    @Query('hasDebt') hasDebt?: string,
-    @Query('isActive') isActive?: string,
+    @Query('hasDebt', ParseOptionalBoolPipe) hasDebt?: boolean,
+    @Query('isActive', ParseOptionalBoolPipe) isActive?: boolean,
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: string,
   ): Promise<ApiResponseDto<PaginatedResponseDto<CustomerResponseDto>>> {
@@ -159,10 +160,8 @@ export class CustomersController {
       phone,
       email,
       address,
-      hasDebts:
-        hasDebt === 'true' ? true : hasDebt === 'false' ? false : undefined,
-      isActive:
-        isActive === 'true' ? true : isActive === 'false' ? false : undefined,
+      hasDebts: hasDebt,
+      isActive: isActive,
       sortBy: sortBy as any,
       sortOrder: sortOrder as any,
     });

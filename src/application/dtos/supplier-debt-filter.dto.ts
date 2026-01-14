@@ -1,6 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsBoolean, IsNumber, IsDateString } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
+import { IsOptional, IsBoolean, IsNumber, IsDateString, IsEnum, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  SupplierDebtSortBy,
+  SortOrder,
+} from '../../domain/filters/supplier-debt.filter';
 
 export class SupplierDebtFilterDto {
   @ApiProperty({
@@ -13,16 +17,20 @@ export class SupplierDebtFilterDto {
   supplierId?: number;
 
   @ApiProperty({
-    description: 'Filter by settlement status',
+    description: 'Filter by supplier name (partial match, case-insensitive)',
     required: false,
   })
-  @IsBoolean()
+  @IsString()
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-    return value;
+  supplierName?: string;
+
+  @ApiProperty({
+    description: 'Filter by settlement status',
+    required: false,
+    type: Boolean,
   })
+  @IsOptional()
+  @IsBoolean()
   isSettled?: boolean;
 
   @ApiProperty({
@@ -40,6 +48,58 @@ export class SupplierDebtFilterDto {
   @IsDateString()
   @IsOptional()
   dueAfter?: string;
+
+  @ApiProperty({
+    description: 'Filter debts created from this date (ISO format)',
+    required: false,
+  })
+  @IsDateString()
+  @IsOptional()
+  createdAtFrom?: string;
+
+  @ApiProperty({
+    description: 'Filter debts created until this date (ISO format)',
+    required: false,
+  })
+  @IsDateString()
+  @IsOptional()
+  createdAtTo?: string;
+
+  @ApiProperty({
+    description: 'Filter debts updated from this date (ISO format)',
+    required: false,
+  })
+  @IsDateString()
+  @IsOptional()
+  updatedAtFrom?: string;
+
+  @ApiProperty({
+    description: 'Filter debts updated until this date (ISO format)',
+    required: false,
+  })
+  @IsDateString()
+  @IsOptional()
+  updatedAtTo?: string;
+
+  @ApiProperty({
+    description: 'Field to sort by',
+    required: false,
+    default: 'dueDate',
+    enum: SupplierDebtSortBy,
+  })
+  @IsEnum(SupplierDebtSortBy)
+  @IsOptional()
+  sortBy?: SupplierDebtSortBy = SupplierDebtSortBy.DUE_DATE;
+
+  @ApiProperty({
+    description: 'Sort order',
+    required: false,
+    default: 'asc',
+    enum: SortOrder,
+  })
+  @IsEnum(SortOrder)
+  @IsOptional()
+  sortOrder?: SortOrder = SortOrder.ASC;
 
   @ApiProperty({
     description: 'Number of records to fetch',

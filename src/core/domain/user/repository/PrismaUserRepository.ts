@@ -24,6 +24,7 @@ export class PrismaUserRepository implements IUserRepository {
 
   async create(user: UserEntity): Promise<UserEntity> {
     try {
+      console.log('this is the user from repository', user);
       const result = await this.prisma.user.create({
         data: {
           username: user.name,
@@ -37,33 +38,33 @@ export class PrismaUserRepository implements IUserRepository {
       return UserEntity.toEntity(result);
     } catch (e) {
       if (e instanceof PrismaClientKnownRequestError) {
+        console.log('this is the error from repository', e);
         if (e.code == 'P2002') {
-          // throw new BadRequestException(
-          //   CoreApiResonseSchema.error(
-          //     HttpStatus.BAD_REQUEST,
-          //     'Bad Request',
-          //     e?.meta?.target[0] == 'email'
-          //       ? 'Email already used'
-          //       : 'Phone already used',
-          //   ),
-          // );
+          const targetField = e?.meta?.target?.[0];
+          let errorMessage = 'Field already exists';
+
+          if (targetField === 'username') {
+            errorMessage = 'Username already exists';
+          } else if (targetField === 'email') {
+            errorMessage = 'Email already exists';
+          } else if (targetField === 'phone') {
+            errorMessage = 'Phone already exists';
+          }
+
           throw new BadRequestException({
             message: 'Bad request',
-            error:
-              e?.meta?.target[0] == 'email'
-                ? 'Email already used'
-                : 'Phone already used',
+            error: errorMessage,
           });
         } else {
           throw new BadRequestException({
             message: 'Bad request',
-            error: '',
+            error: 'User creation failed',
           });
         }
       } else if (e instanceof PrismaClientValidationError) {
         throw new InternalServerErrorException({
           message: 'Internal server error',
-          error: '',
+          error: 'Validation error',
         });
       } else {
         throw new BadRequestException('Internal server error', {
@@ -90,16 +91,38 @@ export class PrismaUserRepository implements IUserRepository {
       });
       return UserEntity.toEntity(result);
     } catch (e) {
-      if (e instanceof PrismaClientValidationError) {
-        throw new InternalServerErrorException({
-          message: 'Internal server error',
-          error: '',
-        });
-      }
       if (e instanceof PrismaClientKnownRequestError) {
+        if (e.code === 'P2002') {
+          const targetField = e?.meta?.target?.[0];
+          let errorMessage = 'Field already exists';
+
+          if (targetField === 'username') {
+            errorMessage = 'Username already exists';
+          } else if (targetField === 'email') {
+            errorMessage = 'Email already exists';
+          } else if (targetField === 'phone') {
+            errorMessage = 'Phone already exists';
+          }
+
+          throw new BadRequestException({
+            message: 'Bad request',
+            error: errorMessage,
+          });
+        } else {
+          throw new BadRequestException({
+            message: 'Bad request',
+            error: 'User update failed',
+          });
+        }
+      } else if (e instanceof PrismaClientValidationError) {
         throw new InternalServerErrorException({
           message: 'Internal server error',
-          error: '',
+          error: 'Validation error',
+        });
+      } else {
+        throw new InternalServerErrorException({
+          message: 'Internal server error',
+          error: 'User update failed',
         });
       }
     }

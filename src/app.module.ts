@@ -12,9 +12,13 @@ import { CustomersModule } from './application/module/customers.module';
 import { TransactionsModule } from './application/module/transactions.module';
 import { DebtsModule } from './application/module/debts.module';
 import { SuppliersModule } from './application/module/suppliers.module';
+import { RefundsModule } from './application/module/refunds.module';
+import { FinancialReportsModule } from './application/module/financial-reports.module';
+import { PaymentAccountsModule } from './application/module/payment-accounts.module';
 import { CsrfModule } from './core/common/module/csrf.module';
 import { CsrfMiddleware } from './core/common/middleware/csrf.middleware';
 import { CsrfGuard } from './core/common/guard/csrf.guard';
+import { DebtAlertModule } from './core/common/pusher/DebtAlertModule';
 
 @Module({
   imports: [
@@ -27,7 +31,11 @@ import { CsrfGuard } from './core/common/guard/csrf.guard';
     TransactionsModule,
     DebtsModule,
     SuppliersModule,
+    RefundsModule,
+    FinancialReportsModule,
+    PaymentAccountsModule,
     CsrfModule,
+    DebtAlertModule,
     ThrottlerModule.forRoot([
       {
         name: 'short',

@@ -28,6 +28,7 @@ export class TransactionRepository implements ITransactionRepository {
         supplier: true,
         debt: true,
         supplierDebt: true,
+        paymentAccount: true,
         transactionItems: {
           include: {
             item: true,
@@ -46,6 +47,7 @@ export class TransactionRepository implements ITransactionRepository {
         supplier: true,
         debt: true,
         supplierDebt: true,
+        paymentAccount: true,
         transactionItems: {
           include: {
             item: true,
@@ -63,6 +65,7 @@ export class TransactionRepository implements ITransactionRepository {
         supplier: true,
         debt: true,
         supplierDebt: true,
+        paymentAccount: true,
         transactionItems: {
           include: {
             item: true,
@@ -83,6 +86,7 @@ export class TransactionRepository implements ITransactionRepository {
         supplier: true,
         debt: true,
         supplierDebt: true,
+        paymentAccount: true,
         transactionItems: {
           include: {
             item: true,
@@ -108,6 +112,7 @@ export class TransactionRepository implements ITransactionRepository {
         supplier: true,
         debt: true,
         supplierDebt: true,
+        paymentAccount: true,
         transactionItems: {
           include: {
             item: true,
@@ -127,6 +132,7 @@ export class TransactionRepository implements ITransactionRepository {
         supplier: true,
         debt: true,
         supplierDebt: true,
+        paymentAccount: true,
         transactionItems: {
           include: {
             item: true,

@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pusher Debt Alerts Test</title>
+    <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+      }
+      .status.connected {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .status.disconnected {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .alert {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+      }
+      .alert.overdue {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+      }
+      .alert.due {
+        background-color: #fff3cd;
+        border-color: #ffeaa7;
+        color: #856404;
+      }
+      .alert.approaching {
+        background-color: #d1ecf1;
+        border-color: #bee5eb;
+        color: #0c5460;
+      }
+      .log {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .log-entry {
+        margin: 5px 0;
+        padding: 5px;
+        border-left: 3px solid #007bff;
+      }
+      .log-entry.error {
+        border-left-color: #dc3545;
+        color: #dc3545;
+      }
+      .log-entry.success {
+        border-left-color: #28a745;
+        color: #28a745;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Pusher Debt Alerts Test</h1>
+
+    <div id="connection-status" class="status disconnected">
+      Connecting to Pusher...
+    </div>
+
+    <div>
+      <h3>Configuration</h3>
+      <p>
+        <strong>Pusher Key:</strong> <span id="pusher-key">Loading...</span>
+      </p>
+      <p>
+        <strong>Cluster:</strong> <span id="pusher-cluster">Loading...</span>
+      </p>
+      <p><strong>Channel:</strong> debt-alerts</p>
+      <p><strong>Event:</strong> debt-alert</p>
+    </div>
+
+    <div>
+      <h3>Recent Alerts</h3>
+      <div id="alerts-container">
+        <p>No alerts received yet...</p>
+      </div>
+    </div>
+
+    <div>
+      <h3>Connection Log</h3>
+      <div id="log" class="log"></div>
+    </div>
+
+    <div>
+      <h3>Test Controls</h3>
+      <button onclick="testPusherConnection()">Test Connection</button>
+      <button onclick="clearLog()">Clear Log</button>
+      <button onclick="clearAlerts()">Clear Alerts</button>
+    </div>
+
+    <script>
+      let pusher;
+      let channel;
+      let alertCount = 0;
+
+      // Configuration - you'll need to update these with your actual Pusher credentials
+      const PUSHER_CONFIG = {
+        key: 'YOUR_PUSHER_KEY', // Replace with your actual Pusher key
+        cluster: 'YOUR_PUSHER_CLUSTER', // Replace with your actual cluster (e.g., 'us2', 'eu', 'ap1')
+        encrypted: true,
+      };
+
+      function log(message, type = 'info') {
+        const logContainer = document.getElementById('log');
+        const logEntry = document.createElement('div');
+        logEntry.className = `log-entry ${type}`;
+        logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logContainer.appendChild(logEntry);
+        logContainer.scrollTop = logContainer.scrollHeight;
+      }
+
+      function updateConnectionStatus(connected) {
+        const statusElement = document.getElementById('connection-status');
+        if (connected) {
+          statusElement.className = 'status connected';
+          statusElement.textContent = 'Connected to Pusher';
+        } else {
+          statusElement.className = 'status disconnected';
+          statusElement.textContent = 'Disconnected from Pusher';
+        }
+      }
+
+      function updateConfigDisplay() {
+        document.getElementById('pusher-key').textContent = PUSHER_CONFIG.key;
+        document.getElementById('pusher-cluster').textContent =
+          PUSHER_CONFIG.cluster;
+      }
+
+      function addAlert(alert) {
+        alertCount++;
+        const alertsContainer = document.getElementById('alerts-container');
+
+        // Remove "No alerts received yet" message
+        if (alertCount === 1) {
+          alertsContainer.innerHTML = '';
+        }
+
+        const alertElement = document.createElement('div');
+        alertElement.className = `alert ${alert.alertType}`;
+        alertElement.innerHTML = `
+                <h4>Alert #${alertCount} - ${alert.alertType.toUpperCase()}</h4>
+                <p><strong>Type:</strong> ${alert.type}</p>
+                <p><strong>Entity:</strong> ${alert.entityName}</p>
+                <p><strong>Amount:</strong> $${alert.amount.toFixed(2)}</p>
+                <p><strong>Due Date:</strong> ${new Date(alert.dueDate).toLocaleDateString()}</p>
+                <p><strong>Days ${alert.isOverdue ? 'Overdue' : 'Until Due'}:</strong> ${Math.abs(alert.daysUntilDue)}</p>
+                <p><strong>Received:</strong> ${new Date(alert.timestamp).toLocaleString()}</p>
+            `;
+
+        alertsContainer.insertBefore(alertElement, alertsContainer.firstChild);
+      }
+
+      function initializePusher() {
+        log('Initializing Pusher...');
+
+        try {
+          pusher = new Pusher(PUSHER_CONFIG.key, {
+            cluster: PUSHER_CONFIG.cluster,
+            encrypted: PUSHER_CONFIG.encrypted,
+          });
+
+          log('Pusher instance created');
+
+          // Subscribe to the debt-alerts channel
+          channel = pusher.subscribe('debt-alerts');
+          log('Subscribed to debt-alerts channel');
+
+          // Listen for debt alerts
+          channel.bind('debt-alert', function (data) {
+            log(
+              `Debt alert received: ${data.type} ${data.entityName} - ${data.alertType}`,
+              'success',
+            );
+            addAlert(data);
+          });
+
+          // Connection events
+          pusher.connection.bind('connected', function () {
+            log('Connected to Pusher', 'success');
+            updateConnectionStatus(true);
+          });
+
+          pusher.connection.bind('disconnected', function () {
+            log('Disconnected from Pusher', 'error');
+            updateConnectionStatus(false);
+          });
+
+          pusher.connection.bind('error', function (err) {
+            log(`Pusher connection error: ${err.message}`, 'error');
+            updateConnectionStatus(false);
+          });
+
+          log('Pusher initialization complete');
+        } catch (error) {
+          log(`Error initializing Pusher: ${error.message}`, 'error');
+        }
+      }
+
+      function testPusherConnection() {
+        log('Testing Pusher connection...');
+
+        if (pusher && pusher.connection.state === 'connected') {
+          log('Pusher is connected and ready', 'success');
+        } else {
+          log('Pusher is not connected', 'error');
+        }
+      }
+
+      function clearLog() {
+        document.getElementById('log').innerHTML = '';
+      }
+
+      function clearAlerts() {
+        document.getElementById('alerts-container').innerHTML =
+          '<p>No alerts received yet...</p>';
+        alertCount = 0;
+      }
+
+      // Initialize when page loads
+      document.addEventListener('DOMContentLoaded', function () {
+        updateConfigDisplay();
+        initializePusher();
+
+        log('Page loaded, waiting for debt alerts...');
+      });
+    </script>
+  </body>
+</html>

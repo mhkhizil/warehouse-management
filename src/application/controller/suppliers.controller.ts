@@ -19,6 +19,7 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { JwtGuard } from '../auth/guard/jwt.guard';
 import { AdminGuard } from '../auth/guard/admin.guard';
@@ -34,6 +35,9 @@ import { CoreApiResonseSchema } from '../../core/common/schema/ApiResponseSchema
 import { SupplierResponseSchema } from './documentation/supplier/ResponseSchema/SupplierResponseSchema';
 import { PaginatedSupplierResponseSchema } from './documentation/supplier/ResponseSchema/PaginatedSupplierResponseSchema';
 import { SupplierListResponseSchema } from './documentation/supplier/ResponseSchema/SupplierListResponseSchema';
+import { PaginationQueryDto } from '../dtos/common/pagination.dto';
+import { SupplierFilter } from '../../domain/filters/supplier.filter';
+import { ParseOptionalBoolPipe } from '../pipes/parse-optional-bool.pipe';
 
 @ApiTags('suppliers')
 @Controller('suppliers')
@@ -49,7 +53,8 @@ export class SuppliersController {
   ) {}
 
   @Post()
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new supplier' })
   @ApiBody({ type: CreateSupplierDto })
   @ApiResponse({
@@ -76,7 +81,15 @@ export class SuppliersController {
   }
 
   @Get()
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'List all suppliers with optional filtering' })
+  @ApiQuery({
+    name: 'isActive',
+    required: false,
+    type: Boolean,
+    description: 'Filter by active status (true/false)',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Suppliers retrieved successfully',
@@ -86,12 +99,21 @@ export class SuppliersController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'User not authenticated',
   })
-  async findAll(@Query(ValidationPipe) filter: SupplierFilterDto) {
+  async findAll(
+    @Query(ValidationPipe) filter: SupplierFilterDto,
+    @Query('isActive', ParseOptionalBoolPipe) isActive?: boolean,
+  ) {
+    // Override isActive from the pipe to ensure proper boolean handling
+    if (isActive !== undefined) {
+      filter.isActive = isActive;
+    }
     const result = await this.listSuppliersUseCase.execute(filter);
     return CoreApiResonseSchema.success(result);
   }
 
   @Get('all')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all suppliers without pagination' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -108,6 +130,8 @@ export class SuppliersController {
   }
 
   @Get('with-debts')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get suppliers with outstanding debts' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -124,6 +148,8 @@ export class SuppliersController {
   }
 
   @Get('email/:email')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a supplier by email' })
   @ApiParam({ name: 'email', description: 'Supplier email', type: 'string' })
   @ApiResponse({
@@ -145,6 +171,8 @@ export class SuppliersController {
   }
 
   @Get('phone/:phone')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a supplier by phone' })
   @ApiParam({ name: 'phone', description: 'Supplier phone', type: 'string' })
   @ApiResponse({
@@ -165,7 +193,59 @@ export class SuppliersController {
     return CoreApiResonseSchema.success(supplier);
   }
 
+  @Get('deleted')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get soft-deleted suppliers with optional filtering',
+  })
+  @ApiQuery({ type: PaginationQueryDto, required: false })
+  @ApiQuery({
+    name: 'name',
+    required: false,
+    description: 'Filter by supplier name',
+  })
+  @ApiQuery({
+    name: 'phone',
+    required: false,
+    description: 'Filter by phone number',
+  })
+  @ApiQuery({
+    name: 'email',
+    required: false,
+    description: 'Filter by email address',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Soft-deleted suppliers retrieved successfully',
+    type: PaginatedSupplierResponseSchema,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'User not authenticated',
+  })
+  async getDeletedSuppliers(
+    @Query() paginationQuery: PaginationQueryDto,
+    @Query('name') name?: string,
+    @Query('phone') phone?: string,
+    @Query('email') email?: string,
+  ) {
+    const filter: SupplierFilter = {
+      skip: Number(paginationQuery.skip) || 0,
+      take: Number(paginationQuery.take) || 10,
+      name,
+      phone,
+      email,
+    };
+
+    const result =
+      await this.listSuppliersUseCase.findDeletedWithFilters(filter);
+    return CoreApiResonseSchema.success(result);
+  }
+
   @Get(':id')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a supplier by ID' })
   @ApiParam({ name: 'id', description: 'Supplier ID', type: 'number' })
   @ApiResponse({
@@ -187,7 +267,8 @@ export class SuppliersController {
   }
 
   @Put(':id')
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a supplier' })
   @ApiParam({ name: 'id', description: 'Supplier ID', type: 'number' })
   @ApiBody({ type: UpdateSupplierDto })
@@ -223,8 +304,40 @@ export class SuppliersController {
     return CoreApiResonseSchema.success(supplier);
   }
 
+  @Put(':id/restore')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Restore a soft-deleted supplier' })
+  @ApiParam({ name: 'id', description: 'Supplier ID', type: 'number' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Supplier restored successfully',
+    type: SupplierResponseSchema,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Supplier not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Supplier is already active',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'User not authenticated',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'User not authorized to restore suppliers',
+  })
+  async restore(@Param('id', ParseIntPipe) id: number) {
+    const supplier = await this.updateSupplierUseCase.restore(id);
+    return CoreApiResonseSchema.success(supplier);
+  }
+
   @Delete(':id')
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a supplier (soft delete)' })
   @ApiParam({ name: 'id', description: 'Supplier ID', type: 'number' })
   @ApiResponse({

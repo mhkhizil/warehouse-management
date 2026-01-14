@@ -9,6 +9,12 @@ import { hash } from 'argon2';
 export class CreateUserUseCase implements ICreateUserUseCase {
   constructor(@Inject() private readonly userRepository: IUserRepository) {}
   public async execute(data?: CreateUserDto): Promise<UserEntity> {
+    console.log('📱 Received phone:', JSON.stringify(data?.phone));
+    console.log('📱 Phone length:', data?.phone?.length);
+    console.log(
+      '📱 Phone char codes:',
+      Array.from(data?.phone || '').map((c) => c.charCodeAt(0)),
+    );
     const newUser = new UserEntity(
       null,
       data?.name,
@@ -17,7 +23,9 @@ export class CreateUserUseCase implements ICreateUserUseCase {
       data?.role,
       await hash(data?.password),
     );
+    console.log('this is the new user from service', newUser);
     const createdUser = await this.userRepository.create(newUser);
+    console.log('this is the creaeduser from service ' + createdUser);
 
     // Return the entity directly instead of converting to DTO
     return createdUser;
