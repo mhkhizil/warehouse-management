@@ -143,6 +143,18 @@ export class SupplierDebtsController {
     enum: ['asc', 'desc'],
     description: 'Sort order (default: asc)',
   })
+  @ApiQuery({
+    name: 'skip',
+    required: false,
+    type: Number,
+    description: 'Number of records to skip (default: 0)',
+  })
+  @ApiQuery({
+    name: 'take',
+    required: false,
+    type: Number,
+    description: 'Number of records to fetch (default: 10)',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Supplier debts retrieved successfully',
