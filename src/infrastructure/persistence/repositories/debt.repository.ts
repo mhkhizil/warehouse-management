@@ -149,6 +149,10 @@ export class DebtRepository implements IDebtRepository {
       alertSent,
       dueBefore,
       dueAfter,
+      minAmount,
+      maxAmount,
+      includeRemarks,
+      excludeRemarks,
       sortBy,
       sortOrder,
       skip = 0,
@@ -165,6 +169,32 @@ export class DebtRepository implements IDebtRepository {
           ...(dueAfter && { gte: dueAfter }),
         },
       }),
+      ...((minAmount !== undefined || maxAmount !== undefined) && {
+        amount: {
+          ...(minAmount !== undefined && { gte: minAmount }),
+          ...(maxAmount !== undefined && { lte: maxAmount }),
+        },
+      }),
+      ...(includeRemarks &&
+        includeRemarks.length > 0 && {
+          OR: includeRemarks.map((remark) => ({
+            remarks: {
+              contains: remark,
+              mode: 'insensitive' as Prisma.QueryMode,
+            },
+          })),
+        }),
+      ...(excludeRemarks &&
+        excludeRemarks.length > 0 && {
+          AND: excludeRemarks.map((remark) => ({
+            NOT: {
+              remarks: {
+                contains: remark,
+                mode: 'insensitive' as Prisma.QueryMode,
+              },
+            },
+          })),
+        }),
     };
 
     // Build orderBy (like supplier-debts)

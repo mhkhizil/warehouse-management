@@ -4165,6 +4165,266 @@ async function main() {
     }
   }
 
+  // Create test data for by-type debt endpoints
+  console.log('🧪 Creating test data for debt by-type endpoints...');
+
+  // Get first customer ID and first item ID for test data
+  const firstCustomer = await prisma.customer.findFirst({
+    orderBy: { id: 'asc' },
+  });
+  const firstItem = await prisma.item.findFirst({
+    orderBy: { id: 'asc' },
+  });
+  const firstStock = await prisma.stock.findFirst({
+    where: { itemId: firstItem?.id },
+  });
+
+  if (firstCustomer && firstItem && firstStock) {
+    const now = new Date();
+    const futureDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
+
+    // Helper function to create transaction with debt and stock update
+    const createTransactionWithDebt = async (
+      type: TransactionType,
+      customerId: number,
+      totalAmount: number,
+      debtAmount: number,
+      debtRemarks: string,
+      itemId: number,
+      stockId: number,
+      quantity: number,
+      unitPrice: number,
+      paymentMethod: PaymentMethod = PaymentMethod.CASH,
+    ) => {
+      // Create transaction
+      const transaction = await prisma.transaction.create({
+        data: {
+          type,
+          customerId,
+          totalAmount,
+          paymentMethod,
+          date: new Date(),
+        },
+      });
+
+      // Create transaction item
+      await prisma.transactionItem.create({
+        data: {
+          transactionId: transaction.id,
+          itemId,
+          stockId,
+          quantity,
+          unitPrice,
+          totalAmount: quantity * unitPrice,
+        },
+      });
+
+      // Create debt linked to transaction
+      await prisma.debt.create({
+        data: {
+          customerId,
+          amount: debtAmount,
+          dueDate: futureDate,
+          remarks: debtRemarks,
+          isSettled: false,
+          alertSent: false,
+          transactionId: transaction.id,
+        },
+      });
+
+      // Update stock (decrease for SELL, increase for BUY/REFUND)
+      if (type === TransactionType.SELL) {
+        await prisma.stock.updateMany({
+          where: { itemId },
+          data: {
+            quantity: {
+              decrement: quantity,
+            },
+          },
+        });
+      } else if (
+        type === TransactionType.BUY ||
+        type === TransactionType.REFUND
+      ) {
+        await prisma.stock.updateMany({
+          where: { itemId },
+          data: {
+            quantity: {
+              increment: quantity,
+            },
+          },
+        });
+      }
+
+      return transaction;
+    };
+
+    // 1. Purchase debts: Positive amounts without refund-related remarks (SELL transactions)
+    await createTransactionWithDebt(
+      TransactionType.SELL,
+      firstCustomer.id,
+      500.0,
+      500.0,
+      'Outstanding payment for engine parts purchase',
+      firstItem.id,
+      firstStock.id,
+      2,
+      250.0,
+    );
+
+    await createTransactionWithDebt(
+      TransactionType.SELL,
+      firstCustomer.id,
+      750.5,
+      750.5,
+      'Payment due for brake system components',
+      firstItem.id,
+      firstStock.id,
+      3,
+      250.17,
+    );
+
+    await createTransactionWithDebt(
+      TransactionType.SELL,
+      firstCustomer.id,
+      1200.0,
+      1200.0,
+      'Invoice for transmission repair parts',
+      firstItem.id,
+      firstStock.id,
+      4,
+      300.0,
+    );
+
+    // 2. Credit balances: Negative amounts (customer has credit) - These are adjustments/credits
+    // For credits, we'll create REFUND transactions that increase stock
+    await createTransactionWithDebt(
+      TransactionType.REFUND,
+      firstCustomer.id,
+      250.0,
+      -250.0,
+      'Customer credit balance from overpayment',
+      firstItem.id,
+      firstStock.id,
+      1,
+      250.0,
+    );
+
+    await createTransactionWithDebt(
+      TransactionType.REFUND,
+      firstCustomer.id,
+      150.75,
+      -150.75,
+      'Store credit balance available',
+      firstItem.id,
+      firstStock.id,
+      1,
+      150.75,
+    );
+
+    await createTransactionWithDebt(
+      TransactionType.REFUND,
+      firstCustomer.id,
+      450.0,
+      -450.0,
+      'Credit from previous transaction',
+      firstItem.id,
+      firstStock.id,
+      1,
+      450.0,
+    );
+
+    // 3. Exchange debts: Positive amounts with exchange-related remarks (SELL transactions)
+    await createTransactionWithDebt(
+      TransactionType.SELL,
+      firstCustomer.id,
+      300.0,
+      300.0,
+      'exchange payment for item replacement',
+      firstItem.id,
+      firstStock.id,
+      1,
+      300.0,
+    );
+
+    await createTransactionWithDebt(
+      TransactionType.SELL,
+      firstCustomer.id,
+      550.25,
+      550.25,
+      'additional payment required for upgraded item exchange',
+      firstItem.id,
+      firstStock.id,
+      2,
+      275.125,
+    );
+
+    await createTransactionWithDebt(
+      TransactionType.SELL,
+      firstCustomer.id,
+      200.0,
+      200.0,
+      'Exchange payment due',
+      firstItem.id,
+      firstStock.id,
+      1,
+      200.0,
+    );
+
+    // 4. Refund adjustments: Refund-related remarks (both positive and negative)
+    // Negative amounts (credits from refunds)
+    await createTransactionWithDebt(
+      TransactionType.REFUND,
+      firstCustomer.id,
+      350.0,
+      -350.0,
+      'Credit from refund #12345',
+      firstItem.id,
+      firstStock.id,
+      1,
+      350.0,
+    );
+
+    // Positive amount (processing fee for refund)
+    await createTransactionWithDebt(
+      TransactionType.SELL,
+      firstCustomer.id,
+      150.0,
+      150.0,
+      'refund #67890 processing fee',
+      firstItem.id,
+      firstStock.id,
+      1,
+      150.0,
+    );
+
+    await createTransactionWithDebt(
+      TransactionType.REFUND,
+      firstCustomer.id,
+      200.5,
+      -200.5,
+      'Credit from exchange refund transaction',
+      firstItem.id,
+      firstStock.id,
+      1,
+      200.5,
+    );
+
+    await createTransactionWithDebt(
+      TransactionType.REFUND,
+      firstCustomer.id,
+      125.0,
+      -125.0,
+      'Credit from refund #11111',
+      firstItem.id,
+      firstStock.id,
+      1,
+      125.0,
+    );
+
+    console.log('✅ Test data for debt by-type endpoints created successfully');
+  }
+
   console.log('🎉 Database seeding completed successfully!');
   console.log(
     `📊 Processed ${staffUsers.length + 1} users (including root admin)`,
