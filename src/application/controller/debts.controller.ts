@@ -38,7 +38,11 @@ import { FindOverdueDebtsUseCase } from '../use-cases/debt/find-overdue-debts.us
 import { CreateDebtDto } from '../dtos/debt/create-debt.dto';
 import { UpdateDebtDto } from '../dtos/debt/update-debt.dto';
 import { DebtResponseDto } from '../dtos/debt/debt-response.dto';
-import { DebtFilter } from '../../domain/filters/debt.filter';
+import {
+  DebtFilter,
+  DebtSortBy,
+  SortOrder,
+} from '../../domain/filters/debt.filter';
 import { DebtResponseSchema } from './documentation/debt/ResponseSchema/DebtResponseSchema';
 import { PaginatedDebtResponseSchema } from './documentation/debt/ResponseSchema/PaginatedDebtResponseSchema';
 import { DebtListResponseSchema } from './documentation/debt/ResponseSchema/DebtListResponseSchema';
@@ -126,6 +130,25 @@ export class DebtsController {
     required: false,
     description: 'Filter by due date after',
   })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    enum: [
+      'customer',
+      'amount',
+      'dueDate',
+      'isSettled',
+      'createdAt',
+      'updatedAt',
+    ],
+    description: 'Field to sort by (default: dueDate)',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    enum: ['asc', 'desc'],
+    description: 'Sort order (default: asc)',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Debts retrieved successfully',
@@ -142,6 +165,8 @@ export class DebtsController {
     @Query('alertSent', ParseOptionalBoolPipe) alertSent?: boolean,
     @Query('dueBefore') dueBefore?: string,
     @Query('dueAfter') dueAfter?: string,
+    @Query('sortBy') sortBy?: DebtSortBy,
+    @Query('sortOrder') sortOrder?: SortOrder,
   ): Promise<ApiResponseDto<PaginatedResponseDto<DebtResponseDto>>> {
     const filter = new DebtFilter({
       skip: paginationQuery.skip,
@@ -151,6 +176,8 @@ export class DebtsController {
       alertSent: alertSent,
       dueBefore: dueBefore ? new Date(dueBefore) : undefined,
       dueAfter: dueAfter ? new Date(dueAfter) : undefined,
+      sortBy,
+      sortOrder,
     });
 
     const { debts, total } = await this.listDebtsUseCase.execute(filter);
@@ -231,6 +258,35 @@ export class DebtsController {
     @Param('customerId', ParseIntPipe) customerId: number,
   ): Promise<ApiResponseDto<DebtResponseDto[]>> {
     const debts = await this.getDebtUseCase.findByCustomerId(customerId);
+    return ApiResponseDto.success(
+      debts.map((debt) => new DebtResponseDto(debt)),
+      'Debts retrieved successfully',
+    );
+  }
+
+  @Get('customer-name/:customerName')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get debts by customer name' })
+  @ApiParam({
+    name: 'customerName',
+    type: 'string',
+    description: 'Customer Name',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Debts retrieved successfully',
+    type: DebtListResponseSchema,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized access',
+  })
+  async getDebtsByCustomerName(
+    @Param('customerName') customerName: string,
+  ): Promise<ApiResponseDto<DebtResponseDto[]>> {
+    const debts = await this.getDebtUseCase.findByCustomerName(customerName);
     return ApiResponseDto.success(
       debts.map((debt) => new DebtResponseDto(debt)),
       'Debts retrieved successfully',

@@ -68,6 +68,26 @@ export class DebtRepository implements IDebtRepository {
     });
   }
 
+  async findByCustomerName(customerName: string): Promise<Debt[]> {
+    return this.prisma.debt.findMany({
+      where: {
+        customer: {
+          name: {
+            contains: customerName,
+            mode: 'insensitive',
+          },
+        },
+      },
+      include: {
+        customer: true,
+        transaction: true,
+      },
+      orderBy: {
+        dueDate: 'asc',
+      },
+    });
+  }
+
   async findByTransactionId(transactionId: number): Promise<Debt | null> {
     return this.prisma.debt.findFirst({
       where: { transactionId },
@@ -129,6 +149,8 @@ export class DebtRepository implements IDebtRepository {
       alertSent,
       dueBefore,
       dueAfter,
+      sortBy,
+      sortOrder,
       skip = 0,
       take = 10,
     } = filter;
@@ -145,12 +167,31 @@ export class DebtRepository implements IDebtRepository {
       }),
     };
 
+    // Build orderBy (like supplier-debts)
+    const sortField = sortBy || 'dueDate';
+    const sortDirection = sortOrder || 'asc';
+
+    let orderBy: any;
+    if (sortField === 'customer') {
+      orderBy = { customer: { name: sortDirection } };
+    } else {
+      const fieldMapping: Record<string, string> = {
+        amount: 'amount',
+        dueDate: 'dueDate',
+        isSettled: 'isSettled',
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt',
+      };
+      const prismaFieldName = fieldMapping[sortField] || 'dueDate';
+      orderBy = { [prismaFieldName]: sortDirection };
+    }
+
     const [debts, total] = await Promise.all([
       this.prisma.debt.findMany({
         where,
         skip,
         take,
-        orderBy: { dueDate: 'asc' },
+        orderBy,
         include: {
           customer: true,
           transaction: true,

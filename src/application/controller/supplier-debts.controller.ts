@@ -94,7 +94,9 @@ export class SupplierDebtsController {
   @Get()
   @UseGuards(JwtGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'List all supplier debts with optional filtering and sorting' })
+  @ApiOperation({
+    summary: 'List all supplier debts with optional filtering and sorting',
+  })
   @ApiQuery({
     name: 'supplierName',
     required: false,
@@ -106,6 +108,18 @@ export class SupplierDebtsController {
     required: false,
     type: Boolean,
     description: 'Filter by settlement status (true/false)',
+  })
+  @ApiQuery({
+    name: 'dueBefore',
+    required: false,
+    type: String,
+    description: 'Filter debts due before this date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'dueAfter',
+    required: false,
+    type: String,
+    description: 'Filter debts due after this date (ISO format)',
   })
   @ApiQuery({
     name: 'createdAtFrom',
@@ -134,7 +148,15 @@ export class SupplierDebtsController {
   @ApiQuery({
     name: 'sortBy',
     required: false,
-    enum: ['supplier', 'amount', 'dueDate', 'isSettled', 'settledDate', 'createdAt', 'updatedAt'],
+    enum: [
+      'supplier',
+      'amount',
+      'dueDate',
+      'isSettled',
+      'settledDate',
+      'createdAt',
+      'updatedAt',
+    ],
     description: 'Field to sort by (default: dueDate)',
   })
   @ApiQuery({
@@ -216,7 +238,11 @@ export class SupplierDebtsController {
   @UseGuards(JwtGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get debts by supplier name' })
-  @ApiParam({ name: 'supplierName', description: 'Supplier Name', type: 'string' })
+  @ApiParam({
+    name: 'supplierName',
+    description: 'Supplier Name',
+    type: 'string',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Supplier debts retrieved successfully',

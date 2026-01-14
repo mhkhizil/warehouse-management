@@ -29,6 +29,11 @@ export class GetDebtUseCase {
     return this.debtRepository.findByCustomerId(customerId);
   }
 
+  async findByCustomerName(customerName: string): Promise<Debt[]> {
+    this.logger.log(`Fetching debts for customer name: ${customerName}`);
+    return this.debtRepository.findByCustomerName(customerName);
+  }
+
   async findByTransactionId(transactionId: number): Promise<Debt> {
     this.logger.log(`Fetching debt for transaction ID: ${transactionId}`);
 
