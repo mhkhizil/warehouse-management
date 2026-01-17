@@ -115,6 +115,24 @@ export class DebtsController {
     description: 'Filter by settlement status (true/false)',
   })
   @ApiQuery({
+    name: 'overdue',
+    required: false,
+    type: Boolean,
+    description: 'Filter for overdue debts (past due date, not settled)',
+  })
+  @ApiQuery({
+    name: 'farFromDue',
+    required: false,
+    type: Boolean,
+    description: 'Filter for debts due within 14 days (not settled)',
+  })
+  @ApiQuery({
+    name: 'dueToday',
+    required: false,
+    type: Boolean,
+    description: 'Filter for debts due today (not settled)',
+  })
+  @ApiQuery({
     name: 'alertSent',
     required: false,
     type: Boolean,
@@ -163,6 +181,9 @@ export class DebtsController {
     @Query('customerId') customerId?: string,
     @Query('isSettled', ParseOptionalBoolPipe) isSettled?: boolean,
     @Query('alertSent', ParseOptionalBoolPipe) alertSent?: boolean,
+    @Query('overdue', ParseOptionalBoolPipe) overdue?: boolean,
+    @Query('farFromDue', ParseOptionalBoolPipe) farFromDue?: boolean,
+    @Query('dueToday', ParseOptionalBoolPipe) dueToday?: boolean,
     @Query('dueBefore') dueBefore?: string,
     @Query('dueAfter') dueAfter?: string,
     @Query('sortBy') sortBy?: DebtSortBy,
@@ -174,6 +195,9 @@ export class DebtsController {
       customerId: customerId ? parseInt(customerId, 10) : undefined,
       isSettled: isSettled,
       alertSent: alertSent,
+      overdue: overdue,
+      farFromDue: farFromDue,
+      dueToday: dueToday,
       dueBefore: dueBefore ? new Date(dueBefore) : undefined,
       dueAfter: dueAfter ? new Date(dueAfter) : undefined,
       sortBy,

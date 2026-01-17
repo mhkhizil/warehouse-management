@@ -110,6 +110,24 @@ export class SupplierDebtsController {
     description: 'Filter by settlement status (true/false)',
   })
   @ApiQuery({
+    name: 'overdue',
+    required: false,
+    type: Boolean,
+    description: 'Filter for overdue debts (past due date, not settled)',
+  })
+  @ApiQuery({
+    name: 'farFromDue',
+    required: false,
+    type: Boolean,
+    description: 'Filter for debts due within 3 days (not settled)',
+  })
+  @ApiQuery({
+    name: 'dueToday',
+    required: false,
+    type: Boolean,
+    description: 'Filter for debts due today (not settled)',
+  })
+  @ApiQuery({
     name: 'dueBefore',
     required: false,
     type: String,

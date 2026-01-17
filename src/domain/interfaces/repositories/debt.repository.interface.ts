@@ -7,6 +7,9 @@ export type DebtFilter = {
   alertSent?: boolean;
   dueBefore?: Date;
   dueAfter?: Date;
+  overdue?: boolean; // Filter for debts past due date (not settled)
+  farFromDue?: boolean; // Filter for debts due within 14 days (not settled)
+  dueToday?: boolean; // Filter for debts due today (not settled)
   skip?: number;
   take?: number;
   // NEW FILTERS FOR DEBT CATEGORIZATION

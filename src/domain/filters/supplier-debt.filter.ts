@@ -25,6 +25,9 @@ export class SupplierDebtFilter extends PaginationFilter {
   createdAtTo?: Date;
   updatedAtFrom?: Date;
   updatedAtTo?: Date;
+  overdue?: boolean; // Filter for debts past due date (not settled)
+  farFromDue?: boolean; // Filter for debts due within 3 days (not settled)
+  dueToday?: boolean; // Filter for debts due today (not settled)
   sortBy?: SupplierDebtSortBy;
   sortOrder?: SortOrder;
 
@@ -33,4 +36,3 @@ export class SupplierDebtFilter extends PaginationFilter {
     Object.assign(this, partial);
   }
 }
-

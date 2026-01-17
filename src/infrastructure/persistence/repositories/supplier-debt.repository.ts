@@ -145,6 +145,55 @@ export class SupplierDebtRepository implements ISupplierDebtRepository {
       where.isSettled = filter.isSettled;
     }
 
+    // Handle overdue filter (debts past due date, not settled)
+    if (filter.overdue === true) {
+      const now = new Date();
+      // Set to start of today for accurate comparison
+      const todayStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+      );
+      where.dueDate = { lt: todayStart };
+      where.isSettled = false;
+    }
+
+    // Handle farFromDue filter (debts due within 3 days, not settled)
+    if (filter.farFromDue === true) {
+      const now = new Date();
+      const todayStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+      );
+      const fourteenDaysLater = new Date(todayStart);
+      fourteenDaysLater.setDate(fourteenDaysLater.getDate() + 14);
+      // Due date is >= today and <= today + 3 days
+      where.dueDate = {
+        gte: todayStart,
+        lte: fourteenDaysLater,
+      };
+      where.isSettled = false;
+    }
+
+    // Handle dueToday filter (debts due today, not settled)
+    if (filter.dueToday === true) {
+      const now = new Date();
+      const todayStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+      );
+      const todayEnd = new Date(todayStart);
+      todayEnd.setDate(todayEnd.getDate() + 1);
+      // Due date is >= today start and < tomorrow start
+      where.dueDate = {
+        gte: todayStart,
+        lt: todayEnd,
+      };
+      where.isSettled = false;
+    }
+
     if (filter.dueBefore || filter.dueAfter) {
       where.dueDate = {
         ...(filter.dueBefore && { lte: filter.dueBefore }),

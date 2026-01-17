@@ -34,6 +34,33 @@ export class SupplierDebtFilterDto {
   isSettled?: boolean;
 
   @ApiProperty({
+    description: 'Filter for overdue debts (past due date, not settled)',
+    required: false,
+    type: Boolean,
+  })
+  @IsOptional()
+  @IsBoolean()
+  overdue?: boolean;
+
+  @ApiProperty({
+    description: 'Filter for debts due within 3 days (not settled)',
+    required: false,
+    type: Boolean,
+  })
+  @IsOptional()
+  @IsBoolean()
+  farFromDue?: boolean;
+
+  @ApiProperty({
+    description: 'Filter for debts due today (not settled)',
+    required: false,
+    type: Boolean,
+  })
+  @IsOptional()
+  @IsBoolean()
+  dueToday?: boolean;
+
+  @ApiProperty({
     description: 'Filter debts due before this date',
     required: false,
   })
