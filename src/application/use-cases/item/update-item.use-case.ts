@@ -65,30 +65,45 @@ export class UpdateItemUseCase {
       }
     }
 
-    // Extract stock quantity change if provided
-    const { stockQuantity, ...itemUpdateData } = updateItemDto;
+    // Extract stock-related fields (stockQuantity and refillAlert) from item update data
+    const { stockQuantity, refillAlert, ...itemUpdateData } = updateItemDto;
 
-    // Update item data
+    // Update item data (without stock-related fields)
     const updatedItem = await this.itemRepository.update(id, itemUpdateData);
 
-    // Update stock quantity if provided
-    if (stockQuantity !== undefined) {
-      // Use type assertion to inform TypeScript that item has a 'stock' property
-      const itemWithStock = item as Item & {
-        stock?: { id: number; quantity: number }[];
-      };
-      const stock = itemWithStock.stock?.[0];
+    // Use type assertion to inform TypeScript that item has a 'stock' property
+    const itemWithStock = item as Item & {
+      stock?: { id: number; quantity: number; refillAlert?: boolean }[];
+    };
+    const stock = itemWithStock.stock?.[0];
+
+    // Update stock if stockQuantity or refillAlert is provided
+    if (stockQuantity !== undefined || refillAlert !== undefined) {
       if (stock) {
-        await this.stockRepository.update(stock.id, {
-          quantity: stockQuantity,
-          lastRefilled: new Date(),
-        });
+        // Update existing stock
+        const stockUpdateData: {
+          quantity?: number;
+          refillAlert?: boolean;
+          lastRefilled?: Date;
+        } = {};
+        
+        if (stockQuantity !== undefined) {
+          stockUpdateData.quantity = stockQuantity;
+          stockUpdateData.lastRefilled = new Date();
+        }
+        
+        if (refillAlert !== undefined) {
+          stockUpdateData.refillAlert = refillAlert;
+        }
+        
+        await this.stockRepository.update(stock.id, stockUpdateData);
       } else {
         // Create new stock entry if one doesn't exist
         await this.stockRepository.create({
           itemId: id,
-          quantity: stockQuantity,
-          lastRefilled: new Date(),
+          quantity: stockQuantity ?? 0,
+          refillAlert: refillAlert ?? false,
+          lastRefilled: stockQuantity !== undefined ? new Date() : undefined,
         });
       }
     }
