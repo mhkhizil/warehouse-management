@@ -149,6 +149,9 @@ export class DebtRepository implements IDebtRepository {
       alertSent,
       dueBefore,
       dueAfter,
+      overdue,
+      farFromDue,
+      dueToday,
       minAmount,
       maxAmount,
       includeRemarks,
@@ -163,6 +166,62 @@ export class DebtRepository implements IDebtRepository {
       ...(customerId && { customerId }),
       ...(isSettled !== undefined && { isSettled }),
       ...(alertSent !== undefined && { alertSent }),
+
+      // Handle overdue filter (debts past due date, not settled)
+      ...(overdue === true && {
+        dueDate: {
+          lt: (() => {
+            const now = new Date();
+            return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          })(),
+        },
+        isSettled: false,
+      }),
+
+      // Handle farFromDue filter (debts due within 14 days, not settled)
+      ...(farFromDue === true && {
+        dueDate: {
+          gte: (() => {
+            const now = new Date();
+            return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          })(),
+          lte: (() => {
+            const now = new Date();
+            const todayStart = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate(),
+            );
+            const fourteenDaysLater = new Date(todayStart);
+            fourteenDaysLater.setDate(fourteenDaysLater.getDate() + 14);
+            return fourteenDaysLater;
+          })(),
+        },
+        isSettled: false,
+      }),
+
+      // Handle dueToday filter (debts due today, not settled)
+      ...(dueToday === true && {
+        dueDate: {
+          gte: (() => {
+            const now = new Date();
+            return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          })(),
+          lt: (() => {
+            const now = new Date();
+            const todayStart = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate(),
+            );
+            const tomorrowStart = new Date(todayStart);
+            tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+            return tomorrowStart;
+          })(),
+        },
+        isSettled: false,
+      }),
+
       ...((dueBefore || dueAfter) && {
         dueDate: {
           ...(dueBefore && { lte: dueBefore }),

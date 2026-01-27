@@ -20,6 +20,9 @@ export class DebtFilter extends PaginationFilter {
   alertSent?: boolean;
   dueBefore?: Date;
   dueAfter?: Date;
+  overdue?: boolean; // Filter for debts past due date (not settled)
+  farFromDue?: boolean; // Filter for debts due within 14 days (not settled)
+  dueToday?: boolean; // Filter for debts due today (not settled)
 
   // NEW FILTERS FOR DEBT CATEGORIZATION
   minAmount?: number; // For filtering positive debts
