@@ -191,7 +191,8 @@ export class ItemsController {
     @Query('excludeId') excludeId?: string,
   ): Promise<ApiResponseDto<ItemResponseDto[]>> {
     const excludeIdNum = excludeId ? parseInt(excludeId) : undefined;
-    const items = await this.getItemUseCase.getEligibleParentItems(excludeIdNum);
+    const items =
+      await this.getItemUseCase.getEligibleParentItems(excludeIdNum);
     const itemDtos = items.map((item) => new ItemResponseDto(item));
     return ApiResponseDto.success(
       itemDtos,
