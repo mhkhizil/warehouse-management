@@ -46,4 +46,17 @@ export class GetItemUseCase {
 
     return this.itemRepository.findSubItems(parentItemId);
   }
+
+  /**
+   * Get items that are eligible to be parent items.
+   * Any non-deleted item can be a parent (allows multi-level nesting).
+   *
+   * @param excludeId - Optional ID to exclude when editing an item (prevents circular references)
+   */
+  async getEligibleParentItems(excludeId?: number): Promise<Item[]> {
+    this.logger.log(
+      `Fetching eligible parent items${excludeId ? ` (excluding ID: ${excludeId} and its descendants)` : ''}`,
+    );
+    return this.itemRepository.findEligibleParentItems(excludeId);
+  }
 }

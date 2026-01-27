@@ -16,4 +16,5 @@ export interface IItemRepository extends IBaseRepository<Item, number> {
     filter: ItemFilter,
   ): Promise<{ items: Item[]; total: number }>;
   findSubItems(parentItemId: number): Promise<Item[]>;
+  findEligibleParentItems(excludeId?: number): Promise<Item[]>;
 }

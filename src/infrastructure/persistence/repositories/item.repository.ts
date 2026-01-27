@@ -147,4 +147,75 @@ export class ItemRepository implements IItemRepository {
 
     return { items, total };
   }
+
+  /**
+   * Find items that are eligible to be parent items.
+   * Eligible items are:
+   * - Not deleted (isDeleted: false)
+   * - Not the item being edited (if excludeId is provided)
+   * - Not a descendant of the item being edited (prevents circular references)
+   *
+   * @param excludeId - Optional ID of item to exclude (and its descendants) when editing
+   */
+  async findEligibleParentItems(excludeId?: number): Promise<Item[]> {
+    // If excludeId is provided, we need to exclude it and all its descendants
+    let excludeIds: number[] = [];
+
+    if (excludeId) {
+      excludeIds = await this.getDescendantIds(excludeId);
+      excludeIds.push(excludeId); // Include the item itself
+    }
+
+    return this.prisma.item.findMany({
+      where: {
+        isDeleted: false,
+        ...(excludeIds.length > 0 && {
+          id: { notIn: excludeIds },
+        }),
+      },
+      orderBy: { name: 'asc' },
+      include: {
+        stock: true,
+        parentItem: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        subItems: {
+          where: {
+            isDeleted: false,
+          },
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Recursively get all descendant IDs of an item.
+   * Used to prevent circular references when setting parent items.
+   */
+  private async getDescendantIds(itemId: number): Promise<number[]> {
+    const descendants: number[] = [];
+
+    const children = await this.prisma.item.findMany({
+      where: {
+        parentItemId: itemId,
+        isDeleted: false,
+      },
+      select: { id: true },
+    });
+
+    for (const child of children) {
+      descendants.push(child.id);
+      const childDescendants = await this.getDescendantIds(child.id);
+      descendants.push(...childDescendants);
+    }
+
+    return descendants;
+  }
 }

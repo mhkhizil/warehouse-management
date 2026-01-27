@@ -163,6 +163,42 @@ export class ItemsController {
     return ApiResponseDto.success(itemDtos, 'All items retrieved successfully');
   }
 
+  @Get('eligible-parents')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get items eligible to be parent items',
+    description:
+      'Returns all non-deleted items that can be assigned as parent items. Supports multi-level nesting. When editing an item, pass excludeId to prevent circular references (excludes the item and its descendants).',
+  })
+  @ApiQuery({
+    name: 'excludeId',
+    required: false,
+    type: 'number',
+    description:
+      'Item ID to exclude (along with its descendants) - use when editing an item to prevent circular references',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Eligible parent items retrieved successfully',
+    type: ItemListResponseSchema,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized access',
+  })
+  async getEligibleParentItems(
+    @Query('excludeId') excludeId?: string,
+  ): Promise<ApiResponseDto<ItemResponseDto[]>> {
+    const excludeIdNum = excludeId ? parseInt(excludeId) : undefined;
+    const items = await this.getItemUseCase.getEligibleParentItems(excludeIdNum);
+    const itemDtos = items.map((item) => new ItemResponseDto(item));
+    return ApiResponseDto.success(
+      itemDtos,
+      'Eligible parent items retrieved successfully',
+    );
+  }
+
   @Get(':id')
   @UseGuards(JwtGuard)
   @ApiBearerAuth()
